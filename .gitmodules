@@ -1,0 +1,76 @@
+[submodule "riscv-gnu-toolchain"]
+	path = riscv-gnu-toolchain
+	url = https://github.com/black-parrot-sdk/riscv-gnu-toolchain
+    branch = blackparrot_mods
+    ignore = untracked
+[submodule "dromajo"]
+	path = dromajo
+	url = https://github.com/bsg-external/dromajo
+    branch = blackparrot_mods
+    ignore = untracked
+[submodule "perch"]
+	path = perch
+	url = https://github.com/black-parrot-sdk/perch
+    branch = master
+    ignore = untracked
+
+[submodule "riscv-opcodes"]
+	path = riscv-opcodes
+    url = https://github.com/riscv/riscv-opcodes.git
+    branch = master
+    ignore = untracked
+[submodule "bootrom"]
+	path = bootrom
+    url = https://github.com/black-parrot-sdk/bootrom
+    branch = master
+    ignore = untracked
+[submodule "bp-tests"]
+	path = bp-tests
+	url = https://github.com/black-parrot-sdk/bp-tests
+    branch = master
+    ignore = untracked
+[submodule "bp-demos"]
+	path = bp-demos
+	url = https://github.com/black-parrot-sdk/bp-demos
+    branch = master
+    ignore = untracked
+[submodule "beebs"]
+	path = beebs
+    url = https://github.com/black-parrot-sdk/beebs
+    branch = blackparrot_mods
+    ignore = untracked
+[submodule "coremark"]
+	path = coremark
+	url = https://github.com/black-parrot-sdk/coremark
+    branch = blackparrot_mods
+    ignore = untracked
+[submodule "linux"]
+	path = linux
+	url = https://github.com/black-parrot-sdk/bp-linux
+    branch = master
+    ignore = untracked
+[submodule "opensbi"]
+	path = opensbi
+	url = https://github.com/black-parrot-sdk/opensbi
+    branch = blackparrot_mods
+    ignore = untracked
+[submodule "riscv-dv"]
+	path = riscv-dv
+	url = https://github.com/black-parrot-sdk/riscv-dv
+    branch = blackparrot_mods
+    ignore = untracked
+[submodule "riscv-tests"]
+	path = riscv-tests
+	url = https://github.com/black-parrot-sdk/riscv-tests
+    branch = blackparrot_mods
+    ignore = untracked
+[submodule "spec2000"]
+	path = spec2000
+	url = https://github.com/black-parrot-sdk/spec2000
+    branch = master
+    ignore = untracked
+[submodule "bedrock"]
+	path = bedrock
+    url = https://github.com/black-parrot-sdk/bedrock.git
+    branch = master
+    ignore = untracked

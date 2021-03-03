@@ -1,0 +1,6 @@
+install/
+include/
+lib/
+prog/
+ucode/
+bsg_cadenv/
