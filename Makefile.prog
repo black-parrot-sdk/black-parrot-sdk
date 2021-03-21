@@ -15,7 +15,7 @@ define submodule_test_template
 $(1)_tag := $(addprefix $(1)., $(shell cd $(2); git rev-parse HEAD))
 $(BP_TOUCH_DIR)/$$($(1)_tag):
 	rm -rf $(BP_TOUCH_DIR)/$(1).*
-	cd $(BP_SDK_DIR); git submodule update --init --merge --recursive $$($(1)_dir)
+	cd $(BP_SDK_DIR); git submodule update --init --merge $(SHALLOW_SUB) --recursive $$($(1)_dir)
 	+$(MAKE) $(1)_build
 	mkdir -p $(BP_PROG_DIR)/$(1)
 	find $(2) -name "*.riscv" -exec cp {} $(BP_PROG_DIR)/$(1)/ \;
@@ -29,7 +29,7 @@ endef
 
 perch_build: $(BP_LIB_DIR)/libperch.a $(BP_LIB_DIR)/crt0.o
 $(BP_LIB_DIR)/libperch.a $(BP_LIB_DIR)/crt0.o:
-	$(MAKE) -C $(perch_dir) clean all
+	$(MAKE) -C $(perch_dir) clean build
 	mkdir -p $(BP_LIB_DIR)
 	mkdir -p $(BP_INCLUDE_DIR)
 	cp $(perch_dir)/libperch.a $(BP_LIB_DIR)

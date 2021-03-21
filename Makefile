@@ -12,8 +12,11 @@ override TARGET_DIRS := $(BP_SDK_BIN_DIR) $(BP_SDK_LIB_DIR) $(BP_SDK_INCLUDE_DIR
 $(TARGET_DIRS):
 	mkdir -p $@
 
+# Makes clones much faster. Comment out if you see "fatal: reference is not a tree"
+SHALLOW_SUB ?= --depth=1
+
 sdk_lite: | $(TARGET_DIRS)
-	cd $(BP_SDK_DIR); git submodule update --init --checkout
+	cd $(BP_SDK_DIR); git submodule update --init --checkout $(SHALLOW_SUB)
 	$(MAKE) dromajo
 
 ## This target makes the sdk tools
