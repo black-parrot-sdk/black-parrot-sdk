@@ -46,7 +46,7 @@ BlackParrot.
 PanicRoom is a port of newlib which packages a DRAM-based filesystem (LittleFS) along with a minimal
 C library. By only implementing a few platform level operations, PanicRoom provides an operational
 filesystem, eliminating the need for a complex host interface, It is automatically included with the
-standard toolchain build as riscv64-unknown-elf-dramfs-, allowing benchmarks such as SPEC to run with minimal host overhead. For an example of how to use PanicRoom, see bp-demos/littlefs\_test
+standard toolchain build as riscv64-unknown-elf-dramfs-, allowing benchmarks such as SPEC to run with minimal host overhead. For an example of how to use PanicRoom, see lfs\_demo in bp-demos
 
 The SDK will install a program which allows you to convert a set of text files into the LitteFS
 filesystem.
