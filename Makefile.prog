@@ -29,7 +29,7 @@ endef
 
 perch_build: $(BP_LIB_DIR)/libperch.a $(BP_LIB_DIR)/crt0.o
 $(BP_LIB_DIR)/libperch.a $(BP_LIB_DIR)/crt0.o:
-	$(MAKE) -C $(perch_dir) clean build
+	$(MAKE) -C $(perch_dir) clean perch crt0.o
 	mkdir -p $(BP_LIB_DIR)
 	mkdir -p $(BP_INCLUDE_DIR)
 	cp $(perch_dir)/libperch.a $(BP_LIB_DIR)
