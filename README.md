@@ -10,8 +10,7 @@ features for bare-metal programs, with and without accelerators attached.
 ## Prerequisites
 ### Centos
 
-    yum install autoconf automake libmpc-devel mpfr-devel gmp-devel gawk  bison flex texinfo
-patchutils gcc gcc-c++ zlib-devel expat-devel dtc gtkwave vim-common virtualenv
+    yum install autoconf automake libmpc-devel mpfr-devel gmp-devel gawk  bison flex texinfo patchutils gcc gcc-c++ zlib-devel expat-devel dtc gtkwave vim-common virtualenv
 
 CentOS 7 requires a more modern gcc to build Linux. If you receive an error such as "These critical
 programs are missing or too old: make" try
@@ -20,18 +19,16 @@ programs are missing or too old: make" try
 
 ### Ubuntu
 
-    sudo apt-get install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk
-build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev wget byacc
-device-tree-compiler python gtkwave vim-common virtualenv python-yaml
+    sudo apt-get install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev wget byacc device-tree-compiler python gtkwave vim-common virtualenv python-yaml
 
 BlackParrot has been tested extensively on CentOS 7. We have many users who have used Ubuntu for
 development. If not on a relatively recent version of these OSes, we suggest using a
 Docker image.
 
-   # make sdk is -j parallelizable!
-   make sdk
-   # only makes a subset of programs. See Makefile for the full list of commands
-   make prog
+    # make sdk is -j parallelizable!
+    make sdk
+    # only makes a subset of programs. See Makefile for the full list of commands
+    make prog
 
 ### Libperch
 libperch is the BlackParrot firmware library. It includes sample linker scripts for supported SoC
@@ -86,9 +83,13 @@ To add a new test to BlackParrot using our libraries is simple. Using our framew
 This should build and install the test program to prog/bp-demos/foobar.riscv
 
 If you want to use your own build structure, include ./Makefile.common to import notable
-BlackParrot directory names as well as put the compiler on your path. Add to your flags:
-  - -I$(BP\_SDK\_INCLUDE\_DIR)
-  - -L$(BP\_SDK\_LIB\_DIR) -lperch
+BlackParrot directory names as well as put the compiler on your path. To build a program,
+use the following flags:
+  - riscv64-unknown-elf-dramfs-gcc (for PanicRoom), riscv64-unknown-linux-gnu-gcc (for Linux)
+  - -I$(BP\_INCLUDE\_DIR)
+  - -L$(BP\_LIB\_DIR) -lperch
+  - -T$(BP\_LINKER\_DIR)/riscv.ld
+
 When you're done building your program, copy it into ./prog/custom/foobar.riscv or your favorite
 SUITE/PROG combination
 
