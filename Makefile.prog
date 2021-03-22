@@ -66,7 +66,7 @@ riscv-dv_build:
 	$(MAKE) -C $(riscv-dv_dir)
 
 linux_build:
-	$(MAKE) -C $(linux_dir) linux.riscv
+	$(MAKE) -C $(linux_dir) linux.riscv OPENSBI_NCPUS=$(OPENSBI_NCPUS) WITH_SHELL=$(WITH_SHELL)
 
 .PHONY: perch bootrom bp-demos bp-tests riscv-tests beebs coremark spec2000 riscv-dv linux
 $(eval $(call submodule_test_template,perch,$(perch_dir)))
