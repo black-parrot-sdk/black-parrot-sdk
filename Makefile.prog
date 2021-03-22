@@ -12,7 +12,7 @@ riscvdv_dir     := $(BP_SDK_DIR)/riscv-dv
 linux_dir       := $(BP_SDK_DIR)/linux
 
 define submodule_test_template
-$(1)_tag := $(addprefix $(1)., $(shell cd $(2); git rev-parse HEAD))
+$(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); git rev-parse HEAD))
 $(BP_TOUCH_DIR)/$$($(1)_tag):
 	rm -rf $(BP_TOUCH_DIR)/$(1).*
 	cd $(BP_SDK_DIR); git submodule update --init --merge $(SHALLOW_SUB) --recursive $$($(1)_dir)
@@ -20,7 +20,7 @@ $(BP_TOUCH_DIR)/$$($(1)_tag):
 	mkdir -p $(BP_PROG_DIR)/$(1)
 	find $(2) -name "*.riscv" -exec cp {} $(BP_PROG_DIR)/$(1)/ \;
 	touch $(BP_TOUCH_DIR)/$$($(1)_tag)
-$(1): $(BP_TOUCH_DIR)/$$($(1)_tag)
+$(1): | $(BP_TOUCH_DIR)/$$($(1)_tag)
 $(1)_manual: $(BP_LIB_DIR)/libperch.a $(BP_LIB_DIR)/crt0.o
 	+$(MAKE) $(1)_build
 	mkdir -p $(BP_PROG_DIR)/$(1)
@@ -77,6 +77,6 @@ $(eval $(call submodule_test_template,riscv-tests,$(riscv_tests_dir)))
 $(eval $(call submodule_test_template,beebs,$(beebs_dir)))
 $(eval $(call submodule_test_template,coremark,$(coremark_dir)))
 $(eval $(call submodule_test_template,spec2000,$(spec2000_dir)))
-$(eval $(call submodule_test_template,riscv-dv,$(riscv-dv_dir)))
+$(eval $(call submodule_test_template,riscv-dv,$(riscvdv_dir)))
 $(eval $(call submodule_test_template,linux,$(linux_dir)))
 
