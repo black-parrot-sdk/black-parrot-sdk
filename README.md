@@ -74,6 +74,13 @@ to the filesystem using normal calls:
         return 0;
     }
 
+### Building Linux
+To build a SMP Linux executable for BlackParrot:
+```
+make -j linux OPENSBI_NCPUS=<n>
+```
+For further information read [this](https://github.com/black-parrot-sdk/bp-linux/blob/master/README.md).
+
 
 ### Adding a test
 To add a new test to BlackParrot using our libraries is simple. Using our framework
