@@ -81,7 +81,7 @@ to the filesystem using normal calls:
 To build a SMP Linux executable for BlackParrot (make sure first to follow the above instructions for building the SDK):
 ```
 make -j linux OPENSBI_NCPUS=<n>
-./install/bin/dromajo --host --ncpus=8 linux/linux.riscv # verify linux runs on the dromajo simulator
+./install/bin/dromajo --host --ncpus=<n> linux/linux.riscv # verify linux runs on the dromajo simulator
 ```
 For further information read [the bp-linux README](https://github.com/black-parrot-sdk/bp-linux/blob/master/README.md).
 
