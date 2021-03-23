@@ -25,10 +25,13 @@ BlackParrot has been tested extensively on CentOS 7. We have many users who have
 development. If not on a relatively recent version of these OSes, we suggest using a
 Docker image.
 
-    # make sdk is -j parallelizable!
-    make sdk
-    # only makes a subset of programs. See Makefile for the full list of commands
-    make prog
+## The SDK
+
+### Building the SDK
+
+    make sdk  # you can use the -j N flag to parallelize
+    make prog # only makes a subset of programs. See Makefile for the full list of commands
+
 
 ### Libperch
 libperch is the BlackParrot firmware library. It includes sample linker scripts for supported SoC
@@ -75,11 +78,12 @@ to the filesystem using normal calls:
     }
 
 ### Building Linux
-To build a SMP Linux executable for BlackParrot:
+To build a SMP Linux executable for BlackParrot (make sure first to follow the above instructions for building the SDK):
 ```
 make -j linux OPENSBI_NCPUS=<n>
+./install/bin/dromajo --host --ncpus=<n> linux/linux.riscv # verify linux runs on the dromajo simulator
 ```
-For further information read [this](https://github.com/black-parrot-sdk/bp-linux/blob/master/README.md).
+For further information read [the bp-linux README](https://github.com/black-parrot-sdk/bp-linux/blob/master/README.md).
 
 
 ### Adding a test
