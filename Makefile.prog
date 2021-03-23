@@ -63,8 +63,11 @@ spec2000_build:
 	$(MAKE) -C $(spec2000_dir)
 
 riscv-dv_build:
-	$(MAKE) -C $(riscv-dv_dir)
+	$(MAKE) -C $(riscvdv_dir)
 
+# Default Linux build is single core and terminates immediately
+OPENSBI_NCPUS ?= 1
+WITH_SHELL    ?= $(linux_dir)/cfg/test.sh
 linux_build:
 	$(MAKE) -C $(linux_dir) linux.riscv OPENSBI_NCPUS=$(OPENSBI_NCPUS) WITH_SHELL=$(WITH_SHELL)
 
