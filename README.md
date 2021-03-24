@@ -32,6 +32,8 @@ Docker image.
     make sdk  # you can use the -j N flag to parallelize
     make prog # only makes a subset of programs. See Makefile for the full list of commands
 
+For each suite in this directory, `make <suite>` will build the tests within and copy the resulting
+.riscv binaries to ./prog/suite/example.riscv
 
 ### Libperch
 libperch is the BlackParrot firmware library. It includes sample linker scripts for supported SoC
