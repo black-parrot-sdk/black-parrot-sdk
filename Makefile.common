@@ -30,3 +30,5 @@ export CROSS_COMPILE ?= $(RISCV_TARGET)-
 
 export PATH := $(BP_SDK_BIN_DIR):$(PATH)
 
+# Makes clones much faster. Comment out if you see "fatal: reference is not a tree"
+SHALLOW_SUB ?= --depth=1
