@@ -116,3 +116,8 @@ part of make sdk.
 will run your program. The --host options make Dromajo behave as BlackParrot, with a host interface
 emulating our Verilog testbench. Once Dromajo passes your test, you're ready to run on BlackParrot! 
 
+### Debugging your test
+Dromajo supports tracing. This option is enabled by adding --trace to the dromajo invocation. The trace format is:
+
+    0 3 0x0000000080000108 (0x06f00113) x 2 0x000000000000006f
+    core_id priv_level pc (instruction) writeback_reg writeback_data
