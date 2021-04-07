@@ -79,6 +79,8 @@ to the filesystem using normal calls:
         return 0;
     }
 
+PanicRoom is also used for stdio operations like `printf`. So to use these functions you still need to generate a LittleFS configuration file(lfs.c) without any input files. You also need to call the `dramfs_init` function by building the start.S code in the perch directory with `-D_DRAMFS` flag alongside your program, or use the crt0.o generated at `lib/` as the default start code, or simply call it at the beginning of the main function.
+
 ### Building Linux
 To build a SMP Linux executable for BlackParrot (make sure first to follow the above instructions for building the SDK):
 ```
