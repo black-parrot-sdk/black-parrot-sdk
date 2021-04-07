@@ -110,11 +110,18 @@ SUITE/PROG combination
 
 ### Testing your test
 RTL waveform debugging is hard. That's why, before we run new programs on BlackParrot, we want to
-run them in Dromajo to verify that the software is working. Luckily, we've already built dromajo as
-part of make sdk.
+run them in Dromajo to verify that the software is working. Luckily, we've already built Dromajo as
+part of make sdk. The version of Dromajo built has been modified to behave exactly as BlackParrot does
+and is found here: https://github.com/bsg-external/dromajo. There is further documentation on
+Dromajo in that repo.
 
     ./install/bin/dromajo --host [--enable_amo] [--ncpus=1] [--trace] ./prog/custom/foobar.riscv
 
 will run your program. The --host options make Dromajo behave as BlackParrot, with a host interface
 emulating our Verilog testbench. Once Dromajo passes your test, you're ready to run on BlackParrot! 
 
+### Debugging your test
+Dromajo supports tracing. This option is enabled by adding --trace=0 to the dromajo invocation (0 indicates to start the trace after 0 instructions). The trace format is:
+
+    0 3 0x0000000080000108 (0x06f00113) x 2 0x000000000000006f
+    core_id priv_level pc (instruction) writeback_reg writeback_data
