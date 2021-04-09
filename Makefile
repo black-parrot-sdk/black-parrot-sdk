@@ -11,13 +11,19 @@ include $(BP_SDK_DIR)/Makefile.prog
 override TARGET_DIRS := $(BP_SDK_BIN_DIR) $(BP_SDK_LIB_DIR) $(BP_SDK_INCLUDE_DIR) $(BP_SDK_TOUCH_DIR)
 $(TARGET_DIRS):
 	mkdir -p $@
+	
+sdk_lite: cd $(BP_SDK_DIR); curl -L $(git config --get remote.origin.url)/releases/download/$(git describe --tags --abbrev=0)/sdk_lite.tgz | tar -xvz
 
-sdk_lite: | $(TARGET_DIRS)
+sdk: cd $(BP_SDK_DIR); curl -L $(git config --get remote.origin.url)/releases/download/$(git describe --tags --abbrev=0)/sdk.tgz | tar -xvz
+
+prog: cd $(BP_SDK_DIR); curl -L $(git config --get remote.origin.url)/releases/download/$(git describe --tags --abbrev=0)/prog.tgz | tar -xvz
+
+build_sdk_lite: | $(TARGET_DIRS)
 	cd $(BP_SDK_DIR); git submodule update --init --checkout $(SHALLOW_SUB)
 	$(MAKE) dromajo
 
 ## This target makes the sdk tools
-sdk: sdk_lite
+build_sdk: build_sdk_lite
 	$(MAKE) gnu
 	$(MAKE) -j1 bedrock
 	$(MAKE) -j1 perch
@@ -25,7 +31,7 @@ sdk: sdk_lite
 	$(MAKE) -j1 bp-demos
 	$(MAKE) -j1 bp-tests
 
-prog: sdk
+build_prog: build_sdk
 	$(MAKE) riscv-tests
 	$(MAKE) coremark
 	$(MAKE) beebs
