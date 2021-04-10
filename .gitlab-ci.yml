@@ -29,7 +29,8 @@ release:
     - apt-add-repository https://cli.github.com/packages
     - apt update
     - apt install -y gh
-    - gh auth login --with-token $GITHUB_TOKEN
+    - echo $GITHUB_TOKEN | gh auth login --with-token
+    - gh config set prompt disabled
     - gh release create $CI_COMMIT_TAG ./dist/*.tgz --repo developandplay/black-parrot-sdk
   only:
     - tags
