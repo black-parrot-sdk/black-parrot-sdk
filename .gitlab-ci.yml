@@ -4,24 +4,32 @@ prep:
     - sudo apt update
     - sudo apt install autoconf automake autotools-dev cmake curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev wget byacc device-tree-compiler python gtkwave vim-common virtualenv python-yaml
     - mkdir dist
+  only:
+    - tags
 
 build-sdk-lite:
   stage: build
   script:
     - make sdk_lite
     - tar -czvf dist/sdk_lite.tgz install
+  only:
+    - tags
     
 build-sdk:
   stage: build
   script:
     - make sdk
     - tar -czvf dist/sdk.tgz install prog lib ucode include bedrock perch bootrom bp-demos bp-tests
+  only:
+    - tags
     
 build-prog:
   stage: build
   script:
     - make prog
     - tar -czvf dist/prog.tgz install prog lib ucode include bedrock perch bootrom bp-demos bp-tests riscv-tests coremark beebs
+  only:
+    - tags
 
 release:
   stage: release
@@ -32,3 +40,5 @@ release:
     - sudo apt install gh
     - gh auth login --with-token $GITHUB_TOKEN
     - gh release create $CI_COMMIT_TAG ./dist/*.tgz --repo developandplay/black-parrot-sdk
+  only:
+    - tags
