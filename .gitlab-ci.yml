@@ -4,11 +4,11 @@ stages:
   - build
   - release
 
-prep:
+build:
   stage: build
   script:  
-    - sudo apt update
-    - sudo apt install autoconf automake autotools-dev cmake curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev wget byacc device-tree-compiler python gtkwave vim-common virtualenv python-yaml
+    - apt update
+    - apt install autoconf automake autotools-dev cmake curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev wget byacc device-tree-compiler python gtkwave vim-common virtualenv python-yaml
     - mkdir dist
     - make sdk_lite
     - tar -czvf dist/sdk_lite.tgz install
@@ -25,10 +25,10 @@ prep:
 release:
   stage: release
   script:
-    - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
-    - sudo apt-add-repository https://cli.github.com/packages
-    - sudo apt update
-    - sudo apt install gh
+    - apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+    - apt-add-repository https://cli.github.com/packages
+    - apt update
+    - apt install gh
     - gh auth login --with-token $GITHUB_TOKEN
     - gh release create $CI_COMMIT_TAG ./dist/*.tgz --repo developandplay/black-parrot-sdk
   only:
