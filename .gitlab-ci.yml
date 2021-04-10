@@ -35,4 +35,4 @@ release:
     - gh release create $CI_COMMIT_TAG ./dist/*.tgz --repo developandplay/black-parrot-sdk
   only:
     - tags  
-  timeout: 10 minutes
+  timeout: 30 minutes
