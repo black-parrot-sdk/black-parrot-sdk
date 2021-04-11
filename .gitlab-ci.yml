@@ -10,11 +10,11 @@ build:
     - apt update
     - DEBIAN_FRONTEND="noninteractive" apt install -y git autoconf automake autotools-dev cmake curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev wget byacc device-tree-compiler python gtkwave vim-common virtualenv python-yaml
     - mkdir dist
-    - make build_sdk_lite -j
+    - make build_sdk_lite -j$(nproc)
     - tar -czvf dist/sdk_lite.tgz install
-    - make build_sdk -j
+    - make build_sdk -j$(nproc)
     - tar -czvf dist/sdk.tgz install prog lib ucode include bedrock perch bootrom bp-demos bp-tests
-    - make build_prog -j
+    - make build_prog -j$(nproc)
     - tar -czvf dist/prog.tgz install prog lib ucode include bedrock perch bootrom bp-demos bp-tests riscv-tests coremark beebs
   only:
     - tags
