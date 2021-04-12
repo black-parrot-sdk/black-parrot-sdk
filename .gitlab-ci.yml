@@ -18,7 +18,7 @@ build:
     - tar -czvf dist/prog.tgz install prog lib ucode include bedrock perch bootrom bp-demos bp-tests riscv-tests coremark beebs
   only:
     - tags
-  timeout: 10 hours
+  timeout: 3 hours
   artifacts:
     paths:
       - dist
@@ -26,11 +26,12 @@ build:
 release:
   stage: release
   script:
+    - apt update
+    - apt install -y software-properties-common
     - apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
     - apt-add-repository https://cli.github.com/packages
     - apt update
     - apt install -y gh
-    - echo $GITHUB_TOKEN | gh auth login --with-token
     - gh config set prompt disabled
     - gh release create $CI_COMMIT_TAG ./dist/*.tgz --repo developandplay/black-parrot-sdk
   only:
