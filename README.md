@@ -21,7 +21,7 @@ programs are missing or too old: make" try
 
     sudo apt-get install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev wget byacc device-tree-compiler python gtkwave vim-common virtualenv python-yaml
 
-cmake3 is required. This is the default on newer versions of Ubuntu, but not necessarily on old versions. 
+cmake3 is required. This is the default on newer versions of Ubuntu, but not necessarily on old versions.
 
 BlackParrot has been tested extensively on CentOS 7. We have many users who have used Ubuntu for
 development. If not on these versions of these OSes, we suggest using a
@@ -33,6 +33,7 @@ Ubuntu on Windows WSL 2.0 seems to work for most things, but you may encounter e
 
 ### Building the SDK
 
+    make checkout # initialize submodules
     make sdk  # you can use the -j N flag to parallelize
     make prog # only makes a subset of programs. See Makefile for the full list of commands
 
@@ -66,18 +67,18 @@ to the filesystem using normal calls:
     int main() {
         // Initialize LFS
         dramfs_init();
-    
+
         // Read from a file
         FILE *hello = fopen("hello.txt", "r");
         if(hello == NULL)
           return -1;
-    
+
         char c;
         while((c = fgetc(hello)) != '\n') {
           bp_cprint(c);
         }
         bp_cprint('\n');
-    
+
         fclose(hello);
         bp_finish(0);
         return 0;
@@ -122,7 +123,7 @@ Dromajo in that repo.
     ./install/bin/dromajo --host [--enable_amo] [--ncpus=1] [--trace] ./prog/custom/foobar.riscv
 
 will run your program. The --host options make Dromajo behave as BlackParrot, with a host interface
-emulating our Verilog testbench. Once Dromajo passes your test, you're ready to run on BlackParrot! 
+emulating our Verilog testbench. Once Dromajo passes your test, you're ready to run on BlackParrot!
 
 ### Debugging your test
 Dromajo supports tracing. This option is enabled by adding --trace=0 to the dromajo invocation (0 indicates to start the trace after 0 instructions). The trace format is:

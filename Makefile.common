@@ -30,5 +30,9 @@ export CROSS_COMPILE ?= $(RISCV_TARGET)-
 
 export PATH := $(BP_SDK_BIN_DIR):$(PATH)
 
-# Makes clones much faster. Comment out if you see "fatal: reference is not a tree"
-SHALLOW_SUB ?= --depth=1
+# Makes clones much faster. Comment out if you see an error while cloning submodules
+export SDK_SHALLOW ?= --depth=1
+export SDK_PROGS_SHALLOW ?= --depth=1
+# riscv-gnu-toolchain/qemu doesn't work well with a shallow clone, enable if you
+# want to give it a try
+#export SDK_TOOLS_SHALLOW ?= --depth=1
