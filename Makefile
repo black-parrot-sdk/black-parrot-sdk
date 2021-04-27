@@ -1,6 +1,9 @@
 export BP_SDK_DIR ?= $(shell git rev-parse --show-toplevel)
 
-.PHONY: sdk prog bsg_cadenv bleach_all
+.PHONY: checkout
+.PHONY: sdk_lite sdk sdk_clean
+.PHONY: prog_lite prog
+.PHONY: tidy_progs tidy bsg_cadenv bleach_all
 .DEFAULT: sdk
 
 include $(BP_SDK_DIR)/Makefile.common
@@ -12,20 +15,27 @@ override TARGET_DIRS := $(BP_SDK_BIN_DIR) $(BP_SDK_LIB_DIR) $(BP_SDK_INCLUDE_DIR
 $(TARGET_DIRS):
 	mkdir -p $@
 
+# checkout submodules, but not recursively
+checkout:
+	cd $(BP_SDK_DIR); git submodule update --init --checkout $(SDK_SHALLOW)
+
 sdk_lite: | $(TARGET_DIRS)
-	cd $(BP_SDK_DIR); git submodule update --init --checkout $(SHALLOW_SUB)
+	$(MAKE) -j1 bedrock
 	$(MAKE) dromajo
 
 ## This target makes the sdk tools
 sdk: sdk_lite
 	$(MAKE) gnu
-	$(MAKE) -j1 bedrock
+
+## Even the "lite" programs require the full sdk toolchain
+prog_lite: sdk
 	$(MAKE) -j1 perch
 	$(MAKE) -j1 bootrom
 	$(MAKE) -j1 bp-demos
 	$(MAKE) -j1 bp-tests
 
-prog: sdk
+## This target makes all of the programs
+prog: prog_lite
 	$(MAKE) riscv-tests
 	$(MAKE) coremark
 	$(MAKE) beebs
@@ -36,9 +46,15 @@ prog: sdk
 	# Requires patience
 	#$(MAKE) linux
 
-tidy:
-	git submodule deinit -f dromajo riscv-gnu-toolchain
-	git submodule deinit -f riscv-tests coremark beebs spec2000 riscv-dv linux
+sdk_clean:
+	-$(MAKE) prog_clean
+	-$(MAKE) tools_clean
+
+tidy_progs:
+	git submodule deinit -f riscv-tests coremark beebs spec2000 riscv-dv
+
+tidy: tidy_progs
+	git submodule deinit -f dromajo riscv-gnu-toolchain linux
 
 bsg_cadenv:
 	-cd $(BP_SDK_DIR); git clone git@github.com:bespoke-silicon-group/bsg_cadenv.git bsg_cadenv

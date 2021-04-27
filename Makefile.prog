@@ -1,5 +1,3 @@
-include $(BP_SDK_DIR)/Makefile.common
-
 perch_dir       := $(BP_SDK_DIR)/perch
 bootrom_dir     := $(BP_SDK_DIR)/bootrom
 bp_demos_dir    := $(BP_SDK_DIR)/bp-demos
@@ -15,7 +13,7 @@ define submodule_test_template
 $(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); git rev-parse HEAD))
 $(BP_TOUCH_DIR)/$$($(1)_tag):
 	rm -rf $(BP_TOUCH_DIR)/$(1).*
-	cd $(BP_SDK_DIR); git submodule update --init --merge $(SHALLOW_SUB) --recursive $$($(1)_dir)
+	cd $(BP_SDK_DIR); git submodule update --init --merge --recursive $(SDK_SHALLOW) -- $$($(1)_dir)
 	+$(MAKE) $(1)_build
 	mkdir -p $(BP_PROG_DIR)/$(1)
 	find $(2) -name "*.riscv" -exec cp {} $(BP_PROG_DIR)/$(1)/ \;
@@ -37,10 +35,10 @@ $(BP_LIB_DIR)/libperch.a $(BP_LIB_DIR)/crt0.o:
 	cp $(perch_dir)/*.h $(BP_INCLUDE_DIR)
 
 bootrom_build:
-	$(MAKE) -C $(bootrom_dir)
+	$(MAKE) -C $(bootrom_dir) clean all
 
 bp-demos_build:
-	$(MAKE) -C $(bp_demos_dir)
+	$(MAKE) -C $(bp_demos_dir) clean all
 
 bp-tests_build:
 	$(MAKE) -C $(bp_tests_dir) clean all
@@ -83,3 +81,16 @@ $(eval $(call submodule_test_template,spec2000,$(spec2000_dir)))
 $(eval $(call submodule_test_template,riscv-dv,$(riscvdv_dir)))
 $(eval $(call submodule_test_template,linux,$(linux_dir)))
 
+.PHONY: prog_clean
+prog_clean:
+	rm -rf $(BP_PROG_DIR)
+	-$(MAKE) -C $(perch_dir) clean
+	-$(MAKE) -C $(bootrom_dir) clean
+	-$(MAKE) -C $(bp_demos_dir) clean
+	-$(MAKE) -C $(bp_tests_dir) clean
+	-$(MAKE) -C $(riscv_tests_dir) clean
+	-$(MAKE) -C $(beebs_dir) clean
+	-$(MAKE) -C $(coremark_dir) clean
+	-$(MAKE) -C $(spec2000_dir) clean
+	-$(MAKE) -C $(riscvdv_dir) clean
+	-$(MAKE) -C $(linux_dir) clean
