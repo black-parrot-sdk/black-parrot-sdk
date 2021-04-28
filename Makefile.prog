@@ -35,7 +35,7 @@ $(BP_LIB_DIR)/libperch.a $(BP_LIB_DIR)/crt0.o:
 	cp $(perch_dir)/*.h $(BP_INCLUDE_DIR)
 
 bootrom_build:
-	$(MAKE) -C $(bootrom_dir) clean all
+	$(MAKE) -C $(bootrom_dir)
 
 bp-demos_build:
 	$(MAKE) -C $(bp_demos_dir) clean all
