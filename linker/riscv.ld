@@ -145,4 +145,6 @@ SECTIONS {
   /* End of uninitialized data segment (used by syscalls.c for heap) */
   PROVIDE( end = . );
   _end = ALIGN(8);
+
+  _sp = 0x8F000000;
 }

@@ -24,7 +24,7 @@ gnu_build:
 
 dromajo_build:
 	mkdir -p $(dromajo_dir)/build
-	$(CMAKE) -S $(dromajo_dir) -B $(dromajo_dir)/build
+	$(CMAKE) -S $(dromajo_dir) -B $(dromajo_dir)/build -DCMAKE_BUILD_TYPE=Release
 	$(MAKE) -C $(dromajo_dir)/build
 	cp $(dromajo_dir)/build/dromajo $(BP_SDK_BIN_DIR)
 	cp $(dromajo_dir)/build/libdromajo_cosim.a $(BP_SDK_LIB_DIR)
