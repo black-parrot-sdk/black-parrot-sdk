@@ -146,5 +146,5 @@ SECTIONS {
   PROVIDE( end = . );
   _end = ALIGN(8);
 
-  _sp = 0x8F000000;
+  _sp = 0x81000000;
 }
