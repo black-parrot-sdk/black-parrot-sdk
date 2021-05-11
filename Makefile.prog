@@ -15,23 +15,23 @@ $(BP_TOUCH_DIR)/$$($(1)_tag):
 	rm -rf $(BP_TOUCH_DIR)/$(1).*
 	cd $(BP_SDK_DIR); git submodule update --init --merge --recursive $(SDK_SHALLOW) -- $$($(1)_dir)
 	+$(MAKE) $(1)_build
-	mkdir -p $(BP_PROG_DIR)/$(1)
-	find $(2) -name "*.riscv" -exec cp {} $(BP_PROG_DIR)/$(1)/ \;
+	mkdir -p $(BP_SDK_PROG_DIR)/$(1)
+	find $(2) -name "*.riscv" -exec cp {} $(BP_SDK_PROG_DIR)/$(1)/ \;
 	touch $(BP_TOUCH_DIR)/$$($(1)_tag)
 $(1): | $(BP_TOUCH_DIR)/$$($(1)_tag)
-$(1)_manual: $(BP_LIB_DIR)/libperch.a
+$(1)_manual: $(BP_SDK_LIB_DIR)/libperch.a
 	+$(MAKE) $(1)_build
-	mkdir -p $(BP_PROG_DIR)/$(1)
-	find $(2) -name "*.riscv" -exec cp {} $(BP_PROG_DIR)/$(1)/ \;
+	mkdir -p $(BP_SDK_PROG_DIR)/$(1)
+	find $(2) -name "*.riscv" -exec cp {} $(BP_SDK_PROG_DIR)/$(1)/ \;
 endef
 
-perch_build: $(BP_LIB_DIR)/libperch.a
-$(BP_LIB_DIR)/libperch.a:
+perch_build: $(BP_SDK_LIB_DIR)/libperch.a
+$(BP_SDK_LIB_DIR)/libperch.a:
 	$(MAKE) -C $(perch_dir) clean perch
-	mkdir -p $(BP_LIB_DIR)
-	mkdir -p $(BP_INCLUDE_DIR)
-	cp $(perch_dir)/libperch.a $(BP_LIB_DIR)
-	cp $(perch_dir)/*.h $(BP_INCLUDE_DIR)
+	mkdir -p $(BP_SDK_LIB_DIR)
+	mkdir -p $(BP_SDK_INCLUDE_DIR)
+	cp $(perch_dir)/libperch.a $(BP_SDK_LIB_DIR)
+	cp $(perch_dir)/*.h $(BP_SDK_INCLUDE_DIR)
 
 bootrom_build:
 	$(MAKE) -C $(bootrom_dir)
@@ -82,7 +82,7 @@ $(eval $(call submodule_test_template,linux,$(linux_dir)))
 
 .PHONY: prog_clean
 prog_clean:
-	rm -rf $(BP_PROG_DIR)
+	rm -rf $(BP_SDK_PROG_DIR)
 	-$(MAKE) -C $(perch_dir) clean
 	-$(MAKE) -C $(bootrom_dir) clean
 	-$(MAKE) -C $(bp_demos_dir) clean
