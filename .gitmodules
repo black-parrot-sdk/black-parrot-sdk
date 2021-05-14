@@ -74,3 +74,8 @@
     url = https://github.com/black-parrot-sdk/bedrock.git
     branch = master
     ignore = untracked
+[submodule "zephyr"]
+    path = zephyr
+    url = https://github.com/black-parrot-sdk/bp-zephyr.git
+    branch = master
+    ignore = untracked

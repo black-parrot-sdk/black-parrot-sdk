@@ -45,6 +45,8 @@ prog: prog_lite
 	#$(MAKE) riscv-dv
 	# Requires patience
 	#$(MAKE) linux
+	# Need a way to specify which program to run
+	#$(MAKE) zephyr
 
 sdk_clean:
 	-$(MAKE) prog_clean
