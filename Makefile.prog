@@ -31,6 +31,7 @@ $(BP_SDK_LIB_DIR)/libperch.a:
 	mkdir -p $(BP_SDK_LIB_DIR)
 	mkdir -p $(BP_SDK_INCLUDE_DIR)
 	cp $(perch_dir)/libperch.a $(BP_SDK_LIB_DIR)
+	cp $(perch_dir)/libperchbm.a $(BP_SDK_LIB_DIR)
 	cp $(perch_dir)/*.h $(BP_SDK_INCLUDE_DIR)
 
 bootrom_build:
