@@ -6,6 +6,7 @@ riscv_tests_dir := $(BP_SDK_DIR)/riscv-tests
 beebs_dir       := $(BP_SDK_DIR)/beebs
 coremark_dir    := $(BP_SDK_DIR)/coremark
 spec2000_dir    := $(BP_SDK_DIR)/spec2000
+spec2006_dir    := $(BP_SDK_DIR)/spec2006
 riscvdv_dir     := $(BP_SDK_DIR)/riscv-dv
 linux_dir       := $(BP_SDK_DIR)/linux
 
@@ -60,6 +61,9 @@ coremark_build:
 spec2000_build:
 	$(MAKE) -C $(spec2000_dir)
 
+spec2006_build:
+	$(MAKE) -C $(spec2006_dir)
+
 riscv-dv_build:
 	$(MAKE) -C $(riscvdv_dir)
 
@@ -69,7 +73,7 @@ WITH_SHELL    ?= $(linux_dir)/cfg/test.sh
 linux_build:
 	$(MAKE) -C $(linux_dir) linux.riscv OPENSBI_NCPUS=$(OPENSBI_NCPUS) WITH_SHELL=$(WITH_SHELL)
 
-.PHONY: perch bootrom bp-demos bp-tests riscv-tests beebs coremark spec2000 riscv-dv linux
+.PHONY: perch bootrom bp-demos bp-tests riscv-tests beebs coremark spec2000 spec2006 riscv-dv linux
 $(eval $(call submodule_test_template,perch,$(perch_dir)))
 $(eval $(call submodule_test_template,bootrom,$(bootrom_dir)))
 $(eval $(call submodule_test_template,bp-demos,$(bp_demos_dir)))
@@ -78,6 +82,7 @@ $(eval $(call submodule_test_template,riscv-tests,$(riscv_tests_dir)))
 $(eval $(call submodule_test_template,beebs,$(beebs_dir)))
 $(eval $(call submodule_test_template,coremark,$(coremark_dir)))
 $(eval $(call submodule_test_template,spec2000,$(spec2000_dir)))
+$(eval $(call submodule_test_template,spec2006,$(spec2006_dir)))
 $(eval $(call submodule_test_template,riscv-dv,$(riscvdv_dir)))
 $(eval $(call submodule_test_template,linux,$(linux_dir)))
 
@@ -92,5 +97,6 @@ prog_clean:
 	-$(MAKE) -C $(beebs_dir) clean
 	-$(MAKE) -C $(coremark_dir) clean
 	-$(MAKE) -C $(spec2000_dir) clean
+	-$(MAKE) -C $(spec2006_dir) clean
 	-$(MAKE) -C $(riscvdv_dir) clean
 	-$(MAKE) -C $(linux_dir) clean

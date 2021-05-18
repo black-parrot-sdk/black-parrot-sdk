@@ -74,3 +74,8 @@
     url = https://github.com/black-parrot-sdk/bedrock.git
     branch = master
     ignore = untracked
+[submodule "spec2006"]
+	path = spec2006
+	url = https://github.com/black-parrot-sdk/spec2006.git
+    branch = master
+    ignore = untracked
