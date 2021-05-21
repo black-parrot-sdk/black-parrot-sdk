@@ -98,10 +98,6 @@ SECTIONS {
     *(.gnu.linkonce.d.*)
   }
 
-  /* End of initialized data segment */
-  PROVIDE( edata = . );
-  _edata = .;
-
   /* Have _gp point to middle of sdata/sbss to maximize displacement range */
   . = ALIGN(16);
   _gp = . + 0x800;
@@ -114,6 +110,10 @@ SECTIONS {
     *(.srodata.*)
     *(.gnu.linkonce.s.*)
   }
+
+  /* End of initialized data segment */
+  PROVIDE( edata = . );
+  _edata = .;
 
   /*--------------------------------------------------------------------*/
   /* Uninitialized data segment                                         */
