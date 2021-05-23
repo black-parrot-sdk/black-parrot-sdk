@@ -27,6 +27,11 @@ sdk_lite: | $(TARGET_DIRS)
 sdk: sdk_lite
 	$(MAKE) gnu
 
+# panic_room only build takes 15 minutes (versus 45 minutes for sdk_lite)
+# to build on 4 cores; it leaves out unnecessary dependencies that make
+# build failures more likely. (qemu, dromajo, dejagnu, gdb)
+panic_room: | $(TARGET_DIRS)
+
 ## Even the "lite" programs require the full sdk toolchain
 prog_lite: sdk
 	$(MAKE) -j1 perch

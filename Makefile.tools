@@ -14,6 +14,24 @@ $(1)_manual:
 	+$(MAKE) $(1)_build
 endef
 
+panic_room_tag ?= $(addprefix panic_room., $(shell cd $(gnu_dir); git rev-parse HEAD))
+
+panic_room: $(BP_SDK_TOUCH_DIR)/$(panic_room_tag)
+
+$(BP_SDK_TOUCH_DIR)/$(panic_room_tag):
+	rm -rf $(BP_SDK_TOUCH_DIR)/panic_room.*
+	cd $(BP_SDK_DIR); git submodule update --init --checkout $(SDK_SHALLOW) -- $(gnu_dir)
+	cd $(gnu_dir); git submodule update --init --checkout riscv-binutils
+	cd $(gnu_dir); git submodule update --init --checkout riscv-glibc
+	cd $(gnu_dir); git submodule update --init --checkout riscv-gcc
+	cd $(gnu_dir); git submodule update --init --checkout riscv-newlib
+	cd $(gnu_dir); \
+		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64imafd --with-abi=lp64 --with-cmodel=medany --disable-gdb
+	+$(MAKE) -C $(gnu_dir)
+	+$(MAKE) -C $(gnu_dir) install
+	cp $(BP_SDK_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(BP_SDK_BIN_DIR)
+	touch $(BP_SDK_TOUCH_DIR)/$(gnu_tag)
+
 gnu_build:
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64imafd --with-abi=lp64 --with-cmodel=medany
@@ -37,7 +55,7 @@ bedrock_build:
 	cp $(bedrock_dir)/roms/*.addr $(BP_UCODE_DIR)/
 	cp $(bedrock_dir)/roms/*.mem $(BP_UCODE_DIR)/
 
-.PHONY: gnu dromajo bedrock
+.PHONY: gnu dromajo bedrock panic_room
 $(eval $(call submodule_tool_template,gnu,$(gnu_dir)))
 $(eval $(call submodule_tool_template,dromajo,$(dromajo_dir)))
 $(eval $(call submodule_tool_template,bedrock,$(bedrock_dir)))
