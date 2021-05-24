@@ -22,6 +22,7 @@ checkout:
 sdk_lite: | $(TARGET_DIRS)
 	$(MAKE) -j1 bedrock
 	$(MAKE) dromajo
+	$(MAKE) gnudramfs
 
 ## This target makes the sdk tools
 sdk: sdk_lite
@@ -31,9 +32,10 @@ sdk: sdk_lite
 # to build on 4 cores; it leaves out unnecessary dependencies that make
 # build failures more likely. (qemu, dromajo, dejagnu, gdb)
 panic_room: | $(TARGET_DIRS)
+	$(MAKE) gnudramfs
 
 ## Even the "lite" programs require the full sdk toolchain
-prog_lite: sdk
+prog_lite: sdk_lite
 	$(MAKE) -j1 perch
 	$(MAKE) -j1 bootrom
 	$(MAKE) -j1 bp-demos
