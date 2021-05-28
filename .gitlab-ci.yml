@@ -1,0 +1,25 @@
+image: ubuntu:20.04
+
+variables:
+  GIT_DEPTH: 0
+
+release:
+  script:  
+    - apt update
+    - DEBIAN_FRONTEND="noninteractive" apt install -y git autoconf automake autotools-dev cmake curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev wget byacc device-tree-compiler python gtkwave vim-common virtualenv python-yaml
+    - mkdir dist
+    - make sdk_lite -j$(nproc)
+    - tar -czvf dist/sdk_lite.tgz ucode install lib include
+    - make sdk -j$(nproc)
+    - tar -czvf dist/sdk.tgz ucode install lib include
+    - apt update
+    - apt install -y software-properties-common
+    - apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+    - apt-add-repository https://cli.github.com/packages
+    - apt update
+    - apt install -y gh
+    - gh config set prompt disabled
+    - gh release create $CI_COMMIT_TAG ./dist/*.tgz --repo developandplay/black-parrot-sdk
+  only:
+    - tags
+  timeout: 3 hours
