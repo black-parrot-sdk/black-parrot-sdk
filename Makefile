@@ -43,9 +43,9 @@ prog_lite: sdk_lite
 
 ## This target makes all of the programs
 prog: prog_lite
-	$(MAKE) riscv-tests
-	$(MAKE) coremark
-	$(MAKE) beebs
+	$(MAKE) -j1 riscv-tests
+	$(MAKE) -j1 coremark
+	$(MAKE) -j1 beebs
 	# Requires access to spec2000
 	#$(MAKE) spec2000
 	# Requires access to Synopsys VCS
