@@ -19,6 +19,11 @@ $(TARGET_DIRS):
 checkout:
 	cd $(BP_SDK_DIR); git submodule update --init --checkout $(SDK_SHALLOW)
 
+	
+pull_sdk_lite: cd $(BP_SDK_DIR); curl -L $(git config --get remote.origin.url)/releases/download/$(git describe --tags --abbrev=0)/sdk_lite.tgz | tar -xvz
+
+pull_sdk: cd $(BP_SDK_DIR); curl -L $(git config --get remote.origin.url)/releases/download/$(git describe --tags --abbrev=0)/sdk.tgz | tar -xvz
+
 sdk_lite: | $(TARGET_DIRS)
 	$(MAKE) -j1 bedrock
 	$(MAKE) dromajo
