@@ -1,6 +1,6 @@
 ## Set variables needed for building tools
 export GCC       ?= gcc
-export CMAKE     ?= cmake
+export CMAKE     ?= cmake3
 export PYTHON    ?= python3
 export XXD       ?= xxd
 
