@@ -11,5 +11,6 @@ stages:
 build:
     stage: build
     script:
-        - pwd    
+        - make sdk -j $CI_NUM_CORES
+
 

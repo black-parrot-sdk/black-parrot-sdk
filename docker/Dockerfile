@@ -11,4 +11,4 @@ RUN yum install -y git224
 # My setup
 RUN yum install -y vim
 RUN mkdir /workdir
-ENTRYPOINT /workdir
+WORKDIR /workdir
