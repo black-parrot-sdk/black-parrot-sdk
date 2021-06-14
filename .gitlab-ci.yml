@@ -1,0 +1,15 @@
+variables:
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: none
+
+default:
+    image: registry.gitlab.com/black-parrot/black-parrot:latest
+
+stages:
+    - build
+
+build:
+    stage: build
+    script:
+        - pwd    
+
