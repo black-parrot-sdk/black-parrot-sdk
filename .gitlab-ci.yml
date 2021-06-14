@@ -3,7 +3,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: none
 
 default:
-    image: registry.gitlab.com/black-parrot/black-parrot:latest
+    image: registry.gitlab.com/dpetrisko/black-parrot-sdk:latest
 
 stages:
     - build
