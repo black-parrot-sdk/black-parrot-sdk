@@ -6,11 +6,68 @@ default:
     image: registry.gitlab.com/dpetrisko/black-parrot-sdk:latest
 
 stages:
-    - build
+    - checkout
+    - tools
+    - perch
+    - progs
 
-build:
-    stage: build
-    script:
-        - make sdk -j $CI_NUM_CORES
+checkout:
+  stage: checkout
+  script:
+    - make checkout -j $CI_NUM_CORES
 
+build_bedrock:
+  stage: tools
+  script:
+    - make bedrock -j1
+
+build_dromajo:
+  stage: tools
+  script:
+    - make dromajo
+
+build_gnudramfs:
+  stage: tools
+  script:
+    - make gnudramfs
+
+build_gnudramfs:
+  stage: tools
+  script:
+    - make gnulinux
+
+build_perch:
+  stage: perch
+  script:
+    - make perch
+
+build_bootrom:
+  stage: progs
+  script:
+    - make bootrom
+
+build_bp-demos:
+  stage: progs
+  script:
+    - make bp-demos
+
+build_bp-tests:
+  stage: progs
+  script:
+    - make bp-tests
+
+build_riscv-tests:
+  stage: progs
+  script:
+    - make riscv-tests
+
+build_coremark:
+  stage: progs
+  script:
+    - make coremark
+
+build_beebs:
+  stage: progs
+  script:
+    - make beebs
 
