@@ -7,6 +7,7 @@ beebs_dir       := $(BP_SDK_DIR)/beebs
 coremark_dir    := $(BP_SDK_DIR)/coremark
 spec2000_dir    := $(BP_SDK_DIR)/spec2000
 spec2006_dir    := $(BP_SDK_DIR)/spec2006
+spec2017_dir    := $(BP_SDK_DIR)/spec2017
 riscvdv_dir     := $(BP_SDK_DIR)/riscv-dv
 linux_dir       := $(BP_SDK_DIR)/linux
 
@@ -64,6 +65,9 @@ spec2000_build:
 spec2006_build:
 	$(MAKE) -C $(spec2006_dir)
 
+spec2017_build:
+	$(MAKE) -C $(spec2017_dir)
+
 riscv-dv_build:
 	$(MAKE) -C $(riscvdv_dir)
 
@@ -83,6 +87,7 @@ $(eval $(call submodule_test_template,beebs,$(beebs_dir)))
 $(eval $(call submodule_test_template,coremark,$(coremark_dir)))
 $(eval $(call submodule_test_template,spec2000,$(spec2000_dir)))
 $(eval $(call submodule_test_template,spec2006,$(spec2006_dir)))
+$(eval $(call submodule_test_template,spec2017,$(spec2017_dir)))
 $(eval $(call submodule_test_template,riscv-dv,$(riscvdv_dir)))
 $(eval $(call submodule_test_template,linux,$(linux_dir)))
 
@@ -98,5 +103,6 @@ prog_clean:
 	-$(MAKE) -C $(coremark_dir) clean
 	-$(MAKE) -C $(spec2000_dir) clean
 	-$(MAKE) -C $(spec2006_dir) clean
+	-$(MAKE) -C $(spec2017_dir) clean
 	-$(MAKE) -C $(riscvdv_dir) clean
 	-$(MAKE) -C $(linux_dir) clean
