@@ -16,7 +16,7 @@ stages:
     - pushes
   artifacts:
     when: always
-    artifacts:
+    paths:
       - "*.log"
       - install/
       - progs/
