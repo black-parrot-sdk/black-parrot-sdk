@@ -11,63 +11,79 @@ stages:
     - perch
     - progs
 
+.job_template: &job_definition
+  only:
+    - pushes
+  artifacts:
+    when: always
+    artifacts:
+      - "*.log"
+      - install/
+      - progs/
+
 checkout:
+  <<: *job_definition
   stage: checkout
   script:
-    - make checkout -j $CI_NUM_CORES
+    - make checkout -j $CI_NUM_CORES | tee checkout.log
 
 build_bedrock:
+  <<: *job_definition
   stage: tools
   script:
-    - make bedrock -j1
+    - make bedrock -j1 | tee bedrock.log
 
 build_dromajo:
+  <<: *job_definition
   stage: tools
   script:
-    - make dromajo
+    - make dromajo | tee dromajo.log
 
 build_gnudramfs:
+  <<: *job_definition
   stage: tools
   script:
-    - make gnudramfs
-
-build_gnudramfs:
-  stage: tools
-  script:
-    - make gnulinux
+    - make gnudramfs | tee gnudramfs.log
 
 build_perch:
+  <<: *job_definition
   stage: perch
   script:
-    - make perch
+    - make perch | tee perch.log
 
 build_bootrom:
+  <<: *job_definition
   stage: progs
   script:
-    - make bootrom
+    - make bootrom | tee bootrom.log
 
 build_bp-demos:
+  <<: *job_definition
   stage: progs
   script:
-    - make bp-demos
+    - make bp-demos | tee bp-demos.log
 
 build_bp-tests:
+  <<: *job_definition
   stage: progs
   script:
-    - make bp-tests
+    - make bp-tests | tee bp-tests.log
 
 build_riscv-tests:
+  <<: *job_definition
   stage: progs
   script:
-    - make riscv-tests
+    - make riscv-tests | tee riscv-tests.log
 
 build_coremark:
+  <<: *job_definition
   stage: progs
   script:
-    - make coremark
+    - make coremark | tee coremark.log
 
 build_beebs:
+  <<: *job_definition
   stage: progs
   script:
-    - make beebs
+    - make beebs | tee beebs.log
 
