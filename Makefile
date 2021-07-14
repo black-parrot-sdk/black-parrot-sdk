@@ -17,7 +17,7 @@ $(TARGET_DIRS):
 
 # checkout submodules, but not recursively
 checkout:
-	cd $(BP_SDK_DIR); git submodule update --init --checkout --recursive
+	cd $(BP_SDK_DIR); git submodule update --init
 
 sdk_lite: | $(TARGET_DIRS)
 	$(MAKE) -j1 bedrock
