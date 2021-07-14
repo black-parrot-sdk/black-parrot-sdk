@@ -17,11 +17,12 @@ $(TARGET_DIRS):
 
 # checkout submodules, but not recursively
 checkout:
-	cd $(BP_SDK_DIR); git submodule update --init --checkout $(SDK_SHALLOW)
+	cd $(BP_SDK_DIR); git submodule update --init --checkout --recursive
 
 sdk_lite: | $(TARGET_DIRS)
 	$(MAKE) -j1 bedrock
 	$(MAKE) dromajo
+	$(MAKE) gnudramfs
 
 ## This target makes the sdk tools
 sdk: sdk_lite
@@ -29,11 +30,12 @@ sdk: sdk_lite
 
 # panic_room only build takes 15 minutes (versus 45 minutes for sdk_lite)
 # to build on 4 cores; it leaves out unnecessary dependencies that make
-# build failures more likely. (qemu, dromajo, dejagnu, gdb)
+# build failures more likely. (dromajo, dejagnu, gdb)
 panic_room: | $(TARGET_DIRS)
+	$(MAKE) gnudramfs
 
 ## Even the "lite" programs require the full sdk toolchain
-prog_lite: sdk
+prog_lite: sdk_lite
 	$(MAKE) -j1 perch
 	$(MAKE) -j1 bootrom
 	$(MAKE) -j1 bp-demos
@@ -41,9 +43,9 @@ prog_lite: sdk
 
 ## This target makes all of the programs
 prog: prog_lite
-	$(MAKE) riscv-tests
-	$(MAKE) coremark
-	$(MAKE) beebs
+	$(MAKE) -j1 riscv-tests
+	$(MAKE) -j1 coremark
+	$(MAKE) -j1 beebs
 	# Requires access to spec2000
 	#$(MAKE) spec2000
 	# Requires access to Synopsys VCS
