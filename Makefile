@@ -16,10 +16,10 @@ $(TARGET_DIRS):
 	mkdir -p $@
 
 # checkout submodules, but not recursively
-checkout:
+checkout: | $(TARGET_DIRS)
 	cd $(BP_SDK_DIR); git submodule update --init
 
-sdk_lite: | $(TARGET_DIRS)
+sdk_lite: checkout
 	$(MAKE) -j1 bedrock
 	$(MAKE) dromajo
 	$(MAKE) gnudramfs
@@ -31,7 +31,7 @@ sdk: sdk_lite
 # panic_room only build takes 15 minutes (versus 45 minutes for sdk_lite)
 # to build on 4 cores; it leaves out unnecessary dependencies that make
 # build failures more likely. (dromajo, dejagnu, gdb)
-panic_room: | $(TARGET_DIRS)
+panic_room: checkout
 	$(MAKE) gnudramfs
 
 ## Even the "lite" programs require the full sdk toolchain
