@@ -18,6 +18,8 @@ stages:
     when: always
     paths:
       - "*.log"
+      - include/
+      - lib/
       - install/
       - progs/
       - ucode/
