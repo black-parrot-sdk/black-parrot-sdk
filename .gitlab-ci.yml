@@ -20,8 +20,7 @@ stages:
       - "*.log"
       - install/
       - progs/
-    expire_in:
-      - "1 day"
+    expire_in: "1 day"
 
 checkout:
   <<: *job_definition
