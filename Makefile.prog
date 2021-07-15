@@ -30,6 +30,7 @@ endef
 
 perch_build: $(BP_SDK_LIB_DIR)/libperch.a
 $(BP_SDK_LIB_DIR)/libperch.a:
+	git submodule update --init $(opcodes_dir)
 	cp $(opcodes_dir)/encoding.h $(BP_SDK_INCLUDE_DIR)
 	$(MAKE) -C $(perch_dir) clean perch
 	mkdir -p $(BP_SDK_LIB_DIR)
