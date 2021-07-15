@@ -3,13 +3,14 @@ variables:
   GIT_SUBMODULE_STRATEGY: none
 
 default:
-    image: registry.gitlab.com/dpetrisko/black-parrot-sdk:latest
+  image: registry.gitlab.com/dpetrisko/black-parrot-sdk:latest
 
 stages:
-    - tools
-    - perch
-    - prog
-    - publish
+  - tools
+  - perch
+  - prog
+  - zip
+  - publish
 
 .job_template: &job_definition
   only:
@@ -89,7 +90,7 @@ build_beebs:
     - make beebs | tee beebs.log
 
 zip_sdk:
-  stage: publish
+  stage: zip
   script:
     - tar -czvf sdk.tar.gz include/ lib/ install/ | tee zip_sdk.log
   artifacts:
@@ -100,7 +101,7 @@ zip_sdk:
     expire_in: "1 day"
 
 zip_prog:
-  stage: publish
+  stage: zip
   script:
     - tar -czvf prog.tar.gz prog/ ucode/ | tee zip_prog.log
   artifacts:
@@ -108,4 +109,13 @@ zip_prog:
     paths:
       - "*.log"
       - prog.tar.gz
+
+publish_tag:
+  stage: publish
+  when: manual
+  script:
+    - gh auth login
+    - gh config set prompt disabled
+    - if [ "$CI_RELEASE_TAG" == "" ]; then echo "Please set CI_RELEASE_TAG"; exit 1; fi
+    - gh release create $CI_RELEASE_TAG sdk.tar.gz prog.tar.gz
 
