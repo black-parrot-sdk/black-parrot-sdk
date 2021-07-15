@@ -93,7 +93,7 @@ zip_sdk:
   script:
     - tar -czvf sdk.tar.gz include/ lib/ install/ | tee zip_sdk.log
   artifacts:
-    when: success
+    when: on_success
     paths:
       - "*.log"
       - sdk.tar.gz
@@ -104,7 +104,7 @@ zip_prog:
   script:
     - tar -czvf prog.tar.gz prog/ ucode/ | tee zip_prog.log
   artifacts:
-    when: success
+    when: on_success
     paths:
       - "*.log"
       - prog.tar.gz
