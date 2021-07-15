@@ -3,6 +3,11 @@
     url = https://github.com/black-parrot-sdk/riscv-gnu-toolchain
     branch = blackparrot_mods
     ignore = untracked
+[submodule "llvm-project"]
+	path = llvm-project
+	url = https://github.com/black-parrot-sdk/llvm-project
+    branch = blackparrot_mods
+    ignore = untracked
 [submodule "dromajo"]
     path = dromajo
     url = https://github.com/bsg-external/dromajo
@@ -80,5 +85,8 @@
     branch = master
     ignore = untracked
 [submodule "spec2017"]
-	path = spec2017
-	url = https://github.com/black-parrot-sdk/spec2017.git
+    path = spec2017
+    url = https://github.com/black-parrot-sdk/spec2017.git
+    branch = master
+    ignore = untracked
+

@@ -1,6 +1,7 @@
 gnu_dir      :=$(BP_SDK_DIR)/riscv-gnu-toolchain
 gnudramfs_dir:=$(gnu_dir)
 gnulinux_dir :=$(gnu_dir)
+llvm_dir     :=$(BP_SDK_DIR)/llvm-project
 dromajo_dir  :=$(BP_SDK_DIR)/dromajo
 bedrock_dir  :=$(BP_SDK_DIR)/bedrock
 
@@ -33,6 +34,20 @@ gnudramfs_build:
 	$(MAKE) -C $(gnu_dir) install
 	cp $(BP_SDK_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(BP_SDK_BIN_DIR)
 
+llvm_build:
+	cd $(llvm_dir); \
+		$(CMAKE) -S llvm -B build -G "Ninja" \
+		-DLLVM_ENABLE_PROJECTS=clang \
+		-DBUILD_SHARED_LIBS=True \
+		-DLLVM_DEFAULT_TARGET_TRIPLE="riscv64-unknown-linux-gnu" \
+		-DLLVM_TARGETS_TO_BUILD="RISCV" \
+		-DCMAKE_INSTALL_PREFIX=$(BP_SDK_INSTALL_DIR) \
+		-DCMAKE_BUILD_TYPE=Release
+	cd $(llvm_dir); \
+		$(CMAKE) --build build
+	cd $(llvm_dir); \
+		$(CMAKE) --build build --target install
+
 dromajo_build:
 	mkdir -p $(dromajo_dir)/build
 	$(CMAKE) -S $(dromajo_dir) -B $(dromajo_dir)/build -DCMAKE_BUILD_TYPE=Release
@@ -51,6 +66,7 @@ bedrock_build:
 .PHONY: gnu dromajo bedrock panic_room
 $(eval $(call submodule_tool_template,gnudramfs,$(gnudramfs_dir)))
 $(eval $(call submodule_tool_template,gnulinux,$(gnulinux_dir)))
+$(eval $(call submodule_tool_template,llvm,$(llvm_dir)))
 $(eval $(call submodule_tool_template,dromajo,$(dromajo_dir)))
 $(eval $(call submodule_tool_template,bedrock,$(bedrock_dir)))
 
