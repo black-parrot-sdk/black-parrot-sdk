@@ -8,7 +8,8 @@ default:
 stages:
     - tools
     - perch
-    - progs
+    - prog
+    - publish
 
 .job_template: &job_definition
   only:
@@ -22,7 +23,7 @@ stages:
       - include/
       - lib/
       - install/
-      - progs/
+      - prog/
       - ucode/
     expire_in: "1 day"
 
@@ -53,37 +54,58 @@ build_perch:
 
 build_bootrom:
   <<: *job_definition
-  stage: progs
+  stage: prog
   script:
     - make bootrom | tee bootrom.log
 
 build_bp-demos:
   <<: *job_definition
-  stage: progs
+  stage: prog
   script:
     - make bp-demos | tee bp-demos.log
 
 build_bp-tests:
   <<: *job_definition
-  stage: progs
+  stage: prog
   script:
     - make bp-tests | tee bp-tests.log
 
 build_riscv-tests:
   <<: *job_definition
-  stage: progs
+  stage: prog
   script:
     - make riscv-tests | tee riscv-tests.log
 
 build_coremark:
   <<: *job_definition
-  stage: progs
+  stage: prog
   script:
     - make coremark | tee coremark.log
 
 build_beebs:
   <<: *job_definition
-  stage: progs
+  stage: prog
   script:
     - make beebs | tee beebs.log
+
+zip_sdk:
+  stage: publish
+  script:
+    - tar -czvf sdk.tar.gz include/ lib/ install/ | tee zip_sdk.log
+  artifacts:
+    when: success
+    paths:
+      - "*.log"
+      - sdk.tar.gz
+    expire_in: "1 day"
+
+zip_prog:
+  stage: publish
+  script:
+    - tar -czvf prog.tar.gz prog/ ucode/ | tee zip_prog.log
+  artifacts:
+    when: success
+    paths:
+      - "*.log"
+      - prog.tar.gz
 
