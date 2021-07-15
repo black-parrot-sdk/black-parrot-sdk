@@ -6,7 +6,6 @@ default:
     image: registry.gitlab.com/dpetrisko/black-parrot-sdk:latest
 
 stages:
-    - checkout
     - tools
     - perch
     - progs
@@ -14,6 +13,8 @@ stages:
 .job_template: &job_definition
   only:
     - pushes
+  before_script:
+    - make checkout -j $CI_NUM_CORES | tee checkout.log
   artifacts:
     when: always
     paths:
@@ -25,11 +26,6 @@ stages:
       - ucode/
     expire_in: "1 day"
 
-checkout:
-  <<: *job_definition
-  stage: checkout
-  script:
-    - make checkout -j $CI_NUM_CORES | tee checkout.log
 
 build_bedrock:
   <<: *job_definition
