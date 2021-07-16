@@ -40,16 +40,11 @@ build_dromajo:
   script:
     - make dromajo -j ${CI_NUM_CORES} | tee dromajo.log
 
-build_gnudramfs:
+build_gnu:
   <<: *job_definition
   stage: tools
   script:
     - make gnudramfs -j ${CI_NUM_CORES} | tee gnudramfs.log
-
-build_gnulinux:
-  <<: *job_definition
-  stage: tools
-  script:
     - make gnulinux -j ${CI_NUM_CORES} | tee gnulinux.log
 
 build_perch:
@@ -107,8 +102,7 @@ zip_tools:
   dependencies:
     - build_bedrock
     - build_dromajo
-    - build_gnudramfs
-    - build_gnulinux
+    - build_gnu
 
 zip_prog:
   stage: zip
