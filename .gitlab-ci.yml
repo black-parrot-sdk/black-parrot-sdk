@@ -28,7 +28,6 @@ stages:
       - ucode/
     expire_in: "1 day"
 
-
 build_bedrock:
   <<: *job_definition
   stage: tools
@@ -46,6 +45,12 @@ build_gnudramfs:
   stage: tools
   script:
     - make gnudramfs | tee gnudramfs.log
+
+build_gnulinux:
+  <<: *job_definition
+  stage: tools
+  script:
+    - make gnulinux | tee gnulinux.log
 
 build_perch:
   <<: *job_definition
@@ -99,6 +104,11 @@ zip_tools:
       - "*.log"
       - tools.tar.gz
     expire_in: "1 day"
+  dependencies:
+    - build_bedrock
+    - build_dromajo
+    - build_gnudramfs
+    - build_gnulinux
 
 zip_prog:
   stage: zip
@@ -109,13 +119,22 @@ zip_prog:
     paths:
       - "*.log"
       - prog.tar.gz
+  dependencies:
+    - build_bootrom
+    - build_bp-demos
+    - build_bp-tests
+    - build_riscv-tests
+    - build_coremark
+    - build_beebs
 
 publish_tag:
   stage: publish
   when: manual
   script:
-    - gh auth login --with-token $GITHUB_TOKEN
     - gh config set prompt disabled
     - if [ "$CI_RELEASE_TAG" == "" ]; then echo "Please set CI_RELEASE_TAG"; exit 1; fi
     - gh release create $CI_RELEASE_TAG tools.tar.gz prog.tar.gz
+  dependencies:
+    - zip_tools
+    - zip_prog
 
