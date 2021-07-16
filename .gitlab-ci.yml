@@ -28,103 +28,103 @@ stages:
       - ucode/
     expire_in: "1 day"
 
-build_bedrock:
-  <<: *job_definition
-  stage: tools
-  script:
-    - make bedrock -j1 | tee bedrock.log
-
-build_dromajo:
-  <<: *job_definition
-  stage: tools
-  script:
-    - make dromajo -j ${CI_NUM_CORES} | tee dromajo.log
-
-# Clean the gnu toolchain first, for some reason caching is not great about it
-# Don't know why the job says failure, everything seems to be fine
-build_gnu:
-  <<: *job_definition
-  allow_failure: true
-  stage: tools
-  script:
-    - git submodule deinit -f riscv-gnu-toolchain
-    - make checkout
-    - make gnudramfs -j ${CI_NUM_CORES} | tee gnudramfs.log
-    - make gnulinux -j ${CI_NUM_CORES} | tee gnulinux.log
-
-build_perch:
-  <<: *job_definition
-  stage: perch
-  script:
-    - make perch -j1 | tee perch.log
-
-build_bootrom:
-  <<: *job_definition
-  stage: prog
-  script:
-    - make bootrom -j1 | tee bootrom.log
-
-build_bp-demos:
-  <<: *job_definition
-  stage: prog
-  script:
-    - make bp-demos -j1 | tee bp-demos.log
-
-build_bp-tests:
-  <<: *job_definition
-  stage: prog
-  script:
-    - make bp-tests -j1 | tee bp-tests.log
-
-build_riscv-tests:
-  <<: *job_definition
-  stage: prog
-  script:
-    - make riscv-tests -j1 | tee riscv-tests.log
-
-build_coremark:
-  <<: *job_definition
-  stage: prog
-  script:
-    - make coremark -j1 | tee coremark.log
-
-build_beebs:
-  <<: *job_definition
-  stage: prog
-  script:
-    - make beebs -j1 | tee beebs.log
-
-zip_tools:
-  stage: zip
-  script:
-    - tar -czvf tools.tar.gz include/ lib/ install/ | tee zip_tools.log
-  artifacts:
-    when: on_success
-    paths:
-      - "*.log"
-      - tools.tar.gz
-    expire_in: "1 day"
-  dependencies:
-    - build_bedrock
-    - build_dromajo
-    - build_gnu
-
-zip_prog:
-  stage: zip
-  script:
-    - tar -czvf prog.tar.gz prog/ ucode/ | tee zip_prog.log
-  artifacts:
-    when: on_success
-    paths:
-      - "*.log"
-      - prog.tar.gz
-  dependencies:
-    - build_bootrom
-    - build_bp-demos
-    - build_bp-tests
-    - build_riscv-tests
-    - build_coremark
-    - build_beebs
+#build_bedrock:
+#  <<: *job_definition
+#  stage: tools
+#  script:
+#    - make bedrock -j1 | tee bedrock.log
+#
+#build_dromajo:
+#  <<: *job_definition
+#  stage: tools
+#  script:
+#    - make dromajo -j ${CI_NUM_CORES} | tee dromajo.log
+#
+## Clean the gnu toolchain first, for some reason caching is not great about it
+## Don't know why the job says failure, everything seems to be fine
+#build_gnu:
+#  <<: *job_definition
+#  allow_failure: true
+#  stage: tools
+#  script:
+#    - git submodule deinit -f riscv-gnu-toolchain
+#    - make checkout
+#    - make gnudramfs -j ${CI_NUM_CORES} | tee gnudramfs.log
+#    - make gnulinux -j ${CI_NUM_CORES} | tee gnulinux.log
+#
+#build_perch:
+#  <<: *job_definition
+#  stage: perch
+#  script:
+#    - make perch -j1 | tee perch.log
+#
+#build_bootrom:
+#  <<: *job_definition
+#  stage: prog
+#  script:
+#    - make bootrom -j1 | tee bootrom.log
+#
+#build_bp-demos:
+#  <<: *job_definition
+#  stage: prog
+#  script:
+#    - make bp-demos -j1 | tee bp-demos.log
+#
+#build_bp-tests:
+#  <<: *job_definition
+#  stage: prog
+#  script:
+#    - make bp-tests -j1 | tee bp-tests.log
+#
+#build_riscv-tests:
+#  <<: *job_definition
+#  stage: prog
+#  script:
+#    - make riscv-tests -j1 | tee riscv-tests.log
+#
+#build_coremark:
+#  <<: *job_definition
+#  stage: prog
+#  script:
+#    - make coremark -j1 | tee coremark.log
+#
+#build_beebs:
+#  <<: *job_definition
+#  stage: prog
+#  script:
+#    - make beebs -j1 | tee beebs.log
+#
+#zip_tools:
+#  stage: zip
+#  script:
+#    - tar -czvf tools.tar.gz include/ lib/ install/ | tee zip_tools.log
+#  artifacts:
+#    when: on_success
+#    paths:
+#      - "*.log"
+#      - tools.tar.gz
+#    expire_in: "1 day"
+#  dependencies:
+#    - build_bedrock
+#    - build_dromajo
+#    - build_gnu
+#
+#zip_prog:
+#  stage: zip
+#  script:
+#    - tar -czvf prog.tar.gz prog/ ucode/ | tee zip_prog.log
+#  artifacts:
+#    when: on_success
+#    paths:
+#      - "*.log"
+#      - prog.tar.gz
+#  dependencies:
+#    - build_bootrom
+#    - build_bp-demos
+#    - build_bp-tests
+#    - build_riscv-tests
+#    - build_coremark
+#    - build_beebs
 
 publish_tag:
   stage: publish
@@ -135,9 +135,4 @@ publish_tag:
     - if [ "$CI_RELEASE_TAG" == "" ]; then echo "Please set CI_RELEASE_TAG"; exit 1; fi
       #- gh release create $CI_RELEASE_TAG tools.tar.gz prog.tar.gz
     - gh release create ${CI_RELEASE_TAG} Makefile
-
-
-  #  dependencies:
-  #    - zip_tools
-  #  - zip_prog
 
