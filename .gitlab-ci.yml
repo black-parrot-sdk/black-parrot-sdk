@@ -40,10 +40,13 @@ build_dromajo:
   script:
     - make dromajo -j ${CI_NUM_CORES} | tee dromajo.log
 
+# Clean the gnu toolchain first, for some reason caching is not great about it
 build_gnu:
   <<: *job_definition
   stage: tools
   script:
+    - git submodule deinit -f riscv-gnu-toolchain
+    - make checkout
     - make gnudramfs -j ${CI_NUM_CORES} | tee gnudramfs.log
     - make gnulinux -j ${CI_NUM_CORES} | tee gnulinux.log
 
