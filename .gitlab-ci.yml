@@ -16,7 +16,7 @@ stages:
   only:
     - pushes
   before_script:
-    - make checkout -j $CI_NUM_CORES | tee checkout.log
+    - make checkout -j ${CI_NUM_CORES} | tee checkout.log
   artifacts:
     when: always
     paths:
@@ -38,61 +38,61 @@ build_dromajo:
   <<: *job_definition
   stage: tools
   script:
-    - make dromajo | tee dromajo.log
+    - make dromajo -j ${CI_NUM_CORES} | tee dromajo.log
 
 build_gnudramfs:
   <<: *job_definition
   stage: tools
   script:
-    - make gnudramfs | tee gnudramfs.log
+    - make gnudramfs -j ${CI_NUM_CORES} | tee gnudramfs.log
 
 build_gnulinux:
   <<: *job_definition
   stage: tools
   script:
-    - make gnulinux | tee gnulinux.log
+    - make gnulinux -j ${CI_NUM_CORES} | tee gnulinux.log
 
 build_perch:
   <<: *job_definition
   stage: perch
   script:
-    - make perch | tee perch.log
+    - make perch -j1 | tee perch.log
 
 build_bootrom:
   <<: *job_definition
   stage: prog
   script:
-    - make bootrom | tee bootrom.log
+    - make bootrom -j1 | tee bootrom.log
 
 build_bp-demos:
   <<: *job_definition
   stage: prog
   script:
-    - make bp-demos | tee bp-demos.log
+    - make bp-demos -j1 | tee bp-demos.log
 
 build_bp-tests:
   <<: *job_definition
   stage: prog
   script:
-    - make bp-tests | tee bp-tests.log
+    - make bp-tests -j1 | tee bp-tests.log
 
 build_riscv-tests:
   <<: *job_definition
   stage: prog
   script:
-    - make riscv-tests | tee riscv-tests.log
+    - make riscv-tests -j1 | tee riscv-tests.log
 
 build_coremark:
   <<: *job_definition
   stage: prog
   script:
-    - make coremark | tee coremark.log
+    - make coremark -j1 | tee coremark.log
 
 build_beebs:
   <<: *job_definition
   stage: prog
   script:
-    - make beebs | tee beebs.log
+    - make beebs -j1 | tee beebs.log
 
 zip_tools:
   stage: zip
