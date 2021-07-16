@@ -71,3 +71,6 @@ bsg_cadenv:
 bleach_all:
 	cd $(BP_SDK_DIR); git clean -fdx; git submodule deinit -f .
 
+# Uncomment this to reduce clone times
+#GIT_SUBMODULE_DEPTH ?= --depth 1000
+
