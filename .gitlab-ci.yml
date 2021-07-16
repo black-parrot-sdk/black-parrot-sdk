@@ -6,11 +6,11 @@ default:
   image: registry.gitlab.com/dpetrisko/black-parrot-sdk:latest
 
 stages:
+  - publish
   - tools
   - perch
   - prog
   - zip
-  - publish
 
 .job_template: &job_definition
   only:
@@ -130,9 +130,11 @@ publish_tag:
   stage: publish
   when: manual
   script:
+    - gh auth login --with-token ${GITHUB_TOKEN}
     - gh config set prompt disabled
     - if [ "$CI_RELEASE_TAG" == "" ]; then echo "Please set CI_RELEASE_TAG"; exit 1; fi
-    - gh release create $CI_RELEASE_TAG tools.tar.gz prog.tar.gz
+      #- gh release create $CI_RELEASE_TAG tools.tar.gz prog.tar.gz
+    - gh release create ${CI_RELEASE_TAG} Makefile
   dependencies:
     - zip_tools
     - zip_prog
