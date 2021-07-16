@@ -133,4 +133,7 @@ publish_tag:
     - gh config set prompt disabled
     - if [ "$CI_RELEASE_TAG" == "" ]; then echo "Please set CI_RELEASE_TAG"; exit 1; fi
     - gh release create v0.1-alpha tools.tar.gz prog.tar.gz --repo black-parrot-sdk/black-parrot-sdk
+  dependencies:
+    - zip_tools
+    - zip_progs
 
