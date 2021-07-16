@@ -1,8 +1,9 @@
 ## Set variables needed for building tools
 export GCC       ?= gcc
-export CMAKE     ?= cmake
+export CMAKE     ?= cmake3
 export PYTHON    ?= python3
 export XXD       ?= xxd
+export CURL      ?= curl
 
 ## Directories to install into
 export BP_SDK_INSTALL_DIR := $(BP_SDK_DIR)/install
@@ -38,9 +39,4 @@ export RISCV_TARGET  ?= riscv64-unknown-elf-dramfs
 export CROSS_COMPILE ?= $(RISCV_TARGET)-
 
 export PATH := $(BP_SDK_BIN_DIR):$(PATH)
-
-# Makes clones much faster. Comment out if you see an error while cloning submodules
-# riscv-gnu-toolchain/qemu doesn't work well with a shallow clone, try setting this
-# flag to --depth=1 if you want to give it a try.
-export SDK_SHALLOW ?=
 

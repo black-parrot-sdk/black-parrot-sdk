@@ -16,12 +16,25 @@ $(TARGET_DIRS):
 	mkdir -p $@
 
 # checkout submodules, but not recursively
-checkout:
-	cd $(BP_SDK_DIR); git submodule update --init --checkout $(SDK_SHALLOW)
+checkout: | $(TARGET_DIRS)
+	git fetch --all
+	cd $(BP_SDK_DIR); git submodule update --init
 
-sdk_lite: | $(TARGET_DIRS)
+# Pulls the latest tools and unpacks into the SDK install location
+pull_sdk: checkout
+	$(eval SDK_URL := https://github.com/black-parrot-sdk/black-parrot-sdk/releases/download/)
+	$(eval SDK_TAG := $(shell git describe --tags --abbrev=0))
+	cd $(BP_SDK_DIR); \
+		$(CURL) -L $(SDK_URL)/$(SDK_TAG)/tools.tar.gz \
+	   	| tar -xvz
+	cd $(BP_SDK_DIR); \
+		$(CURL) -L $(SDK_URL)/$(SDK_TAG)/prog.tar.gz \
+	   	| tar -xvz
+
+sdk_lite: checkout
 	$(MAKE) -j1 bedrock
 	$(MAKE) dromajo
+	$(MAKE) gnudramfs
 
 ## This target makes the sdk tools
 sdk: sdk_lite
@@ -29,11 +42,12 @@ sdk: sdk_lite
 
 # panic_room only build takes 15 minutes (versus 45 minutes for sdk_lite)
 # to build on 4 cores; it leaves out unnecessary dependencies that make
-# build failures more likely. (qemu, dromajo, dejagnu, gdb)
-panic_room: | $(TARGET_DIRS)
+# build failures more likely. (dromajo, dejagnu, gdb)
+panic_room: checkout
+	$(MAKE) gnudramfs
 
 ## Even the "lite" programs require the full sdk toolchain
-prog_lite: sdk
+prog_lite: sdk_lite
 	$(MAKE) -j1 perch
 	$(MAKE) -j1 bootrom
 	$(MAKE) -j1 bp-demos
@@ -41,9 +55,9 @@ prog_lite: sdk
 
 ## This target makes all of the programs
 prog: prog_lite
-	$(MAKE) riscv-tests
-	$(MAKE) coremark
-	$(MAKE) beebs
+	$(MAKE) -j1 riscv-tests
+	$(MAKE) -j1 coremark
+	$(MAKE) -j1 beebs
 	# Requires access to spec2000
 	#$(MAKE) spec2000
 	# Requires access to Synopsys VCS
@@ -68,4 +82,7 @@ bsg_cadenv:
 #  Use with caution.
 bleach_all:
 	cd $(BP_SDK_DIR); git clean -fdx; git submodule deinit -f .
+
+# Uncomment this to reduce clone times
+#GIT_SUBMODULE_DEPTH ?= --depth 1000
 
