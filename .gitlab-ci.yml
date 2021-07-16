@@ -135,7 +135,9 @@ publish_tag:
     - if [ "$CI_RELEASE_TAG" == "" ]; then echo "Please set CI_RELEASE_TAG"; exit 1; fi
       #- gh release create $CI_RELEASE_TAG tools.tar.gz prog.tar.gz
     - gh release create ${CI_RELEASE_TAG} Makefile
-  dependencies:
-    - zip_tools
-    - zip_prog
+
+
+  #  dependencies:
+  #    - zip_tools
+  #  - zip_prog
 
