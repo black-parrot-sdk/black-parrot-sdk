@@ -135,5 +135,5 @@ publish_tag:
     - gh release create v0.1-alpha tools.tar.gz prog.tar.gz --repo black-parrot-sdk/black-parrot-sdk
   dependencies:
     - zip_tools
-    - zip_progs
+    - zip_prog
 

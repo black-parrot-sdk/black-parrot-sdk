@@ -3,6 +3,7 @@ export GCC       ?= gcc
 export CMAKE     ?= cmake3
 export PYTHON    ?= python3
 export XXD       ?= xxd
+export CURL      ?= curl
 
 ## Directories to install into
 export BP_SDK_INSTALL_DIR := $(BP_SDK_DIR)/install

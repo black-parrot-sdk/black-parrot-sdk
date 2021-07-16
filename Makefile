@@ -17,7 +17,19 @@ $(TARGET_DIRS):
 
 # checkout submodules, but not recursively
 checkout: | $(TARGET_DIRS)
+	git fetch --all
 	cd $(BP_SDK_DIR); git submodule update --init
+
+# Pulls the latest tools and unpacks into the SDK install location
+pull_sdk: checkout
+	$(eval SDK_URL := https://github.com/black-parrot-sdk/black-parrot-sdk/releases/download/)
+	$(eval SDK_TAG := $(shell git describe --tags --abbrev=0))
+	cd $(BP_SDK_DIR); \
+		$(CURL) -L $(SDK_URL)/$(SDK_TAG)/tools.tar.gz \
+	   	| tar -xvz
+	cd $(BP_SDK_DIR); \
+		$(CURL) -L $(SDK_URL)/$(SDK_TAG)/prog.tar.gz \
+	   	| tar -xvz
 
 sdk_lite: checkout
 	$(MAKE) -j1 bedrock
