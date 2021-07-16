@@ -131,8 +131,8 @@ publish_tag:
   when: manual
   script:
     - gh config set prompt disabled
-    - echo ${GITHUB_TOKEN} | gh auth login --with-token
-    - if [ "$CI_RELEASE_TAG" == "" ]; then echo "Please set CI_RELEASE_TAG"; exit 1; fi
+      #- if [ "$CI_RELEASE_TAG" == "" ]; then echo "Please set CI_RELEASE_TAG"; exit 1; fi
       #- gh release create $CI_RELEASE_TAG tools.tar.gz prog.tar.gz
-    - gh release create ${CI_RELEASE_TAG} Makefile
+      #- gh release create ${CI_RELEASE_TAG} Makefile
+    - gh release create v0.1-alpha Makefile
 
