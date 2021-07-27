@@ -33,7 +33,7 @@ Ubuntu on Windows WSL 2.0 seems to work for most things, but you may encounter e
 
 ### Quickstart: Download a pre-built toolchain (Alpha)
 
-Pre-built programs and toolchains can be downloaded at [](https://github.com/black-parrot-sdk/black-parrot-sdk/releases). These are intended for compute or bandwidth constrained users, as well as classes or labs which may not have the permissions required to install necessary pre-requisites. To use them instead of building the SDK yourself:
+Pre-built programs and toolchains can be downloaded at this repo's [releases page](https://github.com/black-parrot-sdk/black-parrot-sdk/releases). These are intended for compute or bandwidth constrained users, as well as classes or labs which may not have the permissions required to install necessary pre-requisites. To use them instead of building the SDK yourself:
 
     make checkout # initialize submodules
     make pull_sdk # Download and unpack pre-built SDK
