@@ -52,6 +52,12 @@ build_gnu:
     - make gnudramfs -j ${CI_NUM_CORES} | tee gnudramfs.log
     - make gnulinux -j ${CI_NUM_CORES} | tee gnulinux.log
 
+build_llvm:
+  <<: *job_definition
+  stage: tools
+  script:
+    - make llvm -j ${CI_NUM_CORES} | tee llvm.log
+
 build_perch:
   <<: *job_definition
   stage: perch
@@ -108,6 +114,7 @@ zip_tools:
     - build_bedrock
     - build_dromajo
     - build_gnu
+    - build_llvm
 
 zip_prog:
   stage: zip
