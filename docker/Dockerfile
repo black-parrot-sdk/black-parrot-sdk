@@ -6,7 +6,7 @@ RUN yum install -y autoconf automake libmpc-devel mpfr-devel gmp-devel gawk  bis
 RUN yum install -y epel-release
 RUN rpm -U https://repo.ius.io/ius-release-el7.rpm
 RUN yum install -y git224
-RUN yum install -y cmake3
+RUN yum install -y cmake3 ninja-build
 # Install github CLI
 RUN yum install -y wget
 RUN wget https://github.com/cli/cli/releases/download/v1.12.1/gh_1.12.1_linux_amd64.rpm

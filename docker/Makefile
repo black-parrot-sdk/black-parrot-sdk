@@ -8,3 +8,5 @@ build:
 push: build
 	docker push registry.gitlab.com/dpetrisko/black-parrot-sdk
 
+run:
+	docker run -it registry.gitlab.com/dpetrisko/black-parrot-sdk
