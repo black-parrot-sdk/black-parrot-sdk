@@ -46,6 +46,7 @@ platform. We welcome contributions for other images and scripts to build for oth
 ### Building the SDK
 
     make checkout # initialize submodules
+    # Set whatever variables your platform requires in Makefile.platform
     make sdk  # you can use the -j N flag to parallelize
     make prog # only makes a subset of programs. See Makefile for the full list of commands
 

@@ -1,0 +1,7 @@
+
+LINK_GEN ?= $(BP_LINKER_DIR)/linker_gen.py
+
+linker: $(BP_LINKER_DIR)/riscv.ld
+$(BP_LINKER_DIR)/riscv.ld:
+	$(PYTHON) $(LINK_GEN) $(PLATFORM_DRAM_BASE) $(PLATFORM_SP) > $@
+

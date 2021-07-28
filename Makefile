@@ -9,6 +9,8 @@ export BP_SDK_DIR ?= $(shell git rev-parse --show-toplevel)
 include $(BP_SDK_DIR)/Makefile.common
 include $(BP_SDK_DIR)/Makefile.tools
 include $(BP_SDK_DIR)/Makefile.prog
+include $(BP_SDK_DIR)/Makefile.platform
+include $(BP_SDK_DIR)/Makefile.linker
 
 ## This is the list of target directories that tools and libraries will be installed into
 override TARGET_DIRS := $(BP_SDK_BIN_DIR) $(BP_SDK_LIB_DIR) $(BP_SDK_INCLUDE_DIR) $(BP_SDK_TOUCH_DIR)
@@ -32,6 +34,7 @@ pull_sdk: checkout
 	   	| tar -xvz
 
 sdk_lite: checkout
+	$(MAKE) linker
 	$(MAKE) -j1 bedrock
 	$(MAKE) dromajo
 	$(MAKE) gnudramfs
