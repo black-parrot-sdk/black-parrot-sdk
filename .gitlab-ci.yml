@@ -7,6 +7,7 @@ default:
 
 stages:
   - tools
+  - linker
   - perch
   - prog
   - zip
@@ -23,6 +24,7 @@ stages:
       - "*.log"
       - include/
       - lib/
+      - linker/
       - install/
       - prog/
       - ucode/
@@ -51,6 +53,12 @@ build_gnu:
     - make checkout
     - make gnudramfs -j ${CI_NUM_CORES} | tee gnudramfs.log
     - make gnulinux -j ${CI_NUM_CORES} | tee gnulinux.log
+
+build_linker:
+  <<: *job_definition
+  stage: linker
+  script:
+    - make linker -j1 | tee linker.log
 
 build_perch:
   <<: *job_definition
@@ -112,13 +120,15 @@ zip_tools:
 zip_prog:
   stage: zip
   script:
-    - tar -czvf prog.tar.gz prog/ ucode/ | tee zip_prog.log
+    - tar -czvf prog.tar.gz prog/ linker/ ucode/ | tee zip_prog.log
   artifacts:
     when: on_success
     paths:
       - "*.log"
       - prog.tar.gz
   dependencies:
+    - build_perch
+    - build_linker
     - build_bootrom
     - build_bp-demos
     - build_bp-tests
