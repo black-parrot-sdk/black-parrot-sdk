@@ -1,4 +1,13 @@
 
-PLATFORM_SP        ?= 0x8f00000
+PLATFORM ?= dromajo_cosim
+
+ifeq ($(PLATFORM),dromajo_cosim)
 PLATFORM_DRAM_BASE ?= 0x80000000
+PLATFORM_SP        ?= 0x81000000
+else ifeq ($(PLATFORM),zynqparrot)
+PLATFORM_DRAM_BASE ?= 0x80000000
+PLATFORM_SP        ?= 0x877FF000
+else
+$(error "PLATFORM not found")
+endif
 
