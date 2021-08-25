@@ -47,6 +47,7 @@ sdk: sdk_lite
 # to build on 4 cores; it leaves out unnecessary dependencies that make
 # build failures more likely. (dromajo, dejagnu, gdb)
 panic_room: checkout
+	$(MAKE) linker
 	$(MAKE) gnudramfs
 
 ## Even the "lite" programs require the full sdk toolchain
