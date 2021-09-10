@@ -1,4 +1,4 @@
-# BlackParrot SDK [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+# BlackParrot SDK [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) [![Gitlab CI](https://gitlab.com/black-parrot/black-parrot/badges/master/pipeline.svg)](https://gitlab.com/black-parrot/black-parrot/pipelines)
 The BlackParrot SDK is a collection of tools and example benchmark suites to demonstrate how to
 develop for the BlackParrot core. BlackParrot implements a standard RV64IMAFDMSU ISA and so is
 capable of running just about any program on top of Linux. However, due to the simulation overheads
