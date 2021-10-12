@@ -14,14 +14,14 @@ opcodes_dir     := $(BP_SDK_DIR)/riscv-opcodes
 
 define submodule_test_template
 $(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); git rev-parse HEAD))
-$(BP_TOUCH_DIR)/$$($(1)_tag):
-	rm -rf $(BP_TOUCH_DIR)/$(1).*
+$(BP_SDK_TOUCH_DIR)/$$($(1)_tag):
+	rm -rf $(BP_SDK_TOUCH_DIR)/$(1).*
 	cd $(BP_SDK_DIR); git submodule update --init --recursive $(GIT_SUBMODULE_DEPTH) $(2)
 	+$(MAKE) $(1)_build
 	mkdir -p $(BP_SDK_PROG_DIR)/$(1)
 	find $(2) -name "*.riscv" -exec cp {} $(BP_SDK_PROG_DIR)/$(1)/ \;
-	touch $(BP_TOUCH_DIR)/$$($(1)_tag)
-$(1): | $(BP_TOUCH_DIR)/$$($(1)_tag)
+	touch $(BP_SDK_TOUCH_DIR)/$$($(1)_tag)
+$(1): | $(BP_SDK_TOUCH_DIR)/$$($(1)_tag)
 $(1)_manual: $(BP_SDK_LIB_DIR)/libperch.a
 	+$(MAKE) $(1)_build
 	mkdir -p $(BP_SDK_PROG_DIR)/$(1)
@@ -55,7 +55,7 @@ riscv-tests_build:
 
 beebs_build:
 	cd $(beebs_dir); ./configure --host=riscv64 --with-chip=black-parrot \
-		--includedir=$(BP_INCLUDE_DIR) --libdir=$(BP_LIB_DIR)
+		--includedir=$(BP_SDK_INCLUDE_DIR) --libdir=$(BP_SDK_LIB_DIR)
 	$(MAKE) -C $(beebs_dir) clean all
 	@# TODO: We need to change to output .riscv, but the beebs makefiles are a mess
 	@find $(beebs_dir)/src -type f -executable -exec cp {} {}.riscv \;

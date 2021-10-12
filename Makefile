@@ -13,7 +13,7 @@ include $(BP_SDK_DIR)/Makefile.platform
 include $(BP_SDK_DIR)/Makefile.linker
 
 ## This is the list of target directories that tools and libraries will be installed into
-override TARGET_DIRS := $(BP_SDK_BIN_DIR) $(BP_SDK_LIB_DIR) $(BP_SDK_INCLUDE_DIR) $(BP_SDK_TOUCH_DIR)
+override TARGET_DIRS := $(BP_SDK_BIN_DIR) $(BP_SDK_LIB_DIR) $(BP_SDK_INCLUDE_DIR) $(BP_SDK_LINKER_DIR) $(BP_SDK_TOUCH_DIR)
 $(TARGET_DIRS):
 	mkdir -p $@
 

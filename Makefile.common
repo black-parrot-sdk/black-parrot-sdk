@@ -6,10 +6,13 @@ export XXD       ?= xxd
 export CURL      ?= curl
 
 ## Directories to install into
+export BP_SDK_PROG_DIR    := $(BP_SDK_DIR)/prog
 export BP_SDK_INSTALL_DIR := $(BP_SDK_DIR)/install
 export BP_SDK_BIN_DIR     := $(BP_SDK_INSTALL_DIR)/bin
 export BP_SDK_LIB_DIR     := $(BP_SDK_INSTALL_DIR)/lib
 export BP_SDK_INCLUDE_DIR := $(BP_SDK_INSTALL_DIR)/include
+export BP_SDK_LINKER_DIR  := $(BP_SDK_INSTALL_DIR)/linker
+export BP_SDK_UCODE_DIR   := $(BP_SDK_INSTALL_DIR)/linker
 export BP_SDK_TOUCH_DIR   := $(BP_SDK_INSTALL_DIR)/touchfiles
 
 ## Setup CAD tools
@@ -17,22 +20,6 @@ export BP_SDK_TOUCH_DIR   := $(BP_SDK_INSTALL_DIR)/touchfiles
 # need to setup the cad tools, simply put bsg_cadenv in the same root dir.
 BSG_CADENV_DIR ?= $(BP_SDK_DIR)/bsg_cadenv
 -include $(BSG_CADENV_DIR)/cadenv.mk
-
-# These variables are deprecated by the BP_SDK_* variants below,
-#   but we haven't bumped the test submodules yet
-export BP_PROG_DIR    := $(BP_SDK_DIR)/prog
-export BP_UCODE_DIR   := $(BP_SDK_DIR)/ucode
-export BP_LIB_DIR     := $(BP_SDK_DIR)/lib
-export BP_LINKER_DIR  := $(BP_SDK_DIR)/linker
-export BP_INCLUDE_DIR := $(BP_SDK_DIR)/include
-export BP_TOUCH_DIR   := $(BP_SDK_TOUCH_DIR)
-
-export BP_SDK_PROG_DIR    := $(BP_SDK_DIR)/prog
-export BP_SDK_UCODE_DIR   := $(BP_SDK_DIR)/ucode
-export BP_SDK_LIB_DIR     := $(BP_SDK_DIR)/lib
-export BP_SDK_LINKER_DIR  := $(BP_SDK_DIR)/linker
-export BP_SDK_INCLUDE_DIR := $(BP_SDK_DIR)/include
-export BP_SDK_TOUCH_DIR   := $(BP_SDK_TOUCH_DIR)
 
 ## Cross compilation
 export RISCV_TARGET  ?= riscv64-unknown-elf-dramfs

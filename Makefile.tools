@@ -42,11 +42,11 @@ dromajo_build:
 	cp $(dromajo_dir)/include/dromajo_cosim.h $(BP_SDK_INCLUDE_DIR)
 
 bedrock_build:
-	mkdir -p $(BP_UCODE_DIR)
+	mkdir -p $(BP_SDK_UCODE_DIR)
 	$(MAKE) -C $(bedrock_dir) bins
-	cp $(bedrock_dir)/roms/*.bin $(BP_UCODE_DIR)/
-	cp $(bedrock_dir)/roms/*.addr $(BP_UCODE_DIR)/
-	cp $(bedrock_dir)/roms/*.mem $(BP_UCODE_DIR)/
+	cp $(bedrock_dir)/roms/*.bin $(BP_SDK_UCODE_DIR)/
+	cp $(bedrock_dir)/roms/*.addr $(BP_SDK_UCODE_DIR)/
+	cp $(bedrock_dir)/roms/*.mem $(BP_SDK_UCODE_DIR)/
 
 .PHONY: gnu dromajo bedrock panic_room
 $(eval $(call submodule_tool_template,gnudramfs,$(gnudramfs_dir)))
