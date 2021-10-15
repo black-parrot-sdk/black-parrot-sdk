@@ -97,7 +97,7 @@ $(eval $(call submodule_test_template,linux,$(linux_dir)))
 
 .PHONY: prog_clean
 prog_clean:
-	rm -rf $(BP_SDK_PROG_DIR)
+	rm -rf $(BP_SDK_PROG_DIR) $(BP_SDK_TOUCH_DIR)
 	-$(MAKE) -C $(perch_dir) clean
 	-$(MAKE) -C $(bootrom_dir) clean
 	-$(MAKE) -C $(bp_demos_dir) clean
