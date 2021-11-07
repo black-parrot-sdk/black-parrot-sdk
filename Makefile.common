@@ -12,7 +12,7 @@ export BP_SDK_BIN_DIR     := $(BP_SDK_INSTALL_DIR)/bin
 export BP_SDK_LIB_DIR     := $(BP_SDK_INSTALL_DIR)/lib
 export BP_SDK_INCLUDE_DIR := $(BP_SDK_INSTALL_DIR)/include
 export BP_SDK_LINKER_DIR  := $(BP_SDK_INSTALL_DIR)/linker
-export BP_SDK_UCODE_DIR   := $(BP_SDK_INSTALL_DIR)/linker
+export BP_SDK_UCODE_DIR   := $(BP_SDK_INSTALL_DIR)/ucode
 export BP_SDK_TOUCH_DIR   := $(BP_SDK_INSTALL_DIR)/touchfiles
 
 ## Setup CAD tools
