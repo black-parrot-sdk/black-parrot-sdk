@@ -27,7 +27,7 @@ stages:
       - linker/
       - install/
       - prog/
-      - ucode/
+      - bedrock/
     expire_in: "1 day"
 
 build_bedrock:
@@ -120,7 +120,7 @@ zip_tools:
 zip_prog:
   stage: zip
   script:
-    - tar -czvf prog.tar.gz prog/ linker/ ucode/ | tee zip_prog.log
+    - tar -czvf prog.tar.gz prog/ linker/ bedrock/ | tee zip_prog.log
   artifacts:
     when: on_success
     paths:
