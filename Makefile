@@ -2,7 +2,7 @@ export BP_SDK_DIR ?= $(shell git rev-parse --show-toplevel)
 
 .PHONY: checkout
 .PHONY: sdk_lite sdk sdk_clean
-.PHONY: prog_lite prog
+.PHONY: perch prog_lite prog
 .PHONY: tidy_progs tidy bsg_cadenv bleach_all
 .DEFAULT: sdk
 
@@ -13,7 +13,7 @@ include $(BP_SDK_DIR)/Makefile.platform
 include $(BP_SDK_DIR)/Makefile.linker
 
 ## This is the list of target directories that tools and libraries will be installed into
-override TARGET_DIRS := $(BP_SDK_BIN_DIR) $(BP_SDK_LIB_DIR) $(BP_SDK_INCLUDE_DIR) $(BP_SDK_LINKER_DIR) $(BP_SDK_TOUCH_DIR)
+override TARGET_DIRS := $(BP_SDK_BIN_DIR) $(BP_SDK_LIB_DIR) $(BP_SDK_INCLUDE_DIR) $(BP_SDK_LINKER_DIR) $(BP_SDK_PROG_TOUCH_DIR) $(BP_SDK_TOOLS_TOUCH_DIR)
 $(TARGET_DIRS):
 	mkdir -p $@
 
