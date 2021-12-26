@@ -6,14 +6,15 @@ export XXD       ?= xxd
 export CURL      ?= curl
 
 ## Directories to install into
-export BP_SDK_PROG_DIR    := $(BP_SDK_DIR)/prog
-export BP_SDK_INSTALL_DIR := $(BP_SDK_DIR)/install
-export BP_SDK_BIN_DIR     := $(BP_SDK_INSTALL_DIR)/bin
-export BP_SDK_LIB_DIR     := $(BP_SDK_INSTALL_DIR)/lib
-export BP_SDK_INCLUDE_DIR := $(BP_SDK_INSTALL_DIR)/include
-export BP_SDK_LINKER_DIR  := $(BP_SDK_INSTALL_DIR)/linker
-export BP_SDK_UCODE_DIR   := $(BP_SDK_INSTALL_DIR)/ucode
-export BP_SDK_TOUCH_DIR   := $(BP_SDK_INSTALL_DIR)/touchfiles
+export BP_SDK_PROG_DIR        := $(BP_SDK_DIR)/prog
+export BP_SDK_INSTALL_DIR     := $(BP_SDK_DIR)/install
+export BP_SDK_BIN_DIR         := $(BP_SDK_INSTALL_DIR)/bin
+export BP_SDK_LIB_DIR         := $(BP_SDK_INSTALL_DIR)/lib
+export BP_SDK_INCLUDE_DIR     := $(BP_SDK_INSTALL_DIR)/include
+export BP_SDK_LINKER_DIR      := $(BP_SDK_INSTALL_DIR)/linker
+export BP_SDK_UCODE_DIR       := $(BP_SDK_INSTALL_DIR)/ucode
+export BP_SDK_PROG_TOUCH_DIR  := $(BP_SDK_INSTALL_DIR)/touchfiles/prog
+export BP_SDK_TOOLS_TOUCH_DIR := $(BP_SDK_INSTALL_DIR)/touchfiles/tools
 
 ## Setup CAD tools
 # If the machine you are working on is bsg_cadenv compliant, then you do not

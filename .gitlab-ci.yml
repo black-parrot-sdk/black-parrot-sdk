@@ -105,7 +105,7 @@ build_beebs:
 zip_tools:
   stage: zip
   script:
-    - tar -czvf tools.tar.gz include/ lib/ install/ | tee zip_tools.log
+    - tar -czvf tools.tar.gz install/ | tee zip_tools.log
   artifacts:
     when: on_success
     paths:
