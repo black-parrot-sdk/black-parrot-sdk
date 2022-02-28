@@ -7,31 +7,7 @@ features for bare-metal programs, with and without accelerators attached.
 
 # Getting started
 
-## Prerequisites
-### Centos (7 or 8)
-
-    yum install autoconf automake libmpc-devel mpfr-devel gmp-devel gawk  bison flex texinfo patchutils gcc gcc-c++ zlib-devel expat-devel dtc gtkwave vim-common virtualenv
-
-CentOS 7 requires a more modern gcc to build Linux. If you receive an error such as "These critical
-programs are missing or too old: make" try
-
-    scl enable devtoolset-8 bash
-
-### Ubuntu (18.04 or 20.04)
-
-    sudo apt-get install autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev wget byacc device-tree-compiler python gtkwave vim-common virtualenv python-yaml
-
-cmake3 is required. This is the default on newer versions of Ubuntu, but not necessarily on old versions.
-
-BlackParrot has been tested extensively on CentOS 7. We have many users who have used Ubuntu for
-development. If not on these versions of these OSes, we suggest using a
-Docker image.
-
-Ubuntu on Windows WSL 2.0 seems to work for most things, but you may encounter errors with more complex operations. For instance, compiling Linux is known not to work in this environment. This is considered an experimental build.
-
-## The SDK
-
-### Quickstart: Download a pre-built toolchain (Alpha)
+## Quickstart: Download a pre-built toolchain (Alpha)
 
 Pre-built programs and toolchains can be downloaded at this repo's [releases page](https://github.com/black-parrot-sdk/black-parrot-sdk/releases). These are intended for compute or bandwidth constrained users, as well as classes or labs which may not have the permissions required to install necessary pre-requisites. To use them instead of building the SDK yourself:
 
@@ -43,7 +19,9 @@ build further programs using the tool installation. Toolchains were built on Ubu
 [image](registry.gitlab.com/dpetrisko/black-parrot-sdk), but should run on any modern Linux
 platform. We welcome contributions for other images and scripts to build for other platforms.
 
-### Building the SDK
+## Building the SDK
+
+Before building the SDK, refer to [the relevant section in the README on BlackParrot Simulation Environment](https://github.com/black-parrot/black-parrot-sim#prerequisites) for preparing required tools and libraries.
 
     make checkout # initialize submodules
     # Set whatever variables your platform requires in Makefile.platform
@@ -54,7 +32,7 @@ platform. We welcome contributions for other images and scripts to build for oth
 For each suite in this directory, `make <suite>` will build the tests within and copy the resulting
 .riscv binaries to ./prog/suite/example.riscv
 
-### Libperch
+## Libperch
 libperch is the BlackParrot firmware library. It includes sample linker scripts for supported SoC
 platforms, start code for running bare-metal tests, emulation code for missing instructions and
 firmware routines for printing, serial input and output and program termination.
@@ -63,7 +41,7 @@ libperch is automatically compiled as part of the toplevel `make sdk` target. It
 installed to ./lib/. Users should link this library when compiling a new bare-metal program for
 BlackParrot.
 
-### PanicRoom (aka bsg\_newlib)
+## PanicRoom (aka bsg\_newlib)
 PanicRoom is a port of newlib which packages a DRAM-based filesystem (LittleFS) along with a minimal
 C library. By only implementing a few platform level operations, PanicRoom provides an operational
 filesystem, eliminating the need for a complex host interface, It is automatically included with the
@@ -100,7 +78,7 @@ to the filesystem using normal calls:
 
 PanicRoom is also used for stdio operations like `printf`. So to use these functions you still need to generate a LittleFS configuration file(lfs.c) without any input files. You also need to call the `dramfs_init` function by building the start.S code in the perch directory with `-D_DRAMFS` flag alongside your program, or use the crt0.o generated at `lib/` as the default start code, or simply call it at the beginning of the main function.
 
-### Building Linux
+## Building Linux
 To build a SMP Linux executable for BlackParrot (make sure first to follow the above instructions for building the SDK):
 ```
 make -j linux OPENSBI_NCPUS=<n>
@@ -109,7 +87,7 @@ make -j linux OPENSBI_NCPUS=<n>
 For further information read [the bp-linux README](https://github.com/black-parrot-sdk/bp-linux/blob/master/README.md).
 
 
-### Adding a test
+## Adding a test
 To add a new test to BlackParrot using our libraries is simple. Using our framework
   - add the new test C file in bp-demos/src
   - add the test to the test\_list in bp-demos/Makefile.frag
@@ -127,7 +105,7 @@ use the following flags:
 When you're done building your program, copy it into ./prog/custom/foobar.riscv or your favorite
 SUITE/PROG combination
 
-### Testing your test
+## Testing your test
 RTL waveform debugging is hard. That's why, before we run new programs on BlackParrot, we want to
 run them in Dromajo to verify that the software is working. Luckily, we've already built Dromajo as
 part of make sdk. The version of Dromajo built has been modified to behave exactly as BlackParrot does
@@ -139,7 +117,7 @@ Dromajo in that repo.
 will run your program. The --host options make Dromajo behave as BlackParrot, with a host interface
 emulating our Verilog testbench. Once Dromajo passes your test, you're ready to run on BlackParrot!
 
-### Debugging your test
+## Debugging your test
 Dromajo supports tracing. This option is enabled by adding --trace=0 to the dromajo invocation (0 indicates to start the trace after 0 instructions). The trace format is:
 
     0 3 0x0000000080000108 (0x06f00113) x 2 0x000000000000006f
