@@ -1,7 +1,7 @@
 ## Set variables needed for building tools
 export GCC       ?= gcc
-export CMAKE     ?= cmake3
-export PYTHON    ?= python3
+export CMAKE     ?= $(if $(shell which cmake3),cmake3,cmake)
+export PYTHON    ?= $(if $(shell which python3),python3,python)
 export XXD       ?= xxd
 export CURL      ?= curl
 
