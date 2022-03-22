@@ -82,3 +82,6 @@
 [submodule "spec2017"]
 	path = spec2017
 	url = https://github.com/black-parrot-sdk/spec2017.git
+[submodule "yocto"]
+	path = yocto
+	url = https://github.com/collinmay/bp-yocto.git

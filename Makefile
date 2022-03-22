@@ -68,6 +68,8 @@ prog: prog_lite
 	#$(MAKE) riscv-dv
 	# Requires patience
 	#$(MAKE) linux
+	# Requires even more patience
+	#$(MAKE) yocto
 
 sdk_clean:
 	-$(MAKE) prog_clean
