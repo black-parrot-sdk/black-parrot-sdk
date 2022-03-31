@@ -77,9 +77,10 @@ riscv-dv_build:
 
 # Default Linux build is single core and terminates immediately
 OPENSBI_NCPUS ?= 1
-WITH_SHELL    ?= $(linux_dir)/cfg/test.sh
+WITH_SHELL    ?= $(linux_dir)/cfg/test_info.sh
+MEM_SIZE      ?= 64
 linux_build:
-	$(MAKE) -C $(linux_dir) linux.riscv OPENSBI_NCPUS=$(OPENSBI_NCPUS) WITH_SHELL=$(WITH_SHELL)
+	$(MAKE) -C $(linux_dir) linux.riscv OPENSBI_NCPUS=$(OPENSBI_NCPUS) WITH_SHELL=$(WITH_SHELL) MEM_SIZE=$(MEM_SIZE)
 
 .PHONY: perch bootrom bp-demos bp-tests riscv-tests beebs coremark spec2000 spec2006 riscv-dv linux
 $(eval $(call submodule_test_template,perch,$(perch_dir)))
