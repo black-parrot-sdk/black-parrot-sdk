@@ -3,7 +3,7 @@ export BP_SDK_DIR ?= $(shell git rev-parse --show-toplevel)
 .PHONY: checkout
 .PHONY: sdk_lite sdk sdk_clean
 .PHONY: perch prog_lite prog
-.PHONY: tidy_progs tidy bsg_cadenv bleach_all
+.PHONY: tidy_progs tidy bleach_all
 .DEFAULT: sdk
 
 include $(BP_SDK_DIR)/Makefile.common
@@ -78,9 +78,6 @@ tidy_progs:
 
 tidy: tidy_progs
 	git submodule deinit -f dromajo riscv-gnu-toolchain linux
-
-bsg_cadenv:
-	-cd $(BP_SDK_DIR); git clone git@github.com:bespoke-silicon-group/bsg_cadenv.git bsg_cadenv
 
 ## This target just wipes the whole repo clean.
 #  Use with caution.
