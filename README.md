@@ -32,6 +32,8 @@ Before building the SDK, refer to [the relevant section in the README on BlackPa
 For each suite in this directory, `make <suite>` will build the tests within and copy the resulting
 .riscv binaries to ./prog/suite/example.riscv
 
+The build process tries to be intelligent and only rebuild if a submodule has changed since the last build. To forcibly build a test suite, use `make <suite>_manual`.
+
 ## Libperch
 libperch is the BlackParrot firmware library. It includes sample linker scripts for supported SoC
 platforms, start code for running bare-metal tests, emulation code for missing instructions and
