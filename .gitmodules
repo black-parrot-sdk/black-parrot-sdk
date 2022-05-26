@@ -91,3 +91,7 @@
     url = https://github.com/black-parrot-sdk/spec2017.git
     branch = master
     ignore = untracked
+[submodule "splash3"]
+    path = splash3
+    url = https://github.com/muwyse/Splash-3.git
+    branch = riscv-simulation
