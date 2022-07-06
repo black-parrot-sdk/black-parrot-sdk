@@ -84,8 +84,10 @@ PanicRoom is also used for stdio operations like `printf`. So to use these funct
 To build a SMP Linux executable for BlackParrot (make sure first to follow the above instructions for building the SDK):
 ```
 make -j linux OPENSBI_NCPUS=<n>
-./install/bin/dromajo --host --ncpus=<n> linux/linux.riscv # verify linux runs on the dromajo simulator
+./install/bin/dromajo --host --ncpus=<n> [--enable_amo] linux/linux.riscv # verify linux runs on the dromajo simulator
 ```
+Note: When testing SMP Linux (ncpus > 1) in Dromajo, you may need to add the `--enable_amo` flag to turn on support for atomics in Dromajo, which are supported by the BlackParrot hardware.
+
 For further information read [the bp-linux README](https://github.com/black-parrot-sdk/bp-linux/blob/master/README.md).
 
 
