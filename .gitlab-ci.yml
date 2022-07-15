@@ -1,11 +1,12 @@
 variables:
-  GIT_STRATEGY: clone
+  GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: none
 
 default:
   image: registry.gitlab.com/dpetrisko/black-parrot-sdk:latest
 
 stages:
+  - checkout
   - tools
   - linker
   - perch
@@ -16,8 +17,6 @@ stages:
 .job_template: &job_definition
   only:
     - pushes
-  before_script:
-    - make checkout -j ${CI_NUM_CORES} | tee checkout.log
   artifacts:
     when: always
     paths:
@@ -29,6 +28,13 @@ stages:
       - prog/
       - bedrock/
     expire_in: "1 day"
+
+checkout:
+  <<: *job_definition
+  stage: checkout
+  script:
+    - make bleach_all
+    - make checkout -j ${CI_NUM_CORES} | tee checkout.log
 
 build_bedrock:
   <<: *job_definition
@@ -42,15 +48,10 @@ build_dromajo:
   script:
     - make dromajo -j ${CI_NUM_CORES} | tee dromajo.log
 
-# Clean the gnu toolchain first, for some reason caching is not great about it
-# Don't know why the job says failure, everything seems to be fine
 build_gnu:
   <<: *job_definition
-  allow_failure: true
   stage: tools
   script:
-    - git submodule deinit -f riscv-gnu-toolchain
-    - make checkout
     - make gnudramfs -j ${CI_NUM_CORES} | tee gnudramfs.log
     - make gnulinux -j ${CI_NUM_CORES} | tee gnulinux.log
 
