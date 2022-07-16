@@ -1,6 +1,7 @@
 variables:
   GIT_STRATEGY: fetch
-  GIT_SUBMODULE_STRATEGY: none
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_UPDATE_FLAGS: --jobs ${CI_NUM_CORES}
 
 stages:
   - checkout
