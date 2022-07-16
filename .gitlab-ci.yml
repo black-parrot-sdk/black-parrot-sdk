@@ -39,12 +39,16 @@ build_bedrock:
   stage: tools
   script:
     - make bedrock -j1 | tee bedrock.log
+  dependencies:
+    - checkout 
 
 build_dromajo:
   <<: *job_definition
   stage: tools
   script:
     - make dromajo -j ${CI_NUM_CORES} | tee dromajo.log
+  dependencies:
+    - checkout 
 
 build_gnu:
   <<: *job_definition
@@ -52,54 +56,74 @@ build_gnu:
   script:
     - make gnudramfs -j ${CI_NUM_CORES} | tee gnudramfs.log
     - make gnulinux -j ${CI_NUM_CORES} | tee gnulinux.log
+  dependencies:
+    - checkout 
 
 build_linker:
   <<: *job_definition
   stage: linker
   script:
     - make linker -j1 | tee linker.log
+  dependencies:
+    - build_bedrock
+    - build_dromajo
+    - build_gnu
 
 build_perch:
   <<: *job_definition
   stage: perch
   script:
     - make perch -j1 | tee perch.log
+  dependencies:
+    - build_linker
 
 build_bootrom:
   <<: *job_definition
   stage: prog
   script:
     - make bootrom -j1 | tee bootrom.log
+  dependencies:
+    - build_perch
 
 build_bp-demos:
   <<: *job_definition
   stage: prog
   script:
     - make bp-demos -j1 | tee bp-demos.log
+  dependencies:
+    - build_perch
 
 build_bp-tests:
   <<: *job_definition
   stage: prog
   script:
     - make bp-tests -j1 | tee bp-tests.log
+  dependencies:
+    - build_perch
 
 build_riscv-tests:
   <<: *job_definition
   stage: prog
   script:
     - make riscv-tests -j1 | tee riscv-tests.log
+  dependencies:
+    - build_perch
 
 build_coremark:
   <<: *job_definition
   stage: prog
   script:
     - make coremark -j1 | tee coremark.log
+  dependencies:
+    - build_perch
 
 build_beebs:
   <<: *job_definition
   stage: prog
   script:
     - make beebs -j1 | tee beebs.log
+  dependencies:
+    - build_perch
 
 zip_tools:
   stage: zip
