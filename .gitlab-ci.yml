@@ -1,11 +1,10 @@
 variables:
   GIT_STRATEGY: fetch
-  GIT_SUBMODULE_STRATEGY: none
-
-default:
-  image: registry.gitlab.com/dpetrisko/black-parrot-sdk:latest
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_UPDATE_FLAGS: --jobs ${CI_NUM_CORES}
 
 stages:
+  - checkout
   - tools
   - linker
   - perch
@@ -16,8 +15,6 @@ stages:
 .job_template: &job_definition
   only:
     - pushes
-  before_script:
-    - make checkout -j ${CI_NUM_CORES} | tee checkout.log
   artifacts:
     when: always
     paths:
@@ -30,77 +27,103 @@ stages:
       - bedrock/
     expire_in: "1 day"
 
+checkout:
+  <<: *job_definition
+  stage: checkout
+  script:
+    - make bleach_all
+    - make checkout -j ${CI_NUM_CORES} | tee checkout.log
+
 build_bedrock:
   <<: *job_definition
   stage: tools
   script:
     - make bedrock -j1 | tee bedrock.log
+  dependencies:
+    - checkout 
 
 build_dromajo:
   <<: *job_definition
   stage: tools
   script:
     - make dromajo -j ${CI_NUM_CORES} | tee dromajo.log
+  dependencies:
+    - checkout 
 
-# Clean the gnu toolchain first, for some reason caching is not great about it
-# Don't know why the job says failure, everything seems to be fine
 build_gnu:
   <<: *job_definition
-  allow_failure: true
   stage: tools
   script:
-    - git submodule deinit -f riscv-gnu-toolchain
-    - make checkout
     - make gnudramfs -j ${CI_NUM_CORES} | tee gnudramfs.log
     - make gnulinux -j ${CI_NUM_CORES} | tee gnulinux.log
+  dependencies:
+    - checkout 
 
 build_linker:
   <<: *job_definition
   stage: linker
   script:
     - make linker -j1 | tee linker.log
+  dependencies:
+    - build_bedrock
+    - build_dromajo
+    - build_gnu
 
 build_perch:
   <<: *job_definition
   stage: perch
   script:
     - make perch -j1 | tee perch.log
+  dependencies:
+    - build_linker
 
 build_bootrom:
   <<: *job_definition
   stage: prog
   script:
     - make bootrom -j1 | tee bootrom.log
+  dependencies:
+    - build_perch
 
 build_bp-demos:
   <<: *job_definition
   stage: prog
   script:
     - make bp-demos -j1 | tee bp-demos.log
+  dependencies:
+    - build_perch
 
 build_bp-tests:
   <<: *job_definition
   stage: prog
   script:
     - make bp-tests -j1 | tee bp-tests.log
+  dependencies:
+    - build_perch
 
 build_riscv-tests:
   <<: *job_definition
   stage: prog
   script:
     - make riscv-tests -j1 | tee riscv-tests.log
+  dependencies:
+    - build_perch
 
 build_coremark:
   <<: *job_definition
   stage: prog
   script:
     - make coremark -j1 | tee coremark.log
+  dependencies:
+    - build_perch
 
 build_beebs:
   <<: *job_definition
   stage: prog
   script:
     - make beebs -j1 | tee beebs.log
+  dependencies:
+    - build_perch
 
 zip_tools:
   stage: zip
@@ -142,7 +165,7 @@ publish_tag:
   script:
     - gh config set prompt disabled
     - if [ "$CI_RELEASE_TAG" == "" ]; then echo "Please set CI_RELEASE_TAG"; exit 1; fi
-    - gh release create v0.1-alpha tools.tar.gz prog.tar.gz --repo black-parrot-sdk/black-parrot-sdk
+    - gh release create ${CI_RELEASE_TAG} tools.tar.gz prog.tar.gz --repo black-parrot-sdk/black-parrot-sdk
   dependencies:
     - zip_tools
     - zip_prog
