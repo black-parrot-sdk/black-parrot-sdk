@@ -85,3 +85,9 @@
 [submodule "yocto"]
 	path = yocto
 	url = https://github.com/black-parrot-sdk/bp-yocto.git
+[submodule "wolfssl"]
+	path = wolfssl
+	url = https://github.com/black-parrot-sdk/wolfssl.git
+[submodule "lwip"]
+	path = lwip
+	url = https://github.com/black-parrot-sdk/lwip.git
