@@ -12,6 +12,8 @@ riscvdv_dir     := $(BP_SDK_DIR)/riscv-dv
 linux_dir       := $(BP_SDK_DIR)/linux
 yocto_dir       := $(BP_SDK_DIR)/yocto
 opcodes_dir     := $(BP_SDK_DIR)/riscv-opcodes
+lwip_dir         := $(BP_SDK_DIR)/lwip
+wolfssl_dir      := $(BP_SDK_DIR)/wolfssl
 
 define submodule_test_template
 $(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); git rev-parse HEAD))
@@ -86,6 +88,13 @@ linux_build:
 yocto_build:
 	$(MAKE) -C $(yocto_dir) yocto.riscv
 
+lwip_build: $(BP_SDK_LIB_DIR)/liblwip.a
+$(BP_SDK_LIB_DIR)/liblwip.a:
+	git submodule update --init $(lwip_dir)
+	$(MAKE) -C $(lwip_dir) clean install INSTALL_DIR=$(BP_SDK_INSTALL_DIR) CROSS_COMPILE=$(CROSS_COMPILE)
+	
+
+
 .PHONY: perch bootrom bp-demos bp-tests riscv-tests beebs coremark spec2000 spec2006 riscv-dv linux yocto
 $(eval $(call submodule_test_template,perch,$(perch_dir)))
 $(eval $(call submodule_test_template,bootrom,$(bootrom_dir)))
@@ -100,6 +109,7 @@ $(eval $(call submodule_test_template,spec2017,$(spec2017_dir)))
 $(eval $(call submodule_test_template,riscv-dv,$(riscvdv_dir)))
 $(eval $(call submodule_test_template,linux,$(linux_dir)))
 $(eval $(call submodule_test_template,yocto,$(yocto_dir)))
+$(eval $(call submodule_test_template,lwip,$(lwip_dir)))
 
 .PHONY: prog_clean
 prog_clean:
