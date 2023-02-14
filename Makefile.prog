@@ -91,13 +91,13 @@ yocto_build:
 lwip_build: $(BP_SDK_LIB_DIR)/liblwip.a
 $(BP_SDK_LIB_DIR)/liblwip.a:
 	git submodule update --init $(lwip_dir)
-	$(MAKE) -C $(lwip_dir) clean install INSTALL_DIR=$(BP_SDK_INSTALL_DIR) CROSS_COMPILE=$(CROSS_COMPILE)
+	$(MAKE) -C $(lwip_dir) clean install INSTALL_DIR=$(BP_SDK_INSTALL_DIR)
 
 wolfssl_build: $(BP_SDK_LIB_DIR)/libwolfssl.a
 $(BP_SDK_LIB_DIR)/libwolfssl.a:
 	git submodule update --init $(wolfssl_dir)
 	mkdir -p $(BP_SDK_LIB_DIR) $(BP_SDK_INCLUDE_DIR)
-	$(MAKE) -C $(wolfssl_dir) -f bp_makefile INSTALL_DIR=$(BP_SDK_INSTALL_DIR) CROSS_COMPILE=$(CROSS_COMPILE)
+	$(MAKE) -C $(wolfssl_dir) -f bp_makefile INSTALL_DIR=$(BP_SDK_INSTALL_DIR)
 
 
 .PHONY: perch bootrom bp-demos bp-tests riscv-tests beebs coremark spec2000 spec2006 riscv-dv linux yocto
