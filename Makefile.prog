@@ -55,7 +55,7 @@ riscv-tests_build:
 	$(MAKE) -C $(riscv_tests_dir) clean all
 
 beebs_build:
-	cd $(beebs_dir); ./configure --host=riscv64 --with-chip=black-parrot \
+	cd $(beebs_dir); ./configure --host=riscv64 --with-chip=blackparrot \
 		--includedir=$(BP_SDK_INCLUDE_DIR) --libdir=$(BP_SDK_LIB_DIR)
 	$(MAKE) -C $(beebs_dir) clean all
 	@# TODO: We need to change to output .riscv, but the beebs makefiles are a mess

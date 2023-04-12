@@ -64,6 +64,10 @@ prog: prog_lite
 	$(MAKE) -j1 beebs
 	# Requires access to spec2000
 	#$(MAKE) spec2000
+	# Requires access to spec2006
+	#$(MAKE) spec2006
+	# Requires access to spec2017
+	#$(MAKE) spec2017
 	# Requires access to Synopsys VCS
 	#$(MAKE) riscv-dv
 	# Requires patience
