@@ -22,13 +22,13 @@ gnulinux: gnudramfs
 
 gnulinux_build:
 	cd $(gnu_dir); \
-		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64imafd --with-abi=lp64 --with-cmodel=medany --disable-gdb
+		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64imafd --with-abi=lp64 --with-cmodel=medany
 	$(MAKE) -C $(gnu_dir) linux
 	$(MAKE) -C $(gnu_dir) install
 
 gnudramfs_build:
 	cd $(gnu_dir); \
-		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64imafd --with-abi=lp64 --with-cmodel=medany --disable-gdb	
+		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64imafd --with-abi=lp64 --with-cmodel=medany
 	$(MAKE) -C $(gnu_dir)
 	$(MAKE) -C $(gnu_dir) install
 	cp $(BP_SDK_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(BP_SDK_BIN_DIR)
