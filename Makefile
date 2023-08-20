@@ -62,14 +62,16 @@ prog: prog_lite
 	$(MAKE) -j1 riscv-tests
 	$(MAKE) -j1 coremark
 	$(MAKE) -j1 beebs
+
+prog_bsg: prog
 	# Requires access to spec2000
-	#$(MAKE) spec2000
+	$(MAKE) spec2000
 	# Requires access to Synopsys VCS
-	#$(MAKE) riscv-dv
+	$(MAKE) riscv-dv
 	# Requires patience
-	#$(MAKE) linux
+	$(MAKE) linux
 	# Requires even more patience
-	#$(MAKE) yocto
+	$(MAKE) yocto
 
 sdk_clean:
 	-$(MAKE) prog_clean
