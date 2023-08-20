@@ -71,7 +71,7 @@ prog_bsg: prog
 	# Requires patience
 	$(MAKE) linux
 	# Requires even more patience
-	$(MAKE) yocto
+	#$(MAKE) yocto
 
 sdk_clean:
 	-$(MAKE) prog_clean
