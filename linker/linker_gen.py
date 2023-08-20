@@ -110,7 +110,7 @@ def print_linker(dram_base, sp):
     
       /* Have _gp point to middle of sdata/sbss to maximize displacement range */
       . = ALIGN(16);
-      _gp = . + 0x800;
+      __global_pointer$ = . + 0x800;
     
       /* Writable small data segment */
       .sdata : 
@@ -143,7 +143,7 @@ def print_linker(dram_base, sp):
     
       /* bss: Uninitialized writeable data section */
       . = .;
-      _bss_start = .;
+      __bss_start = .;
       .bss : 
       {{
         *(.bss)

@@ -16,6 +16,12 @@ export BP_SDK_UCODE_DIR       := $(BP_SDK_INSTALL_DIR)/ucode
 export BP_SDK_PROG_TOUCH_DIR  := $(BP_SDK_INSTALL_DIR)/touchfiles/prog
 export BP_SDK_TOOLS_TOUCH_DIR := $(BP_SDK_INSTALL_DIR)/touchfiles/tools
 
+## Setup CAD tools
+# If the machine you are working on is bsg_cadenv compliant, then you do not
+# need to setup the cad tools, simply put bsg_cadenv in the same root dir.
+BSG_CADENV_DIR ?= $(BP_SDK_DIR)/bsg_cadenv
+-include $(BSG_CADENV_DIR)/cadenv.mk
+
 ## Cross compilation
 export RISCV_TARGET  ?= riscv64-unknown-elf-dramfs
 export CROSS_COMPILE ?= $(RISCV_TARGET)-
