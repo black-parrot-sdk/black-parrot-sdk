@@ -63,9 +63,17 @@ prog: prog_lite
 	$(MAKE) -j1 coremark
 	$(MAKE) -j1 beebs
 
-prog_bsg: prog
+bsg_cadenv: $(BSG_CADENV_DIR)
+$(BSG_CADENV_DIR):
+	-git clone git@github.com:bespoke-silicon-group/bsg_cadenv.git $@
+
+prog_bsg: prog bsg_cadenv
 	# Requires access to spec2000
 	$(MAKE) spec2000
+	# Requires access to spec2006
+	$(MAKE) spec2006
+	# Requires access to spec2017
+	$(MAKE) spec2017
 	# Requires access to Synopsys VCS
 	$(MAKE) riscv-dv
 	# Requires patience

@@ -21,14 +21,16 @@ gnu: gnulinux
 gnulinux: gnudramfs
 
 gnulinux_build:
+	-$(MAKE) -C $(gnu_dir) -f Makefile.patch patch
 	cd $(gnu_dir); \
-		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64imafdc --with-abi=lp64d --with-cmodel=medany
+		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2
 	$(MAKE) -C $(gnu_dir) linux
 	$(MAKE) -C $(gnu_dir) install
 
 gnudramfs_build:
+	-$(MAKE) -C $(gnu_dir) -f Makefile.patch patch
 	cd $(gnu_dir); \
-		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64imafdc --with-abi=lp64d --with-cmodel=medany
+		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2
 	$(MAKE) -C $(gnu_dir)
 	$(MAKE) -C $(gnu_dir) install
 	cp $(BP_SDK_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(BP_SDK_BIN_DIR)
