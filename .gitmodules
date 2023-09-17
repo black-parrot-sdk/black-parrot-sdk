@@ -55,11 +55,6 @@
     url = https://github.com/black-parrot-sdk/bp-linux
     branch = master
     ignore = untracked
-[submodule "opensbi"]
-    path = opensbi
-    url = https://github.com/black-parrot-sdk/opensbi
-    branch = blackparrot_mods
-    ignore = untracked
 [submodule "riscv-dv"]
     path = riscv-dv
     url = https://github.com/black-parrot-sdk/riscv-dv
