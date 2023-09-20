@@ -66,8 +66,13 @@
     branch = blackparrot_mods
     ignore = untracked
 [submodule "yocto"]
-	path = yocto
+    path = yocto
     url = https://github.com/black-parrot-sdk/bp-yocto.git
+    branch = master
+    ignore = untracked
+[submodule "bp-zephyr"]
+    path = zephyr
+    url = https://github.com/black-parrot-sdk/bp-zephyr
     branch = master
     ignore = untracked
 
@@ -82,8 +87,7 @@
     branch = master
     ignore = untracked
 [submodule "spec2017"]
-	path = spec2017
-	url = https://github.com/black-parrot-sdk/spec2017.git
+    path = spec2017
+    url = https://github.com/black-parrot-sdk/spec2017.git
     branch = master
     ignore = untracked
-
