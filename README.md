@@ -26,7 +26,8 @@ Before building the SDK, refer to [the relevant section in the README on BlackPa
     make checkout # initialize submodules
     # Set whatever variables your platform requires in Makefile.platform
     #   or select a pre-configured platform from {dromajo_cosim, zynqparrot}
-    make sdk  # you can use the -j N flag to parallelize
+    # If needed, specify the PLATFORM to select a non-default platform
+    make sdk  [PLATFORM-<platform>] # you can use the -j N flag to parallelize
     make prog # only makes a subset of programs. See Makefile for the full list of commands
 
 For each suite in this directory, `make <suite>` will build the tests within and copy the resulting
