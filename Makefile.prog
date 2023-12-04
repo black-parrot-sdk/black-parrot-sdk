@@ -30,8 +30,7 @@ $(1)_manual: $(BP_SDK_LIB_DIR)/libperch.a
 	find $(2) -name "*.riscv" -exec cp {} $(BP_SDK_PROG_DIR)/$(1)/ \;
 endef
 
-perch_build: $(BP_SDK_LIB_DIR)/libperch.a
-$(BP_SDK_LIB_DIR)/libperch.a:
+perch_build:
 	git submodule update --init $(opcodes_dir)
 	cp $(opcodes_dir)/encoding.h $(BP_SDK_INCLUDE_DIR)
 	$(MAKE) -C $(perch_dir) clean perch
