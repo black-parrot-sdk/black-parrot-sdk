@@ -21,7 +21,10 @@ gnu: gnulinux
 gnulinux: gnudramfs
 
 gnulinux_build:
-	-$(MAKE) -C $(gnu_dir) -f Makefile.patch patch
+	-@cd $(gnu_dir);          git apply patches/$(gnu_dir)
+	-@cd $(gnu_dir)/binutils; git apply patches/$(gnu_dir)/binutils
+	-@cd $(gnu_dir)/gcc;      git apply patches/$(gnu_dir)/gcc
+	-@cd $(gnu_dir)/gdb;      git apply patches/$(gnu_dir)/gdb
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
 			--enable-linux --with-target-cflags="-mstrict-align -mcmodel=medany" \
@@ -30,7 +33,10 @@ gnulinux_build:
 	$(MAKE) -C $(gnu_dir) install
 
 gnudramfs_build:
-	-$(MAKE) -C $(gnu_dir) -f Makefile.patch patch
+	-@cd $(gnu_dir);          git apply patches/$(gnu_dir)
+	-@cd $(gnu_dir)/binutils; git apply patches/$(gnu_dir)/binutils
+	-@cd $(gnu_dir)/gcc;      git apply patches/$(gnu_dir)/gcc
+	-@cd $(gnu_dir)/gdb;      git apply patches/$(gnu_dir)/gdb
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
 			--disable-linux --with-target-cflags="-mstrict-align -mcmodel=medany" \

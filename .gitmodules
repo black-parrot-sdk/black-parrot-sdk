@@ -1,7 +1,6 @@
 [submodule "riscv-gnu-toolchain"]
     path = riscv-gnu-toolchain
-    url = https://github.com/black-parrot-sdk/riscv-gnu-toolchain
-    branch = blackparrot_mods
+    url = https://github.com/riscv/riscv-gnu-toolchain
     ignore = untracked
 [submodule "dromajo"]
     path = dromajo
