@@ -54,7 +54,7 @@ bedrock_build:
 	cp $(bedrock_dir)/roms/*.addr $(BP_SDK_UCODE_DIR)/
 	cp $(bedrock_dir)/roms/*.mem $(BP_SDK_UCODE_DIR)/
 
-.PHONY: gnu dromajo bedrock panic_room
+.PHONY: gnu dromajo bedrock panic_room riscv-isa-sim
 $(eval $(call submodule_tool_template,gnudramfs,$(gnudramfs_dir)))
 $(eval $(call submodule_tool_template,gnulinux,$(gnulinux_dir)))
 $(eval $(call submodule_tool_template,dromajo,$(dromajo_dir)))
@@ -63,6 +63,7 @@ $(eval $(call submodule_tool_template,bedrock,$(bedrock_dir)))
 .PHONY: tools_clean
 tools_clean:
 	rm -rf $(BP_SDK_TOOLS_TOUCH_DIR)/*
+	-$(MAKE) -C $(riscv-isa-sim) clean
 	-$(MAKE) -C $(bedrock_dir) clean
 	-$(MAKE) -C $(dromajo_dir)/build clean
 	-$(MAKE) -C $(gnu_dir) clean

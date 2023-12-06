@@ -51,7 +51,7 @@ bp-tests_build:
 	$(MAKE) -C $(bp_tests_dir) clean all
 
 riscv-tests_build:
-	cd $(riscv_tests_dir); git submodule update --init --recursive
+	#cd $(riscv_tests_dir); git submodule update --init --recursive
 	cd $(riscv_tests_dir); ./configure --target=$(RISCV_TARGET)
 	$(MAKE) -C $(riscv_tests_dir) clean all
 

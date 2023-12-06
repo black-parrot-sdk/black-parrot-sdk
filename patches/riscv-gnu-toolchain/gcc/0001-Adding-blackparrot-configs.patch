@@ -1,0 +1,319 @@
+From e6c5f46048a8eec7c3d08bfb7630ba274170c750 Mon Sep 17 00:00:00 2001
+From: Dan Petrisko <petrisko@cs.washington.edu>
+Date: Sun, 20 Aug 2023 01:19:25 -0700
+Subject: [PATCH] Adding blackparrot configs
+
+---
+ config.sub                               |  4 ++-
+ gcc/config/riscv/bsg_blackparrot.md      | 60 ++++++++++++++++++++++++++++++++
+ gcc/config/riscv/bsg_blackparrot_alt.md  | 45 ++++++++++++++++++++++++
+ gcc/config/riscv/bsg_blackparrot_alt2.md | 45 ++++++++++++++++++++++++
+ gcc/config/riscv/riscv-opts.h            |  5 ++-
+ gcc/config/riscv/riscv.cc                | 39 +++++++++++++++++++++
+ gcc/config/riscv/riscv.h                 |  3 +-
+ gcc/config/riscv/riscv.md                |  5 ++-
+ 8 files changed, 202 insertions(+), 4 deletions(-)
+ create mode 100644 gcc/config/riscv/bsg_blackparrot.md
+ create mode 100644 gcc/config/riscv/bsg_blackparrot_alt.md
+ create mode 100644 gcc/config/riscv/bsg_blackparrot_alt2.md
+
+diff --git a/config.sub b/config.sub
+index 38f3d037a78..ab248c0712a 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1749,7 +1749,7 @@ case $os in
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+ 	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
+-	     | fiwix* )
++	     | fiwix* | dramfs*)
+ 		;;
+ 	# This one is extra strict with allowed versions
+ 	sco3.2v2 | sco3.2v[4-9]* | sco5v6*)
+@@ -1787,6 +1787,8 @@ case $kernel-$os in
+ 		;;
+ 	*-eabi* | *-gnueabi*)
+ 		;;
++    elf-dramfs*)
++		;;
+ 	-*)
+ 		# Blank kernel with real OS is always fine.
+ 		;;
+diff --git a/gcc/config/riscv/bsg_blackparrot.md b/gcc/config/riscv/bsg_blackparrot.md
+new file mode 100644
+index 00000000000..7bf47e53c67
+--- /dev/null
++++ b/gcc/config/riscv/bsg_blackparrot.md
+@@ -0,0 +1,60 @@
++(define_automaton "bsg_blackparrot")
++
++;; EXE stage functional units, FPU has 3-stage pipeline
++(define_cpu_unit "bsg_blackparrot_alu" "bsg_blackparrot")
++(define_cpu_unit "bsg_blackparrot_div" "bsg_blackparrot")
++
++(define_insn_reservation "bsg_blackparrot_alu" 1
++  (and (eq_attr "tune" "bsg_blackparrot")
++       (eq_attr "type" "unknown,arith,shift,slt,multi,logical,move,nop,auipc,const"))
++  "bsg_blackparrot_alu")
++
++(define_insn_reservation "bsg_blackparrot_branch" 1
++  (and (eq_attr "tune" "bsg_blackparrot")
++       (eq_attr "type" "branch"))
++  "bsg_blackparrot_alu")
++
++(define_insn_reservation "bsg_blackparrot_jump" 1
++  (and (eq_attr "tune" "bsg_blackparrot")
++       (eq_attr "type" "jump,call"))
++  "bsg_blackparrot_alu")
++
++(define_insn_reservation "bsg_blackparrot_iload" 2
++  (and (eq_attr "tune" "bsg_blackparrot")
++       (eq_attr "type" "load"))
++  "bsg_blackparrot_alu")
++
++(define_insn_reservation "bsg_blackparrot_fload" 3
++  (and (eq_attr "tune" "bsg_blackparrot")
++       (eq_attr "type" "fpload"))
++  "bsg_blackparrot_alu")
++
++(define_insn_reservation "bsg_blackparrot_store" 1
++  (and (eq_attr "tune" "bsg_blackparrot")
++       (eq_attr "type" "store,fpstore"))
++  "bsg_blackparrot_alu")
++
++(define_insn_reservation "bsg_blackparrot_imul" 4
++  (and (eq_attr "tune" "bsg_blackparrot")
++       (eq_attr "type" "imul"))
++  "bsg_blackparrot_alu")
++
++(define_insn_reservation "bsg_blackparrot_idiv" 66
++  (and (eq_attr "tune" "bsg_blackparrot")
++       (eq_attr "type" "idiv"))
++  "bsg_blackparrot_div*66")
++
++(define_insn_reservation "bsg_blackparrot_floats_aux" 2
++  (and (eq_attr "tune" "bsg_blackparrot")
++       (eq_attr "type" "fcvt,fcmp,fmove"))
++  "bsg_blackparrot_alu")
++
++(define_insn_reservation "bsg_blackparrot_floats_fma" 5
++  (and (eq_attr "tune" "bsg_blackparrot")
++       (eq_attr "type" "fadd,fmul,fmadd"))
++  "bsg_blackparrot_alu")
++
++(define_insn_reservation "bsg_blackparrot_floats_long" 55
++  (and (eq_attr "tune" "bsg_blackparrot")
++       (eq_attr "type" "fdiv,fsqrt"))
++  "bsg_blackparrot_div*55")
+diff --git a/gcc/config/riscv/bsg_blackparrot_alt.md b/gcc/config/riscv/bsg_blackparrot_alt.md
+new file mode 100644
+index 00000000000..59c0503fb46
+--- /dev/null
++++ b/gcc/config/riscv/bsg_blackparrot_alt.md
+@@ -0,0 +1,45 @@
++(define_automaton "bsg_blackparrot_alt")
++
++;; EXE stage functional units, FPU has 3-stage pipeline
++(define_cpu_unit "bsg_blackparrot_alt_alu" "bsg_blackparrot_alt")
++(define_cpu_unit "bsg_blackparrot_alt_div" "bsg_blackparrot_alt")
++
++(define_insn_reservation "bsg_blackparrot_alt_alu" 1
++  (and (eq_attr "tune" "bsg_blackparrot_alt")
++       (eq_attr "type" "unknown,arith,shift,slt,multi,logical,move,nop,auipc,const"))
++  "bsg_blackparrot_alt_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt_branch" 1
++  (and (eq_attr "tune" "bsg_blackparrot_alt")
++       (eq_attr "type" "branch"))
++  "bsg_blackparrot_alt_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt_jump" 1
++  (and (eq_attr "tune" "bsg_blackparrot_alt")
++       (eq_attr "type" "jump,call"))
++  "bsg_blackparrot_alt_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt_load" 2
++  (and (eq_attr "tune" "bsg_blackparrot_alt")
++       (eq_attr "type" "load,fpload"))
++  "bsg_blackparrot_alt_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt_store" 1
++  (and (eq_attr "tune" "bsg_blackparrot_alt")
++       (eq_attr "type" "store,fpstore"))
++  "bsg_blackparrot_alt_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt_imul" 4
++  (and (eq_attr "tune" "bsg_blackparrot_alt")
++       (eq_attr "type" "imul"))
++  "bsg_blackparrot_alt_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt_idiv" 34
++  (and (eq_attr "tune" "bsg_blackparrot_alt")
++       (eq_attr "type" "idiv"))
++  "bsg_blackparrot_alt_div*34")
++
++(define_insn_reservation "bsg_blackparrot_alt_floats" 5
++  (and (eq_attr "tune" "bsg_blackparrot_alt")
++       (eq_attr "type" "fadd,fmul,fdiv,fcvt,fcmp,fmove"))
++  "bsg_blackparrot_alt_alu")
+diff --git a/gcc/config/riscv/bsg_blackparrot_alt2.md b/gcc/config/riscv/bsg_blackparrot_alt2.md
+new file mode 100644
+index 00000000000..d50839edf6b
+--- /dev/null
++++ b/gcc/config/riscv/bsg_blackparrot_alt2.md
+@@ -0,0 +1,45 @@
++(define_automaton "bsg_blackparrot_alt2")
++
++;; EXE stage functional units, FPU has 3-stage pipeline
++(define_cpu_unit "bsg_blackparrot_alt2_alu" "bsg_blackparrot_alt2")
++(define_cpu_unit "bsg_blackparrot_alt2_div" "bsg_blackparrot_alt2")
++
++(define_insn_reservation "bsg_blackparrot_alt2_alu" 1
++  (and (eq_attr "tune" "bsg_blackparrot_alt2")
++       (eq_attr "type" "unknown,arith,shift,slt,multi,logical,move,nop,auipc,const"))
++  "bsg_blackparrot_alt2_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt2_branch" 1
++  (and (eq_attr "tune" "bsg_blackparrot_alt2")
++       (eq_attr "type" "branch"))
++  "bsg_blackparrot_alt2_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt2_jump" 1
++  (and (eq_attr "tune" "bsg_blackparrot_alt2")
++       (eq_attr "type" "jump,call"))
++  "bsg_blackparrot_alt2_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt2_load" 3
++  (and (eq_attr "tune" "bsg_blackparrot_alt2")
++       (eq_attr "type" "load,fpload"))
++  "bsg_blackparrot_alt2_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt2_store" 1
++  (and (eq_attr "tune" "bsg_blackparrot_alt2")
++       (eq_attr "type" "store,fpstore"))
++  "bsg_blackparrot_alt2_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt2_imul" 4
++  (and (eq_attr "tune" "bsg_blackparrot_alt2")
++       (eq_attr "type" "imul"))
++  "bsg_blackparrot_alt2_alu")
++
++(define_insn_reservation "bsg_blackparrot_alt2_idiv" 34
++  (and (eq_attr "tune" "bsg_blackparrot_alt2")
++       (eq_attr "type" "idiv"))
++  "bsg_blackparrot_alt2_div*34")
++
++(define_insn_reservation "bsg_blackparrot_alt2_floats" 5
++  (and (eq_attr "tune" "bsg_blackparrot_alt2")
++       (eq_attr "type" "fadd,fmul,fdiv,fcvt,fcmp,fmove"))
++  "bsg_blackparrot_alt2_alu")
+diff --git a/gcc/config/riscv/riscv-opts.h b/gcc/config/riscv/riscv-opts.h
+index 15bb5e76854..d6a3977177c 100644
+--- a/gcc/config/riscv/riscv-opts.h
++++ b/gcc/config/riscv/riscv-opts.h
+@@ -52,7 +52,10 @@ extern enum riscv_isa_spec_class riscv_isa_spec;
+ /* Keep this list in sync with define_attr "tune" in riscv.md.  */
+ enum riscv_microarchitecture_type {
+   generic,
+-  sifive_7
++  sifive_7,
++  bsg_blackparrot,
++  bsg_blackparrot_alt,
++  bsg_blackparrot_alt2
+ };
+ extern enum riscv_microarchitecture_type riscv_microarchitecture;
+ 
+diff --git a/gcc/config/riscv/riscv.cc b/gcc/config/riscv/riscv.cc
+index 4939d9964db..85111046846 100644
+--- a/gcc/config/riscv/riscv.cc
++++ b/gcc/config/riscv/riscv.cc
+@@ -304,6 +304,42 @@ static const struct riscv_tune_param sifive_7_tune_info = {
+   true,						/* slow_unaligned_access */
+ };
+ 
++static const struct riscv_tune_param bsg_blackparrot_tune_info = {
++  {COSTS_N_INSNS (5), COSTS_N_INSNS (5)},  /* fp_add */
++  {COSTS_N_INSNS (5), COSTS_N_INSNS (5)},  /* fp_mul */
++  {COSTS_N_INSNS (20), COSTS_N_INSNS (20)},  /* fp_div */
++  {COSTS_N_INSNS (4), COSTS_N_INSNS (4)},  /* int_mul */
++  {COSTS_N_INSNS (20), COSTS_N_INSNS (20)},  /* int_div */
++  1,                       /* issue_rate */
++  2,                       /* branch_cost */
++  2,                       /* memory_cost */
++  true,                        /* slow_unaligned_access */
++};
++
++static const struct riscv_tune_param bsg_blackparrot_alt_tune_info = {
++  {COSTS_N_INSNS (5), COSTS_N_INSNS (5)},  /* fp_add */
++  {COSTS_N_INSNS (5), COSTS_N_INSNS (5)},  /* fp_mul */
++  {COSTS_N_INSNS (5), COSTS_N_INSNS (5)},  /* fp_div */
++  {COSTS_N_INSNS (4), COSTS_N_INSNS (4)},  /* int_mul */
++  {COSTS_N_INSNS (4), COSTS_N_INSNS (4)},  /* int_div */
++  1,                       /* issue_rate */
++  2,                       /* branch_cost */
++  3,                       /* memory_cost */
++  true,                        /* slow_unaligned_access */
++};
++
++static const struct riscv_tune_param bsg_blackparrot_alt2_tune_info = {
++  {COSTS_N_INSNS (5), COSTS_N_INSNS (5)},  /* fp_add */
++  {COSTS_N_INSNS (5), COSTS_N_INSNS (5)},  /* fp_mul */
++  {COSTS_N_INSNS (5), COSTS_N_INSNS (5)},  /* fp_div */
++  {COSTS_N_INSNS (4), COSTS_N_INSNS (4)},  /* int_mul */
++  {COSTS_N_INSNS (4), COSTS_N_INSNS (4)},  /* int_div */
++  1,                       /* issue_rate */
++  2,                       /* branch_cost */
++  3,                       /* memory_cost */
++  true,                        /* slow_unaligned_access */
++};
++
+ /* Costs to use when optimizing for T-HEAD c906.  */
+ static const struct riscv_tune_param thead_c906_tune_info = {
+   {COSTS_N_INSNS (4), COSTS_N_INSNS (5)}, /* fp_add */
+@@ -367,6 +403,9 @@ static const struct riscv_tune_info riscv_tune_info_table[] = {
+   { "sifive-3-series", generic, &rocket_tune_info },
+   { "sifive-5-series", generic, &rocket_tune_info },
+   { "sifive-7-series", sifive_7, &sifive_7_tune_info },
++  { "bsg_blackparrot", bsg_blackparrot, &bsg_blackparrot_tune_info },
++  { "bsg_blackparrot_alt", bsg_blackparrot_alt, &bsg_blackparrot_alt_tune_info },
++  { "bsg_blackparrot_alt2", bsg_blackparrot_alt2, &bsg_blackparrot_alt2_tune_info },
+   { "thead-c906", generic, &thead_c906_tune_info },
+   { "size", generic, &optimize_size_tune_info },
+ };
+diff --git a/gcc/config/riscv/riscv.h b/gcc/config/riscv/riscv.h
+index b3eb6abc2aa..6bf1b7be2f6 100644
+--- a/gcc/config/riscv/riscv.h
++++ b/gcc/config/riscv/riscv.h
+@@ -44,7 +44,8 @@ along with GCC; see the file COPYING3.  If not see
+ #endif
+ 
+ #ifndef RISCV_TUNE_STRING_DEFAULT
+-#define RISCV_TUNE_STRING_DEFAULT "rocket"
++//#define RISCV_TUNE_STRING_DEFAULT "rocket"
++#define RISCV_TUNE_STRING_DEFAULT "bsg_blackparrot"
+ #endif
+ 
+ extern const char *riscv_expand_arch (int argc, const char **argv);
+diff --git a/gcc/config/riscv/riscv.md b/gcc/config/riscv/riscv.md
+index c6399b1389e..a2c6a7d770f 100644
+--- a/gcc/config/riscv/riscv.md
++++ b/gcc/config/riscv/riscv.md
+@@ -254,7 +254,7 @@
+ ;; Microarchitectures we know how to tune for.
+ ;; Keep this in sync with enum riscv_microarchitecture.
+ (define_attr "tune"
+-  "generic,sifive_7"
++  "generic,sifive_7,bsg_blackparrot,bsg_blackparrot_alt,bsg_blackparrot_alt2"
+   (const (symbol_ref "((enum attr_tune) riscv_microarchitecture)")))
+ 
+ ;; Describe a user's asm statement.
+@@ -2869,3 +2869,6 @@
+ (include "pic.md")
+ (include "generic.md")
+ (include "sifive-7.md")
++(include "bsg_blackparrot.md")
++(include "bsg_blackparrot_alt.md")
++(include "bsg_blackparrot_alt2.md")
+-- 
+2.16.5
+

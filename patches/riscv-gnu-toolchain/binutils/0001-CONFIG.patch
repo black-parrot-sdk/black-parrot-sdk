@@ -1,0 +1,34 @@
+From 57a7bc8de94891a64c8331d37c582abe2a2a6711 Mon Sep 17 00:00:00 2001
+From: Dan Petrisko <petrisko@cs.washington.edu>
+Date: Sun, 20 Aug 2023 01:19:13 -0700
+Subject: [PATCH] CONFIG
+
+---
+ config.sub | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/config.sub b/config.sub
+index dba16e84c77..caebbc12acc 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1712,7 +1712,7 @@ fi
+ # Now, validate our (potentially fixed-up) OS.
+ case $os in
+ 	# Sometimes we do "kernel-libc", so those need to count as OSes.
+-	musl* | newlib* | relibc* | uclibc*)
++	musl* | newlib* | relibc* | uclibc* | dramfs*)
+ 		;;
+ 	# Likewise for "kernel-abi"
+ 	eabi* | gnueabi*)
+@@ -1792,6 +1792,8 @@ case $kernel-$os in
+ 		;;
+ 	*-eabi* | *-gnueabi*)
+ 		;;
++    elf-dramfs)
++        ;;
+ 	-*)
+ 		# Blank kernel with real OS is always fine.
+ 		;;
+-- 
+2.16.5
+

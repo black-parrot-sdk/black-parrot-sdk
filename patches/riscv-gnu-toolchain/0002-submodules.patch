@@ -1,0 +1,44 @@
+diff --git a/.gitmodules b/.gitmodules
+index 340189f..d5de3d5 100644
+--- a/.gitmodules
++++ b/.gitmodules
+@@ -9,33 +9,22 @@
+ [submodule "glibc"]
+ 	path = glibc
+ 	url = https://sourceware.org/git/glibc.git
+-[submodule "dejagnu"]
+-	path = dejagnu
+-	url = https://git.savannah.gnu.org/git/dejagnu.git
+-	branch = dejagnu-1.6.3
++#[submodule "newlib"]
++#	path = newlib
++#	url = https://sourceware.org/git/newlib-cygwin.git
++#	branch = master
+ [submodule "newlib"]
+ 	path = newlib
+-	url = https://sourceware.org/git/newlib-cygwin.git
+-	branch = master
++	url = https://github.com/bespoke-silicon-group/bsg_newlib_dramfs.git
++	branch = dramfs
+ [submodule "gdb"]
+ 	path = gdb
+ 	url = https://sourceware.org/git/binutils-gdb.git
+ 	branch = gdb-12-branch
+-[submodule "qemu"]
+-	path = qemu
+-	url = https://gitlab.com/qemu-project/qemu.git
+ [submodule "musl"]
+ 	path = musl
+ 	url = https://git.musl-libc.org/git/musl
+ 	branch = master
+-[submodule "spike"]
+-	path = spike
+-	url = https://github.com/riscv-software-src/riscv-isa-sim.git
+-	branch = master
+-[submodule "pk"]
+-	path = pk
+-	url = https://github.com/riscv-software-src/riscv-pk.git
+-	branch = master
+ [submodule "llvm"]
+ 	path = llvm
+ 	url = https://github.com/llvm/llvm-project.git
