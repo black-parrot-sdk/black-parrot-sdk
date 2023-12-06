@@ -1,43 +1,34 @@
-From e6c5f46048a8eec7c3d08bfb7630ba274170c750 Mon Sep 17 00:00:00 2001
+From 39861e95a6fbcfdbf73b96a8a86010e7e8cc1dcf Mon Sep 17 00:00:00 2001
 From: Dan Petrisko <petrisko@cs.washington.edu>
-Date: Sun, 20 Aug 2023 01:19:25 -0700
+Date: Wed, 6 Dec 2023 12:02:38 -0800
 Subject: [PATCH] Adding blackparrot configs
 
 ---
- config.sub                               |  4 ++-
+ config.sub                               |  2 ++
  gcc/config/riscv/bsg_blackparrot.md      | 60 ++++++++++++++++++++++++++++++++
  gcc/config/riscv/bsg_blackparrot_alt.md  | 45 ++++++++++++++++++++++++
  gcc/config/riscv/bsg_blackparrot_alt2.md | 45 ++++++++++++++++++++++++
+ gcc/config/riscv/riscv-cores.def         |  7 ++++
  gcc/config/riscv/riscv-opts.h            |  5 ++-
- gcc/config/riscv/riscv.cc                | 39 +++++++++++++++++++++
- gcc/config/riscv/riscv.h                 |  3 +-
+ gcc/config/riscv/riscv.cc                | 36 +++++++++++++++++++
  gcc/config/riscv/riscv.md                |  5 ++-
- 8 files changed, 202 insertions(+), 4 deletions(-)
+ 8 files changed, 203 insertions(+), 2 deletions(-)
  create mode 100644 gcc/config/riscv/bsg_blackparrot.md
  create mode 100644 gcc/config/riscv/bsg_blackparrot_alt.md
  create mode 100644 gcc/config/riscv/bsg_blackparrot_alt2.md
 
 diff --git a/config.sub b/config.sub
-index 38f3d037a78..ab248c0712a 100755
+index 38f3d037a78..dc252e6346d 100755
 --- a/config.sub
 +++ b/config.sub
-@@ -1749,7 +1749,7 @@ case $os in
- 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
- 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
- 	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
--	     | fiwix* )
-+	     | fiwix* | dramfs*)
- 		;;
- 	# This one is extra strict with allowed versions
- 	sco3.2v2 | sco3.2v[4-9]* | sco5v6*)
-@@ -1787,6 +1787,8 @@ case $kernel-$os in
- 		;;
- 	*-eabi* | *-gnueabi*)
+@@ -1712,6 +1712,8 @@ case $os in
+ 	# Likewise for "kernel-abi"
+ 	eabi* | gnueabi*)
  		;;
 +    elf-dramfs*)
-+		;;
- 	-*)
- 		# Blank kernel with real OS is always fine.
++        ;;
+ 	# VxWorks passes extra cpu info in the 4th filed.
+ 	simlinux | simwindows | spe)
  		;;
 diff --git a/gcc/config/riscv/bsg_blackparrot.md b/gcc/config/riscv/bsg_blackparrot.md
 new file mode 100644
@@ -207,8 +198,33 @@ index 00000000000..d50839edf6b
 +  (and (eq_attr "tune" "bsg_blackparrot_alt2")
 +       (eq_attr "type" "fadd,fmul,fdiv,fcvt,fcmp,fmove"))
 +  "bsg_blackparrot_alt2_alu")
+diff --git a/gcc/config/riscv/riscv-cores.def b/gcc/config/riscv/riscv-cores.def
+index 7d87ab7ce28..13c7aa8a827 100644
+--- a/gcc/config/riscv/riscv-cores.def
++++ b/gcc/config/riscv/riscv-cores.def
+@@ -37,6 +37,9 @@ RISCV_TUNE("rocket", generic, rocket_tune_info)
+ RISCV_TUNE("sifive-3-series", generic, rocket_tune_info)
+ RISCV_TUNE("sifive-5-series", generic, rocket_tune_info)
+ RISCV_TUNE("sifive-7-series", sifive_7, sifive_7_tune_info)
++RISCV_TUNE("bsg_blackparrot", bsg_blackparrot, bsg_blackparrot_tune_info)
++RISCV_TUNE("bsg_blackparrot_alt", bsg_blackparrot_alt, bsg_blackparrot_alt_tune_info)
++RISCV_TUNE("bsg_blackparrot_alt2", bsg_blackparrot_alt2, bsg_blackparrot_alt2_tune_info)
+ RISCV_TUNE("thead-c906", generic, thead_c906_tune_info)
+ RISCV_TUNE("size", generic, optimize_size_tune_info)
+ 
+@@ -73,6 +76,10 @@ RISCV_CORE("sifive-s76",      "rv64imafdc", "sifive-7-series")
+ RISCV_CORE("sifive-u54",      "rv64imafdc", "sifive-5-series")
+ RISCV_CORE("sifive-u74",      "rv64imafdc", "sifive-7-series")
+ 
++RISCV_CORE("bsg_blackparrot", "rv64imafdc", "bsg_blackparrot")
++RISCV_CORE("bsg_blackparrot_alt", "rv64imafdc", "bsg_blackparrot_alt")
++RISCV_CORE("bsg_blackparrot_alt2", "rv64imafdc", "bsg_blackparrot_alt2")
++
+ RISCV_CORE("thead-c906",      "rv64imafdc_xtheadba_xtheadbb_xtheadbs_xtheadcmo_"
+ 			      "xtheadcondmov_xtheadfmemidx_xtheadmac_"
+ 			      "xtheadmemidx_xtheadmempair_xtheadsync",
 diff --git a/gcc/config/riscv/riscv-opts.h b/gcc/config/riscv/riscv-opts.h
-index 15bb5e76854..d6a3977177c 100644
+index be8de182312..3a79ea8ea7b 100644
 --- a/gcc/config/riscv/riscv-opts.h
 +++ b/gcc/config/riscv/riscv-opts.h
 @@ -52,7 +52,10 @@ extern enum riscv_isa_spec_class riscv_isa_spec;
@@ -224,10 +240,10 @@ index 15bb5e76854..d6a3977177c 100644
  extern enum riscv_microarchitecture_type riscv_microarchitecture;
  
 diff --git a/gcc/config/riscv/riscv.cc b/gcc/config/riscv/riscv.cc
-index 4939d9964db..85111046846 100644
+index 9c626904e89..c0d0c52befe 100644
 --- a/gcc/config/riscv/riscv.cc
 +++ b/gcc/config/riscv/riscv.cc
-@@ -304,6 +304,42 @@ static const struct riscv_tune_param sifive_7_tune_info = {
+@@ -339,6 +339,42 @@ static const struct riscv_tune_param sifive_7_tune_info = {
    true,						/* slow_unaligned_access */
  };
  
@@ -270,35 +286,11 @@ index 4939d9964db..85111046846 100644
  /* Costs to use when optimizing for T-HEAD c906.  */
  static const struct riscv_tune_param thead_c906_tune_info = {
    {COSTS_N_INSNS (4), COSTS_N_INSNS (5)}, /* fp_add */
-@@ -367,6 +403,9 @@ static const struct riscv_tune_info riscv_tune_info_table[] = {
-   { "sifive-3-series", generic, &rocket_tune_info },
-   { "sifive-5-series", generic, &rocket_tune_info },
-   { "sifive-7-series", sifive_7, &sifive_7_tune_info },
-+  { "bsg_blackparrot", bsg_blackparrot, &bsg_blackparrot_tune_info },
-+  { "bsg_blackparrot_alt", bsg_blackparrot_alt, &bsg_blackparrot_alt_tune_info },
-+  { "bsg_blackparrot_alt2", bsg_blackparrot_alt2, &bsg_blackparrot_alt2_tune_info },
-   { "thead-c906", generic, &thead_c906_tune_info },
-   { "size", generic, &optimize_size_tune_info },
- };
-diff --git a/gcc/config/riscv/riscv.h b/gcc/config/riscv/riscv.h
-index b3eb6abc2aa..6bf1b7be2f6 100644
---- a/gcc/config/riscv/riscv.h
-+++ b/gcc/config/riscv/riscv.h
-@@ -44,7 +44,8 @@ along with GCC; see the file COPYING3.  If not see
- #endif
- 
- #ifndef RISCV_TUNE_STRING_DEFAULT
--#define RISCV_TUNE_STRING_DEFAULT "rocket"
-+//#define RISCV_TUNE_STRING_DEFAULT "rocket"
-+#define RISCV_TUNE_STRING_DEFAULT "bsg_blackparrot"
- #endif
- 
- extern const char *riscv_expand_arch (int argc, const char **argv);
 diff --git a/gcc/config/riscv/riscv.md b/gcc/config/riscv/riscv.md
-index c6399b1389e..a2c6a7d770f 100644
+index bc384d9aedf..ff0a18d2162 100644
 --- a/gcc/config/riscv/riscv.md
 +++ b/gcc/config/riscv/riscv.md
-@@ -254,7 +254,7 @@
+@@ -437,7 +437,7 @@
  ;; Microarchitectures we know how to tune for.
  ;; Keep this in sync with enum riscv_microarchitecture.
  (define_attr "tune"
@@ -307,13 +299,15 @@ index c6399b1389e..a2c6a7d770f 100644
    (const (symbol_ref "((enum attr_tune) riscv_microarchitecture)")))
  
  ;; Describe a user's asm statement.
-@@ -2869,3 +2869,6 @@
+@@ -3145,5 +3145,8 @@
  (include "pic.md")
  (include "generic.md")
  (include "sifive-7.md")
 +(include "bsg_blackparrot.md")
 +(include "bsg_blackparrot_alt.md")
 +(include "bsg_blackparrot_alt2.md")
+ (include "thead.md")
+ (include "vector.md")
 -- 
 2.16.5
 

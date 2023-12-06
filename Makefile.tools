@@ -5,10 +5,10 @@ dromajo_dir  :=$(BP_SDK_DIR)/dromajo
 bedrock_dir  :=$(BP_SDK_DIR)/bedrock
 
 define submodule_tool_template
-$(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); git rev-parse HEAD))
+$(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); $(GIT) rev-parse HEAD))
 $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag):
 	rm -rf $(BP_SDK_TOOLS_TOUCH_DIR)/$(1).*
-	cd $(BP_SDK_DIR); git submodule update --init --recursive $(GIT_SUBMODULE_DEPTH) $(2)
+	cd $(BP_SDK_DIR); $(GIT) submodule update --init --recursive $(GIT_SUBMODULE_DEPTH) $(2)
 	+$(MAKE) $(1)_build
 	touch $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag)
 $(1): | $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag)
@@ -21,26 +21,24 @@ gnu: gnulinux
 gnulinux: gnudramfs
 
 gnulinux_build:
-	-@cd $(gnu_dir);          git apply patches/$(gnu_dir)
-	-@cd $(gnu_dir)/binutils; git apply patches/$(gnu_dir)/binutils
-	-@cd $(gnu_dir)/gcc;      git apply patches/$(gnu_dir)/gcc
-	-@cd $(gnu_dir)/gdb;      git apply patches/$(gnu_dir)/gdb
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
-			--enable-linux --with-target-cflags="-mstrict-align -mcmodel=medany" \
-			--enable-linux --with-target-cxxflags="-mstrict-align -mcmodel=medany"
+			--enable-linux --disable-gdb --with-target-cflags="-mstrict-align -mcmodel=medany" \
+			--enable-linux --disable-gdb --with-target-cxxflags="-mstrict-align -mcmodel=medany" \
+			NEWLIB_TUPLE=riscv64-unknown-elf-dramfs
 	$(MAKE) -C $(gnu_dir) linux
 	$(MAKE) -C $(gnu_dir) install
 
 gnudramfs_build:
-	-@cd $(gnu_dir);          git apply patches/$(gnu_dir)
-	-@cd $(gnu_dir)/binutils; git apply patches/$(gnu_dir)/binutils
-	-@cd $(gnu_dir)/gcc;      git apply patches/$(gnu_dir)/gcc
-	-@cd $(gnu_dir)/gdb;      git apply patches/$(gnu_dir)/gdb
+	cd $(gnu_dir); $(GIT) apply --ignore-whitespace --ignore-space-change ../patches/riscv-gnu-toolchain/*.patch
+	cd $(gnu_dir)/binutils; $(GIT) apply --ignore-whitespace --ignore-space-change ../../patches/riscv-gnu-toolchain/binutils/*.patch
+	cd $(gnu_dir)/gcc; $(GIT) apply --ignore-whitespace --ignore-space-change ../../patches/riscv-gnu-toolchain/gcc/*.patch
+	cd $(gnu_dir)/gdb; $(GIT) apply --ignore-whitespace --ignore-space-change ../../patches/riscv-gnu-toolchain/gdb/*.patch
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
-			--disable-linux --with-target-cflags="-mstrict-align -mcmodel=medany" \
-			--disable-linux --with-target-cxxflags="-mstrict-align -mcmodel=medany"
+			--disable-linux --disable-gdb --with-target-cflags="-mstrict-align -mcmodel=medany" \
+			--disable-linux --disable-gdb --with-target-cxxflags="-mstrict-align -mcmodel=medany" \
+			NEWLIB_TUPLE=riscv64-unknown-elf-dramfs
 	$(MAKE) -C $(gnu_dir)
 	$(MAKE) -C $(gnu_dir) install
 	cp $(BP_SDK_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(BP_SDK_BIN_DIR)

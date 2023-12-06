@@ -25,6 +25,7 @@ BSG_CADENV_DIR ?= $(BP_SDK_DIR)/bsg_cadenv
 
 ## Cross compilation
 export RISCV_TARGET  ?= riscv64-unknown-elf-dramfs
+export NEWLIB_TUPLE  ?= $(RISCV_TARGET)
 export CROSS_COMPILE ?= $(RISCV_TARGET)-
 
 export PATH := $(BP_SDK_BIN_DIR):$(PATH)
