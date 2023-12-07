@@ -53,7 +53,7 @@ bp-tests_build:
 riscv-tests_build:
 	-@cd $(riscv_tests_dir);     $(GIT) apply $(BP_SDK_DIR)/patches/riscv-tests/*
 	-@cd $(riscv_tests_dir)/env; $(GIT) apply $(BP_SDK_DIR)/patches/riscv-tests/env/*
-	-@cd $(riscv_tests_dir); ./configure --target=$(RISCV_TARGET)
+	@cd $(riscv_tests_dir); ./configure --target=$(RISCV_TARGET)
 	$(MAKE) -C $(riscv_tests_dir) clean all
 
 beebs_build:

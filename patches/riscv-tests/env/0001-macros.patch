@@ -1,0 +1,20 @@
+diff --git a/p/riscv_test.h b/p/riscv_test.h
+index 7bf35cf..ff710b8 100644
+--- a/p/riscv_test.h
++++ b/p/riscv_test.h
+@@ -198,9 +198,12 @@ handle_exception:                                                       \
+         /* some unhandlable exception occurred */                       \
+   1:    ori TESTNUM, TESTNUM, 1337;                                     \
+   write_tohost:                                                         \
+-        sw TESTNUM, tohost, t5;                                         \
+-        sw zero, tohost + 4, t5;                                        \
+-        j write_tohost;                                                 \
++    mv a0, t5;                                                          \
++    .extern bp_finish;                                                  \
++    call bp_finish;                                                     \
++  /*      sw TESTNUM, tohost, t5;  */                                   \
++  /*      sw zero, tohost + 4, t5; */                                   \
++  /*      j write_tohost;          */                                   \
+ reset_vector:                                                           \
+         INIT_XREG;                                                      \
+         RISCV_MULTICORE_DISABLE;                                        \
