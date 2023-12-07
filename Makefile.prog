@@ -67,7 +67,13 @@ beebs_build:
 	@find $(beebs_dir)/src -type f -executable -exec cp {} {}.riscv \;
 
 coremark_build:
-	$(MAKE) -C $(coremark_dir)/barebones
+	-@cd $(coremark_dir); $(GIT) apply $(BP_SDK_DIR)/patches/coremark/*
+	$(MAKE) -C $(coremark_dir)/barebones -fcore_portme.mak \
+		ITERATIONS=10 \
+		PORT_CC="$(CROSS_COMPILE)gcc" \
+		PORT_LD_FLAGS="-T$(BP_SDK_LINKER_DIR)/riscv.ld -L$(BP_SDK_LIB_DIR) -Wl,--whole-archive -lperch -Wl,--no-whole-archive" \
+		PORT_CFLAGS="-I$(BP_SDK_INCLUDE_DIR)" \
+		clean coremark.riscv
 
 spec2000_build:
 	$(MAKE) -C $(spec2000_dir)

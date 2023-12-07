@@ -45,10 +45,9 @@
     ignore = untracked
 [submodule "coremark"]
     path = coremark
-    url = https://github.com/black-parrot-sdk/coremark
-    branch = blackparrot_mods
+    url = https://github.com/eembc/coremark
     ignore = untracked
-[submodule "linux"]
+[submodule "bp-linux"]
     path = linux
     url = https://github.com/black-parrot-sdk/bp-linux
     branch = master
