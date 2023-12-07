@@ -23,8 +23,9 @@ gnulinux: gnudramfs
 gnulinux_build:
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
-			--enable-linux --disable-gdb --with-target-cflags="-mstrict-align -mcmodel=medany" \
-			--enable-linux --disable-gdb --with-target-cxxflags="-mstrict-align -mcmodel=medany" \
+			--enable-linux --disable-gdb --disable-llvm --disable-multilib \
+			--with-target-cflags="-mstrict-align -mcmodel=medany" \
+			--with-target-cxxflags="-mstrict-align -mcmodel=medany" \
 			NEWLIB_TUPLE=riscv64-unknown-elf-dramfs
 	$(MAKE) -C $(gnu_dir) linux
 	$(MAKE) -C $(gnu_dir) install
@@ -34,10 +35,12 @@ gnudramfs_build:
 	cd $(gnu_dir)/binutils; $(GIT) apply --ignore-whitespace --ignore-space-change ../../patches/riscv-gnu-toolchain/binutils/*.patch
 	cd $(gnu_dir)/gcc; $(GIT) apply --ignore-whitespace --ignore-space-change ../../patches/riscv-gnu-toolchain/gcc/*.patch
 	cd $(gnu_dir)/gdb; $(GIT) apply --ignore-whitespace --ignore-space-change ../../patches/riscv-gnu-toolchain/gdb/*.patch
+	cd $(gnu_dir); $(GIT) submodule sync; $(GIT) submodule update --init --remote newlib
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
-			--disable-linux --disable-gdb --with-target-cflags="-mstrict-align -mcmodel=medany" \
-			--disable-linux --disable-gdb --with-target-cxxflags="-mstrict-align -mcmodel=medany" \
+			--disable-linux --disable-gdb --disable-llvm --disable-multilib \
+			--with-target-cflags="-mstrict-align -mcmodel=medany" \
+			--with-target-cxxflags="-mstrict-align -mcmodel=medany" \
 			NEWLIB_TUPLE=riscv64-unknown-elf-dramfs
 	$(MAKE) -C $(gnu_dir)
 	$(MAKE) -C $(gnu_dir) install
