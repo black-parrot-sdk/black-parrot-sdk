@@ -1,5 +1,5 @@
 diff --git a/p/riscv_test.h b/p/riscv_test.h
-index 7bf35cf..ff710b8 100644
+index 7bf35cf..b42a639 100644
 --- a/p/riscv_test.h
 +++ b/p/riscv_test.h
 @@ -198,9 +198,12 @@ handle_exception:                                                       \
@@ -9,8 +9,8 @@ index 7bf35cf..ff710b8 100644
 -        sw TESTNUM, tohost, t5;                                         \
 -        sw zero, tohost + 4, t5;                                        \
 -        j write_tohost;                                                 \
-+    mv a0, t5;                                                          \
 +    .extern bp_finish;                                                  \
++    li sp, 0x81000000;                                                  \
 +    call bp_finish;                                                     \
 +  /*      sw TESTNUM, tohost, t5;  */                                   \
 +  /*      sw zero, tohost + 4, t5; */                                   \

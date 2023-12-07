@@ -41,8 +41,7 @@
     ignore = untracked
 [submodule "beebs"]
     path = beebs
-    url = https://github.com/black-parrot-sdk/beebs
-    branch = blackparrot_mods
+    url = https://github.com/mageec/beebs
     ignore = untracked
 [submodule "coremark"]
     path = coremark
@@ -61,8 +60,7 @@
     ignore = untracked
 [submodule "riscv-tests"]
     path = riscv-tests
-    url = https://github.com/black-parrot-sdk/riscv-tests
-    branch = blackparrot_mods
+    url = https://github.com/riscv/riscv-tests
     ignore = untracked
 [submodule "yocto"]
     path = yocto

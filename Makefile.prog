@@ -57,9 +57,12 @@ riscv-tests_build:
 	$(MAKE) -C $(riscv_tests_dir) clean all
 
 beebs_build:
-	cd $(beebs_dir); ./configure --host=riscv64 --with-chip=blackparrot \
+	cd $(beebs_dir); ./configure --host=riscv64 --with-chip=generic \
 		--includedir=$(BP_SDK_INCLUDE_DIR) --libdir=$(BP_SDK_LIB_DIR)
-	$(MAKE) -C $(beebs_dir) clean all
+	$(MAKE) -C $(beebs_dir) clean all \
+		CC="$(CROSS_COMPILE)gcc" \
+		CFLAGS="-O2 -mabi=lp64d -march=rv64gc -mcmodel=medany" \
+		LDFLAGS="-L$(BP_SDK_LIB_DIR) -lperchbm"
 	@# TODO: We need to change to output .riscv, but the beebs makefiles are a mess
 	@find $(beebs_dir)/src -type f -executable -exec cp {} {}.riscv \;
 
