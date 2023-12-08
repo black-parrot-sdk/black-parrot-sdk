@@ -49,7 +49,7 @@ index 0000000..9bd2a82
 +all: $(addprefix generate., $(RISCVDV_TEST_LIST))
 +
 +generate.%:
-+	$(PYTHON) run.py --target=rv64imafdc --steps gen,gcc_compile --simulator vcs --iterations 1 --batch_size 1 -o out/ --gcc_opts="$(RISCV_GCC_OPTS)"  -tn $*
++	$(PYTHON) run.py --target=rv64imafdc --steps gen,gcc_compile --simulator vcs --iterations 20 --batch_size 5 -o out/ --gcc_opts="$(RISCV_GCC_OPTS)"  -tn $*
 +
 +clean:
 +	rm -rf out*
