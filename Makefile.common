@@ -5,9 +5,15 @@ export PYTHON    ?= $(if $(shell which python3),python3,python)
 export XXD       ?= xxd
 export CURL      ?= curl
 export GIT       ?= git
+export FIND      ?= find
+export CP        ?= cp
+export MKDIR     ?= mkdir
+export MV        ?= mv
+export PATCH     ?= git apply --ignore-whitespace --ignore-space-change
 
 ## Directories to install into
 export BP_SDK_PROG_DIR        := $(BP_SDK_DIR)/prog
+export BP_SDK_PATCH_DIR       := $(BP_SDK_DIR)/patches
 export BP_SDK_INSTALL_DIR     := $(BP_SDK_DIR)/install
 export BP_SDK_BIN_DIR         := $(BP_SDK_INSTALL_DIR)/bin
 export BP_SDK_LIB_DIR         := $(BP_SDK_INSTALL_DIR)/lib

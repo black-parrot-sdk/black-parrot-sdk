@@ -30,6 +30,8 @@ $(1)_manual: $(BP_SDK_LIB_DIR)/libperch.a
 	find $(2) -name "*.riscv" -exec cp {} $(BP_SDK_PROG_DIR)/$(1)/ \;
 endef
 
+PERCENT := %
+
 perch_build: $(BP_SDK_LIB_DIR)/libperch.a
 $(BP_SDK_LIB_DIR)/libperch.a:
 	$(GIT) submodule update --init $(opcodes_dir)
@@ -51,8 +53,8 @@ bp-tests_build:
 	$(MAKE) -C $(bp_tests_dir) clean all
 
 riscv-tests_build:
-	-@cd $(riscv_tests_dir);     $(GIT) apply $(BP_SDK_DIR)/patches/riscv-tests/*
-	-@cd $(riscv_tests_dir)/env; $(GIT) apply $(BP_SDK_DIR)/patches/riscv-tests/env/*
+	-@cd $(riscv_tests_dir);     $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-tests/*.patch
+	-@cd $(riscv_tests_dir)/env; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-tests/env/*.patch
 	@cd $(riscv_tests_dir); ./configure --target=$(RISCV_TARGET)
 	$(MAKE) -C $(riscv_tests_dir) clean all
 
@@ -63,16 +65,15 @@ beebs_build:
 		CC="$(CROSS_COMPILE)gcc" \
 		CFLAGS="-O2 -mabi=lp64d -march=rv64gc -mcmodel=medany" \
 		LDFLAGS="-L$(BP_SDK_LIB_DIR) -lperchbm"
-	@# TODO: We need to change to output .riscv, but the beebs makefiles are a mess
-	@find $(beebs_dir)/src -type f -executable -exec cp {} {}.riscv \;
+	$(FIND) $(beebs_dir)/src -type f -executable -exec cp {} {}.riscv \;
 
 coremark_build:
-	-@cd $(coremark_dir); $(GIT) apply $(BP_SDK_DIR)/patches/coremark/*
+	-@cd $(coremark_dir); $(PATCH) $(BP_SDK_PATCH_DIR)/coremark/*.patch
 	$(MAKE) -C $(coremark_dir)/barebones -fcore_portme.mak \
-		ITERATIONS=10 \
-		PORT_CC="$(CROSS_COMPILE)gcc" \
-		PORT_LD_FLAGS="-T$(BP_SDK_LINKER_DIR)/riscv.ld -L$(BP_SDK_LIB_DIR) -Wl,--whole-archive -lperch -Wl,--no-whole-archive" \
-		PORT_CFLAGS="-I$(BP_SDK_INCLUDE_DIR)" \
+			ITERATIONS=10 \
+			PORT_CC="$(CROSS_COMPILE)gcc" \
+			PORT_LD_FLAGS="-T$(BP_SDK_LINKER_DIR)/riscv.ld -L$(BP_SDK_LIB_DIR) -Wl,--whole-archive -lperch -Wl,--no-whole-archive" \
+			PORT_CFLAGS="-I$(BP_SDK_INCLUDE_DIR)" \
 		clean coremark.riscv
 
 spec2000_build:
@@ -85,7 +86,14 @@ spec2017_build:
 	$(MAKE) -C $(spec2017_dir)
 
 riscv-dv_build:
-	$(MAKE) -C $(riscvdv_dir)
+	-@cd $(riscvdv_dir); $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-dv/*.patch
+	$(MAKE) -C $(riscvdv_dir) \
+		RISCV_GCC=riscv64-unknown-elf-dramfs-gcc \
+		RISCV_OBJCOPY=riscv64-unknown-elf-dramfs-objcopy \
+		RISCV_GCC_OPTS="-march=rv64imafdc -mabi=lp64d -L$(BP_SDK_LIB_DIR) -Wl,--whole-archive -lperchbm -Wl,--no-whole-archive"
+	for f in $(riscvdv_dir)/out/asm_test/*.o; \
+		do [ -f "$$f" ] && $(MV) "$$f" "$${f$(PERCENT)o}riscv"; \
+	done
 
 # Default Linux build is single core and terminates immediately
 OPENSBI_NCPUS ?= 1

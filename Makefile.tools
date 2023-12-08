@@ -31,10 +31,10 @@ gnulinux_build:
 	$(MAKE) -C $(gnu_dir) install
 
 gnudramfs_build:
-	cd $(gnu_dir); $(GIT) apply --ignore-whitespace --ignore-space-change ../patches/riscv-gnu-toolchain/*.patch
-	cd $(gnu_dir)/binutils; $(GIT) apply --ignore-whitespace --ignore-space-change ../../patches/riscv-gnu-toolchain/binutils/*.patch
-	cd $(gnu_dir)/gcc; $(GIT) apply --ignore-whitespace --ignore-space-change ../../patches/riscv-gnu-toolchain/gcc/*.patch
-	cd $(gnu_dir)/gdb; $(GIT) apply --ignore-whitespace --ignore-space-change ../../patches/riscv-gnu-toolchain/gdb/*.patch
+	cd $(gnu_dir); $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/*.patch
+	cd $(gnu_dir)/binutils; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/binutils/*.patch
+	cd $(gnu_dir)/gcc; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gcc/*.patch
+	cd $(gnu_dir)/gdb; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gdb/*.patch
 	cd $(gnu_dir); $(GIT) submodule sync; $(GIT) submodule update --init --remote newlib
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \

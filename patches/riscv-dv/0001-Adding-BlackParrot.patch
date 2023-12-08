@@ -1,0 +1,112 @@
+From 575eb06c9b81f6e296520386074ce6822124c25d Mon Sep 17 00:00:00 2001
+From: Dan Petrisko <petrisko@cs.washington.edu>
+Date: Thu, 7 Dec 2023 16:49:58 -0800
+Subject: [PATCH] Adding BlackParrot
+
+---
+ Makefile                     | 37 +++++++++++++++++++++++++++++++++++++
+ run.py                       |  2 +-
+ src/riscv_asm_program_gen.sv |  9 +++++++--
+ src/riscv_instr_pkg.sv       |  2 +-
+ 4 files changed, 46 insertions(+), 4 deletions(-)
+ create mode 100644 Makefile
+
+diff --git a/Makefile b/Makefile
+new file mode 100644
+index 0000000..9bd2a82
+--- /dev/null
++++ b/Makefile
+@@ -0,0 +1,37 @@
++
++RISCVDV_TEST_LIST = \
++	riscv_arithmetic_basic_test \
++	riscv_rand_instr_test \
++	riscv_jump_stress_test \
++	riscv_loop_test \
++	riscv_rand_jump_test \
++	riscv_mmu_stress_test \
++	riscv_no_fence_test \
++	riscv_illegal_instr_test \
++	riscv_ebreak_test \
++	riscv_ebreak_debug_mode_test \
++	riscv_full_interrupt_test \
++	riscv_unaligned_load_store_test \
++	riscv_non_compressed_instr_test \
++	riscv_hint_instr_test \
++	riscv_pmp_test \
++	riscv_machine_mode_rand_test \
++	riscv_privileged_mode_rand_test \
++	riscv_invalid_csr_test \
++	riscv_rand_instr_test \
++	riscv_sfence_exception_test \
++	riscv_amo_test \
++	riscv_floating_point_arithmetic_test \
++	riscv_floating_point_rand_test \
++	riscv_floating_point_mmu_stress_test
++	#riscv_csr_test \
++	#riscv_page_table_exception_test \
++
++all: $(addprefix generate., $(RISCVDV_TEST_LIST))
++
++generate.%:
++	$(PYTHON) run.py --target=rv64imafdc --steps gen,gcc_compile --simulator vcs --iterations 1 --batch_size 1 -o out/ --gcc_opts="$(RISCV_GCC_OPTS)"  -tn $*
++
++clean:
++	rm -rf out*
++	rm -rf ucli*
+diff --git a/run.py b/run.py
+index ac32317..a6a3926 100644
+--- a/run.py
++++ b/run.py
+@@ -435,7 +435,7 @@ def gcc_compile(test_list, output_dir, isa, mabi, opts, debug_cmd):
+                 sys.exit(RET_FAIL)
+             # gcc compilation
+             cmd = ("{} -static -mcmodel=medany \
+-             -fvisibility=hidden -nostdlib \
++             -fvisibility=hidden \
+              -nostartfiles {} \
+              -I{}/user_extension \
+              -T{}/scripts/link.ld {} -o {} ".format(
+diff --git a/src/riscv_asm_program_gen.sv b/src/riscv_asm_program_gen.sv
+index 4c96924..9987310 100644
+--- a/src/riscv_asm_program_gen.sv
++++ b/src/riscv_asm_program_gen.sv
+@@ -323,6 +323,7 @@ class riscv_asm_program_gen extends uvm_object;
+     string str[$];
+     instr_stream.push_back(".include \"user_define.h\"");
+     instr_stream.push_back(".globl _start");
++    instr_stream.push_back(".globl exit");
+     instr_stream.push_back(".section .text");
+     if (cfg.disable_compressed_instr) begin
+       instr_stream.push_back(".option norvc;");
+@@ -343,8 +344,12 @@ class riscv_asm_program_gen extends uvm_object;
+   virtual function void gen_program_end(int hart);
+     if (hart == 0) begin
+       // Use write_tohost to terminate spike simulation
+-      gen_section("write_tohost", {"sw gp, tohost, t5"});
+-      gen_section("_exit", {"j write_tohost"});
++      //gen_section("write_tohost", {"sw gp, tohost, t5"});
++      //gen_section("_exit", {"j write_tohost"});
++      gen_section("write_tohost", {".extern bp_finish;"});
++      gen_section("_exit", {"li sp, 0x81000000"});
++      instr_stream.push_back("li a0, 0x0");
++      instr_stream.push_back("call bp_finish");
+     end
+   endfunction
+ 
+diff --git a/src/riscv_instr_pkg.sv b/src/riscv_instr_pkg.sv
+index 9620766..e3f0338 100644
+--- a/src/riscv_instr_pkg.sv
++++ b/src/riscv_instr_pkg.sv
+@@ -1380,7 +1380,7 @@ package riscv_instr_pkg;
+     string store_instr = (XLEN == 32) ? "sw" : "sd";
+     if (scratch inside {implemented_csr}) begin
+       // Push USP from gpr.SP onto the kernel stack
+-      instr.push_back($sformatf("addi x%0d, x%0d, -4", tp, tp));
++      instr.push_back($sformatf("addi x%0d, x%0d, %d", tp, tp, -(XLEN/8)));
+       instr.push_back($sformatf("%0s  x%0d, (x%0d)", store_instr, sp, tp));
+       // Move KSP to gpr.SP
+       instr.push_back($sformatf("add x%0d, x%0d, zero", sp, tp));
+-- 
+2.16.5
+
