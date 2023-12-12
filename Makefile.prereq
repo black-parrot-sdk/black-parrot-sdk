@@ -1,0 +1,41 @@
+prereq_dir    :=$(BP_SDK_WORK_DIR)
+python311_tag := $(BP_SDK_TOOLS_TOUCH_DIR)/python311.any
+openssl_tag   := $(BP_SDK_TOOLS_TOUCH_DIR)/openssl.any
+
+# Some additional prereqs for Centos 7
+ifneq (,$(findstring CentOS Linux release 7,$(shell $(CAT) /etc/centos-release)))
+PREREQS += $(openssl_tag)
+PREREQS += $(python311_tag)
+endif
+
+OPENSSL_VERSION := 1.1.1w
+OPENSSL := openssl-$(OPENSSL_VERSION)
+OPENSSL_URL := https://www.openssl.org/source/$(OPENSSL).tar.gz
+OPENSSL_INSTALL := $(BP_SDK_INSTALL_DIR)/openssl
+$(openssl_tag):
+	cd $(BP_SDK_WORK_DIR); \
+		$(WGET) -qO- $(OPENSSL_URL) | $(TAR) xzv
+	cd $(BP_SDK_WORK_DIR)/$(OPENSSL); \
+		CROSS_COMPILE="" ./config shared --prefix=$(OPENSSL_INSTALL) --openssldir=$(OPENSSL_INSTALL)
+	$(MAKE) -C $(BP_SDK_WORK_DIR)/$(OPENSSL)
+	$(MAKE) -C $(BP_SDK_WORK_DIR)/$(OPENSSL) install
+	touch $@
+
+PYTHON311_VERSION := 3.11.4
+PYTHON311 := Python-$(PYTHON311_VERSION)
+PYTHON311_URL := https://www.python.org/ftp/python/$(PYTHON311_VERSION)/$(PYTHON311).tgz
+$(python311_tag):
+	cd $(BP_SDK_WORK_DIR); \
+		$(WGET) -qO- $(PYTHON311_URL) | $(TAR) xzv
+	cd $(BP_SDK_WORK_DIR)/$(PYTHON311); \
+		./configure \
+			LDFLAGS="-L$(OPENSSL_INSTALL)/lib" \
+			--with-openssl=$(BP_SDK_INSTALL_DIR) \
+			--with-openssl-rpath=$(BP_SDK_LIB_DIR) \
+			--prefix=$(BP_SDK_INSTALL_DIR)
+	$(MAKE) -C $(BP_SDK_WORK_DIR)/$(PYTHON311) altinstall
+	ln -nsf $(BP_SDK_INSTALL_DIR)/bin/$(PYTHON311) $(BP_SDK_INSTALL_DIR)/bin/python3
+	touch $@
+
+prereqs: $(PREREQS)
+

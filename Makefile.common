@@ -10,13 +10,18 @@ export CP        ?= cp
 export MKDIR     ?= mkdir
 export MV        ?= mv
 export PATCH     ?= git apply --ignore-whitespace --ignore-space-change
+export TAR       ?= tar
+export WGET      ?= wget
+export CAT       ?= cat
 
 ## Directories to install into
 export BP_SDK_PROG_DIR        := $(BP_SDK_DIR)/prog
 export BP_SDK_PATCH_DIR       := $(BP_SDK_DIR)/patches
+export BP_SDK_WORK_DIR        := $(BP_SDK_DIR)/work
 export BP_SDK_INSTALL_DIR     := $(BP_SDK_DIR)/install
 export BP_SDK_BIN_DIR         := $(BP_SDK_INSTALL_DIR)/bin
 export BP_SDK_LIB_DIR         := $(BP_SDK_INSTALL_DIR)/lib
+export BP_SDK_LIB64_DIR       := $(BP_SDK_INSTALL_DIR)/lib64
 export BP_SDK_INCLUDE_DIR     := $(BP_SDK_INSTALL_DIR)/include
 export BP_SDK_LINKER_DIR      := $(BP_SDK_INSTALL_DIR)/linker
 export BP_SDK_UCODE_DIR       := $(BP_SDK_INSTALL_DIR)/ucode

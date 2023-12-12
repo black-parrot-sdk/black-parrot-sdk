@@ -1,8 +1,9 @@
-gnu_dir      :=$(BP_SDK_DIR)/riscv-gnu-toolchain
-gnudramfs_dir:=$(gnu_dir)
-gnulinux_dir :=$(gnu_dir)
-dromajo_dir  :=$(BP_SDK_DIR)/dromajo
-bedrock_dir  :=$(BP_SDK_DIR)/bedrock
+gnu_dir       :=$(BP_SDK_DIR)/riscv-gnu-toolchain
+gnudramfs_dir :=$(gnu_dir)
+gnulinux_dir  :=$(gnu_dir)
+qemu_dir      :=$(gnu_dir)/qemu
+dromajo_dir   :=$(BP_SDK_DIR)/dromajo
+bedrock_dir   :=$(BP_SDK_DIR)/bedrock
 
 define submodule_tool_template
 $(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); $(GIT) rev-parse HEAD))
@@ -23,7 +24,7 @@ gnulinux: gnudramfs
 gnulinux_build:
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
-			--enable-linux --disable-gdb --disable-llvm \
+			--enable-linux --disable-gdb --disable-llvm --enable-qemu-system \
 			--with-target-cflags="-mstrict-align -mcmodel=medany" \
 			--with-target-cxxflags="-mstrict-align -mcmodel=medany" \
 			NEWLIB_TUPLE=riscv64-unknown-elf-dramfs
@@ -46,6 +47,17 @@ gnudramfs_build:
 	$(MAKE) -C $(gnu_dir) install
 	cp $(BP_SDK_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(BP_SDK_BIN_DIR)
 
+# Experimental, only supported on Centos 7 as written
+qemu_build:
+	mkdir -p $(qemu_dir)/build
+	cd $(qemu_dir)/build; \
+		../configure --prefix=$(BP_SDK_INSTALL_DIR) \
+		--enable-pie --disable-seccomp \
+		--target-list=riscv64-softmmu \
+		--python=$(shell which $(PYTHON))
+	cd $(qemu_dir)/build; $(MAKE)
+	cd $(qemu_dir)/build; $(MAKE) install
+
 dromajo_build:
 	mkdir -p $(dromajo_dir)/build
 	$(CMAKE) -S $(dromajo_dir) -B $(dromajo_dir)/build -DCMAKE_BUILD_TYPE=Release
@@ -66,6 +78,7 @@ $(eval $(call submodule_tool_template,gnudramfs,$(gnudramfs_dir)))
 $(eval $(call submodule_tool_template,gnulinux,$(gnulinux_dir)))
 $(eval $(call submodule_tool_template,dromajo,$(dromajo_dir)))
 $(eval $(call submodule_tool_template,bedrock,$(bedrock_dir)))
+$(eval $(call submodule_tool_template,qemu,$(gnu_dir)))
 
 .PHONY: tools_clean
 tools_clean:
