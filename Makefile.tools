@@ -23,7 +23,7 @@ gnulinux: gnudramfs
 gnulinux_build:
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
-			--enable-linux --disable-gdb --disable-llvm \
+			--enable-linux --disable-gdb --disable-llvm --enable-qemu-system \
 			--with-target-cflags="-mstrict-align -mcmodel=medany" \
 			--with-target-cxxflags="-mstrict-align -mcmodel=medany" \
 			NEWLIB_TUPLE=riscv64-unknown-elf-dramfs
