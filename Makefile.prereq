@@ -22,18 +22,19 @@ $(openssl_tag):
 	touch $@
 
 PYTHON311_VERSION := 3.11.4
-PYTHON311_DIR := Python-$(PYTHON311_VERSION)
-PYTHON311_URL := https://www.python.org/ftp/python/$(PYTHON311_VERSION)/$(PYTHON311_DIR).tgz
+PYTHON311 := Python-$(PYTHON311_VERSION)
+PYTHON311_URL := https://www.python.org/ftp/python/$(PYTHON311_VERSION)/$(PYTHON311).tgz
 $(python311_tag):
 	cd $(BP_SDK_WORK_DIR); \
 		$(WGET) -qO- $(PYTHON311_URL) | $(TAR) xzv
-	cd $(BP_SDK_WORK_DIR)/$(PYTHON311_DIR); \
+	cd $(BP_SDK_WORK_DIR)/$(PYTHON311); \
 		./configure \
 			LDFLAGS="-L$(OPENSSL_INSTALL)/lib" \
 			--with-openssl=$(BP_SDK_INSTALL_DIR) \
 			--with-openssl-rpath=$(BP_SDK_LIB_DIR) \
 			--prefix=$(BP_SDK_INSTALL_DIR)
-	$(MAKE) -C $(BP_SDK_WORK_DIR)/$(PYTHON311_DIR) altinstall
+	$(MAKE) -C $(BP_SDK_WORK_DIR)/$(PYTHON311) altinstall
+	ln -nsf $(BP_SDK_INSTALL_DIR)/bin/$(PYTHON311) $(BP_SDK_INSTALL_DIR)/bin/python3
 	touch $@
 
 prereqs: $(PREREQS)
