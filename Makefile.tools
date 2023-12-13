@@ -1,8 +1,8 @@
-gnu_dir      :=$(BP_SDK_DIR)/riscv-gnu-toolchain
-gnudramfs_dir:=$(gnu_dir)
-gnulinux_dir :=$(gnu_dir)
-dromajo_dir  :=$(BP_SDK_DIR)/dromajo
-bedrock_dir  :=$(BP_SDK_DIR)/bedrock
+gnu_dir       :=$(BP_SDK_DIR)/riscv-gnu-toolchain
+gnudramfs_dir :=$(gnu_dir)
+gnulinux_dir  :=$(gnu_dir)
+dromajo_dir   :=$(BP_SDK_DIR)/dromajo
+bedrock_dir   :=$(BP_SDK_DIR)/bedrock
 
 define submodule_tool_template
 $(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); $(GIT) rev-parse HEAD))
