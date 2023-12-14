@@ -1,0 +1,169 @@
+diff --git a/benchmarks/Makefile b/benchmarks/Makefile
+index fde4f23..8bb6e5e 100644
+--- a/benchmarks/Makefile
++++ b/benchmarks/Makefile
+@@ -43,9 +43,9 @@ bmarks = \
+ 
+ RISCV_PREFIX ?= riscv$(XLEN)-unknown-elf-
+ RISCV_GCC ?= $(RISCV_PREFIX)gcc
+-RISCV_GCC_OPTS ?= -DPREALLOCATE=1 -mcmodel=medany -static -std=gnu99 -O2 -ffast-math -fno-common -fno-builtin-printf -fno-tree-loop-distribute-patterns -march=rv$(XLEN)gcv -mabi=lp64d
++RISCV_GCC_OPTS ?= -DPREALLOCATE=1 -mcmodel=medany -static -std=gnu99 -O2 -ffast-math -fno-common -fno-builtin-printf -fno-tree-loop-distribute-patterns -march=rv$(XLEN)gcv -mabi=lp64d -I$(BP_SDK_INCLUDE_DIR)
+ RISCV_LINK ?= $(RISCV_GCC) -T $(src_dir)/common/test.ld $(incs)
+-RISCV_LINK_OPTS ?= -static -nostdlib -nostartfiles -lm -lgcc -T $(src_dir)/common/test.ld
++RISCV_LINK_OPTS ?= -static -nostdlib -nostartfiles -lm -lgcc -T $(src_dir)/common/test.ld -L$(BP_SDK_LIB_DIR) -lperchbm
+ RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.text.init --section=.data
+ RISCV_SIM ?= spike --isa=rv$(XLEN)gcv
+ 
+diff --git a/benchmarks/common/syscalls.c b/benchmarks/common/syscalls.c
+index 7a7b7fd..123faa9 100644
+--- a/benchmarks/common/syscalls.c
++++ b/benchmarks/common/syscalls.c
+@@ -7,6 +7,7 @@
+ #include <limits.h>
+ #include <sys/signal.h>
+ #include "util.h"
++#include "bp_utils.h"
+ 
+ #define SYS_write 64
+ 
+@@ -55,7 +56,8 @@ void setStats(int enable)
+ 
+ void __attribute__((noreturn)) tohost_exit(uintptr_t code)
+ {
+-  tohost = (code << 1) | 1;
++  //tohost = (code << 1) | 1;
++  bp_finish(code);
+   while (1);
+ }
+ 
+@@ -76,7 +78,8 @@ void abort()
+ 
+ void printstr(const char* s)
+ {
+-  syscall(SYS_write, 1, (uintptr_t)s, strlen(s));
++  //syscall(SYS_write, 1, (uintptr_t)s, strlen(s));
++  bp_print_string((char *)s);
+ }
+ 
+ void __attribute__((weak)) thread_entry(int cid, int nc)
+@@ -125,16 +128,17 @@ void _init(int cid, int nc)
+ #undef putchar
+ int putchar(int ch)
+ {
+-  static __thread char buf[64] __attribute__((aligned(64)));
+-  static __thread int buflen = 0;
++  //static __thread char buf[64] __attribute__((aligned(64)));
++  //static __thread int buflen = 0;
+ 
+-  buf[buflen++] = ch;
++  //buf[buflen++] = ch;
+ 
+-  if (ch == '\n' || buflen == sizeof(buf))
+-  {
+-    syscall(SYS_write, 1, (uintptr_t)buf, buflen);
+-    buflen = 0;
+-  }
++  //if (ch == '\n' || buflen == sizeof(buf))
++  //{
++  //  syscall(SYS_write, 1, (uintptr_t)buf, buflen);
++  //  buflen = 0;
++  //}
++  bp_cprint(ch);
+ 
+   return 0;
+ }
+diff --git a/env b/env
+--- a/env
++++ b/env
+@@ -1 +1 @@
+-Subproject commit 4fabfb4e0d3eacc1dc791da70e342e4b68ea7e46
++Subproject commit 4fabfb4e0d3eacc1dc791da70e342e4b68ea7e46-dirty
+diff --git a/isa/Makefile b/isa/Makefile
+index d66b901..0be1c25 100644
+--- a/isa/Makefile
++++ b/isa/Makefile
+@@ -46,23 +46,23 @@ vpath %.S $(src_dir)
+ #------------------------------------------------------------
+ # Build assembly tests
+ 
+-%.dump: %
++%.dump: %.riscv
+ 	$(RISCV_OBJDUMP) $< > $@
+ 
+-%.out: %
++%.out: %.riscv
+ 	$(RISCV_SIM) --isa=rv64gc_zfh_zicboz_svnapot_zicntr --misaligned $< 2> $@
+ 
+-%.out32: %
++%.out32: %.riscv
+ 	$(RISCV_SIM) --isa=rv32gc_zfh_zicboz_svnapot_zicntr --misaligned $< 2> $@
+ 
+ define compile_template
+ 
+ $$($(1)_p_tests): $(1)-p-%: $(1)/%.S
+-	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/p -I$(src_dir)/macros/scalar -T$(src_dir)/../env/p/link.ld $$< -o $$@
++	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/p -I$(src_dir)/macros/scalar -T$(src_dir)/../env/p/link.ld $$< -o $$@.riscv -L$(BP_SDK_LIB_DIR) -lperchbm
+ $(1)_tests += $$($(1)_p_tests)
+ 
+ $$($(1)_v_tests): $(1)-v-%: $(1)/%.S
+-	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -DENTROPY=0x$$(shell echo \$$@ | md5sum | cut -c 1-7) -std=gnu99 -O2 -I$(src_dir)/../env/v -I$(src_dir)/macros/scalar -T$(src_dir)/../env/v/link.ld $(src_dir)/../env/v/entry.S $(src_dir)/../env/v/*.c $$< -o $$@
++	$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -DENTROPY=0x$$(shell echo \$$@ | md5sum | cut -c 1-7) -std=gnu99 -O2 -I$(src_dir)/../env/v -I$(src_dir)/macros/scalar -T$(src_dir)/../env/v/link.ld $(src_dir)/../env/v/entry.S $(src_dir)/../env/v/*.c $$< -o $$@.riscv -L$(BP_SDK_LIB_DIR) -lperchbm
+ $(1)_tests += $$($(1)_v_tests)
+ 
+ $(1)_tests_dump = $$(addsuffix .dump, $$($(1)_tests))
+@@ -79,6 +79,19 @@ endif
+ 
+ endef
+ 
++ifeq ($(XLEN),64)
++$(eval $(call compile_template,rv64ui,-march=rv64g -mabi=lp64d))
++$(eval $(call compile_template,rv64uc,-march=rv64g -mabi=lp64d))
++$(eval $(call compile_template,rv64um,-march=rv64g -mabi=lp64d))
++$(eval $(call compile_template,rv64ua,-march=rv64g -mabi=lp64d))
++$(eval $(call compile_template,rv64uf,-march=rv64g -mabi=lp64d))
++$(eval $(call compile_template,rv64ud,-march=rv64g -mabi=lp64d))
++$(eval $(call compile_template,rv64uzfh,-march=rv64g_zfh -mabi=lp64d))
++$(eval $(call compile_template,rv64mzicbo,-march=rv64g_zicboz -mabi=lp64d))
++$(eval $(call compile_template,rv64si,-march=rv64g -mabi=lp64d))
++$(eval $(call compile_template,rv64ssvnapot,-march=rv64g -mabi=lp64d))
++$(eval $(call compile_template,rv64mi,-march=rv64g -mabi=lp64d))
++else
+ $(eval $(call compile_template,rv32ui,-march=rv32g -mabi=ilp32))
+ $(eval $(call compile_template,rv32uc,-march=rv32g -mabi=ilp32))
+ $(eval $(call compile_template,rv32um,-march=rv32g -mabi=ilp32))
+@@ -88,24 +101,9 @@ $(eval $(call compile_template,rv32ud,-march=rv32g -mabi=ilp32))
+ $(eval $(call compile_template,rv32uzfh,-march=rv32g_zfh -mabi=ilp32))
+ $(eval $(call compile_template,rv32si,-march=rv32g -mabi=ilp32))
+ $(eval $(call compile_template,rv32mi,-march=rv32g -mabi=ilp32))
+-ifeq ($(XLEN),64)
+-$(eval $(call compile_template,rv64ui,-march=rv64g -mabi=lp64))
+-$(eval $(call compile_template,rv64uc,-march=rv64g -mabi=lp64))
+-$(eval $(call compile_template,rv64um,-march=rv64g -mabi=lp64))
+-$(eval $(call compile_template,rv64ua,-march=rv64g -mabi=lp64))
+-$(eval $(call compile_template,rv64uf,-march=rv64g -mabi=lp64))
+-$(eval $(call compile_template,rv64ud,-march=rv64g -mabi=lp64))
+-$(eval $(call compile_template,rv64uzfh,-march=rv64g_zfh -mabi=lp64))
+-$(eval $(call compile_template,rv64mzicbo,-march=rv64g_zicboz -mabi=lp64))
+-$(eval $(call compile_template,rv64si,-march=rv64g -mabi=lp64))
+-$(eval $(call compile_template,rv64ssvnapot,-march=rv64g -mabi=lp64))
+-$(eval $(call compile_template,rv64mi,-march=rv64g -mabi=lp64))
+ endif
+ 
+-tests_dump = $(addsuffix .dump, $(tests))
+-tests_hex = $(addsuffix .hex, $(tests))
+-tests_out = $(addsuffix .out, $(filter rv64%,$(tests)))
+-tests32_out = $(addsuffix .out32, $(filter rv32%,$(tests)))
++tests_riscv = $(addsuffix .riscv, $(filter rv64%,$(tests)))
+ 
+ run: $(tests_out) $(tests32_out)
+ 
+@@ -114,7 +112,8 @@ junk += $(tests) $(tests_dump) $(tests_hex) $(tests_out) $(tests32_out)
+ #------------------------------------------------------------
+ # Default
+ 
+-all: $(tests_dump)
++$(tests_riscv): $(tests)
++all: $(tests_riscv)
+ 
+ #------------------------------------------------------------
+ # Clean up

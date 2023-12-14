@@ -4,6 +4,7 @@ lib/
 prog/
 ucode/
 bsg_cadenv/
+work/
 sdk.tar.gz
 prog.tar.gz
 riscv.ld

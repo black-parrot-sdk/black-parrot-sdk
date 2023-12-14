@@ -1,0 +1,22 @@
+diff --git a/Makefile.in b/Makefile.in
+index 7b7a4df..bfc443b 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -607,7 +607,7 @@ stamps/build-gcc-newlib-stage1: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-binuti
+ 		--disable-shared \
+ 		--disable-threads \
+ 		--disable-tls \
+-		--enable-languages=c,c++ \
++		--enable-languages=c,c++,fortran \
+ 		@with_system_zlib@ \
+ 		--with-newlib \
+ 		--with-sysroot=$(INSTALL_DIR)/$(NEWLIB_TUPLE) \
+@@ -710,7 +710,7 @@ stamps/build-gcc-newlib-stage2: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-newlib
+ 		--prefix=$(INSTALL_DIR) \
+ 		--disable-shared \
+ 		--disable-threads \
+-		--enable-languages=c,c++ \
++		--enable-languages=c,c++,fortran \
+ 		--with-pkgversion="$(GCCPKGVER)" \
+ 		@with_system_zlib@ \
+ 		--enable-tls \

@@ -1,14 +1,45 @@
+# Upstream Tools
 [submodule "riscv-gnu-toolchain"]
     path = riscv-gnu-toolchain
-    url = https://github.com/black-parrot-sdk/riscv-gnu-toolchain
-    branch = blackparrot_mods
+    url = https://github.com/riscv/riscv-gnu-toolchain
+    branch = master
     ignore = untracked
+[submodule "riscv-opcodes"]
+    path = riscv-opcodes
+    url = https://github.com/riscv/riscv-opcodes.git
+    branch = master
+    ignore = untracked
+
+# Upstream Benchmarks
+[submodule "beebs"]
+    path = beebs
+    url = https://github.com/mageec/beebs
+    branch = master
+    ignore = untracked
+[submodule "coremark"]
+    path = coremark
+    url = https://github.com/eembc/coremark
+    branch = master
+    ignore = untracked
+[submodule "riscv-dv"]
+    path = riscv-dv
+    url = https://github.com/chipsalliance/riscv-dv
+    branch = master
+    ignore = untracked
+[submodule "riscv-tests"]
+    path = riscv-tests
+    url = https://github.com/riscv/riscv-tests
+    branch = master
+    ignore = untracked
+
+# BlackParrot Tool Forks
 [submodule "dromajo"]
     path = dromajo
     url = https://github.com/bsg-external/dromajo
-    branch = blackparrot_mods
+    branch = blackparrot_mods_1208
     ignore = untracked
 
+# BlackParrot libraries
 [submodule "perch"]
     path = perch
     url = https://github.com/black-parrot-sdk/perch
@@ -24,12 +55,6 @@
     url = https://github.com/black-parrot-sdk/bootrom
     branch = master
     ignore = untracked
-[submodule "riscv-opcodes"]
-    path = riscv-opcodes
-    url = https://github.com/riscv/riscv-opcodes.git
-    branch = master
-    ignore = untracked
-
 [submodule "bp-tests"]
     path = bp-tests
     url = https://github.com/black-parrot-sdk/bp-tests
@@ -40,54 +65,38 @@
     url = https://github.com/black-parrot-sdk/bp-demos
     branch = master
     ignore = untracked
-[submodule "beebs"]
-    path = beebs
-    url = https://github.com/black-parrot-sdk/beebs
-    branch = blackparrot_mods
-    ignore = untracked
-[submodule "coremark"]
-    path = coremark
-    url = https://github.com/black-parrot-sdk/coremark
-    branch = blackparrot_mods
-    ignore = untracked
-[submodule "linux"]
-    path = linux
-    url = https://github.com/black-parrot-sdk/bp-linux
+
+# BlackParrot wrappers for benchmarks
+[submodule "bp-spec2000"]
+    path = spec2000
+    url = https://github.com/black-parrot-sdk/spec2000
     branch = master
     ignore = untracked
-[submodule "riscv-dv"]
-    path = riscv-dv
-    url = https://github.com/black-parrot-sdk/riscv-dv
-    branch = blackparrot_mods
-    ignore = untracked
-[submodule "riscv-tests"]
-    path = riscv-tests
-    url = https://github.com/black-parrot-sdk/riscv-tests
-    branch = blackparrot_mods
-    ignore = untracked
-[submodule "yocto"]
-    path = yocto
-    url = https://github.com/black-parrot-sdk/bp-yocto.git
+[submodule "bp-spec2006"]
+    path = spec2006
+    url = https://github.com/black-parrot-sdk/spec2006.git
     branch = master
     ignore = untracked
+[submodule "bp-spec2017"]
+    path = spec2017
+    url = https://github.com/black-parrot-sdk/spec2017.git
+    branch = master
+    ignore = untracked
+
+# BlackParrot wrappers for OSes
 [submodule "bp-zephyr"]
     path = zephyr
     url = https://github.com/black-parrot-sdk/bp-zephyr
     branch = master
     ignore = untracked
+[submodule "bp-linux"]
+    path = linux
+    url = https://github.com/black-parrot-sdk/bp-linux
+    branch = master
+    ignore = untracked
+[submodule "bp-yocto"]
+    path = yocto
+    url = https://github.com/black-parrot-sdk/bp-yocto.git
+    branch = master
+    ignore = untracked
 
-[submodule "spec2000"]
-    path = spec2000
-    url = https://github.com/black-parrot-sdk/spec2000
-    branch = master
-    ignore = untracked
-[submodule "spec2006"]
-    path = spec2006
-    url = https://github.com/black-parrot-sdk/spec2006.git
-    branch = master
-    ignore = untracked
-[submodule "spec2017"]
-    path = spec2017
-    url = https://github.com/black-parrot-sdk/spec2017.git
-    branch = master
-    ignore = untracked

@@ -1,0 +1,22 @@
+diff --git a/config.sub b/config.sub
+index f6ede1d0dc0..c15a6d69731 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1716,7 +1716,7 @@ fi
+ # Now, validate our (potentially fixed-up) OS.
+ case $os in
+ 	# Sometimes we do "kernel-libc", so those need to count as OSes.
+-	musl* | newlib* | relibc* | uclibc*)
++	musl* | newlib* | relibc* | uclibc* | dramfs*)
+ 		;;
+ 	# Likewise for "kernel-abi"
+ 	eabi* | gnueabi*)
+@@ -1809,6 +1809,8 @@ case $kernel-$os in
+ 		;;
+ 	*-eabi* | *-gnueabi*)
+ 		;;
++    elf-dramfs)
++        ;;
+ 	-*)
+ 		# Blank kernel with real OS is always fine.
+ 		;;

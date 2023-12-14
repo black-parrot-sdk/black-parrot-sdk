@@ -1,14 +1,15 @@
-gnu_dir      :=$(BP_SDK_DIR)/riscv-gnu-toolchain
-gnudramfs_dir:=$(gnu_dir)
-gnulinux_dir :=$(gnu_dir)
-dromajo_dir  :=$(BP_SDK_DIR)/dromajo
-bedrock_dir  :=$(BP_SDK_DIR)/bedrock
+gnu_dir       :=$(BP_SDK_DIR)/riscv-gnu-toolchain
+gnudramfs_dir :=$(gnu_dir)
+gnulinux_dir  :=$(gnu_dir)
+qemu_dir      :=$(gnu_dir)/qemu
+dromajo_dir   :=$(BP_SDK_DIR)/dromajo
+bedrock_dir   :=$(BP_SDK_DIR)/bedrock
 
 define submodule_tool_template
-$(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); git rev-parse HEAD))
+$(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); $(GIT) rev-parse HEAD))
 $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag):
 	rm -rf $(BP_SDK_TOOLS_TOUCH_DIR)/$(1).*
-	cd $(BP_SDK_DIR); git submodule update --init --recursive $(GIT_SUBMODULE_DEPTH) $(2)
+	cd $(BP_SDK_DIR); $(GIT) submodule update --init --recursive $(GIT_SUBMODULE_DEPTH) $(2)
 	+$(MAKE) $(1)_build
 	touch $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag)
 $(1): | $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag)
@@ -21,23 +22,41 @@ gnu: gnulinux
 gnulinux: gnudramfs
 
 gnulinux_build:
-	-$(MAKE) -C $(gnu_dir) -f Makefile.patch patch
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
-			--enable-linux --with-target-cflags="-mstrict-align -mcmodel=medany" \
-			--enable-linux --with-target-cxxflags="-mstrict-align -mcmodel=medany"
+			--enable-linux --disable-gdb --disable-llvm --enable-qemu-system \
+			--with-target-cflags="-mstrict-align -mcmodel=medany" \
+			--with-target-cxxflags="-mstrict-align -mcmodel=medany" \
+			NEWLIB_TUPLE=riscv64-unknown-elf-dramfs
 	$(MAKE) -C $(gnu_dir) linux
 	$(MAKE) -C $(gnu_dir) install
 
 gnudramfs_build:
-	-$(MAKE) -C $(gnu_dir) -f Makefile.patch patch
+	cd $(gnu_dir); $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/*.patch
+	cd $(gnu_dir)/binutils; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/binutils/*.patch
+	cd $(gnu_dir)/gcc; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gcc/*.patch
+	cd $(gnu_dir)/gdb; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gdb/*.patch
+	cd $(gnu_dir); $(GIT) submodule sync; $(GIT) submodule update --init --remote newlib
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
-			--disable-linux --with-target-cflags="-mstrict-align -mcmodel=medany" \
-			--disable-linux --with-target-cxxflags="-mstrict-align -mcmodel=medany"
+			--disable-linux --disable-gdb --disable-llvm \
+			--with-target-cflags="-mstrict-align -mcmodel=medany" \
+			--with-target-cxxflags="-mstrict-align -mcmodel=medany" \
+			NEWLIB_TUPLE=riscv64-unknown-elf-dramfs
 	$(MAKE) -C $(gnu_dir)
 	$(MAKE) -C $(gnu_dir) install
 	cp $(BP_SDK_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(BP_SDK_BIN_DIR)
+
+# Experimental, only supported on Centos 7 as written
+qemu_build:
+	mkdir -p $(qemu_dir)/build
+	cd $(qemu_dir)/build; \
+		../configure --prefix=$(BP_SDK_INSTALL_DIR) \
+		--enable-pie --disable-seccomp \
+		--target-list=riscv64-softmmu \
+		--python=$(shell which $(PYTHON))
+	cd $(qemu_dir)/build; $(MAKE)
+	cd $(qemu_dir)/build; $(MAKE) install
 
 dromajo_build:
 	mkdir -p $(dromajo_dir)/build
@@ -54,15 +73,17 @@ bedrock_build:
 	cp $(bedrock_dir)/roms/*.addr $(BP_SDK_UCODE_DIR)/
 	cp $(bedrock_dir)/roms/*.mem $(BP_SDK_UCODE_DIR)/
 
-.PHONY: gnu dromajo bedrock panic_room
+.PHONY: gnu dromajo bedrock panic_room riscv-isa-sim
 $(eval $(call submodule_tool_template,gnudramfs,$(gnudramfs_dir)))
 $(eval $(call submodule_tool_template,gnulinux,$(gnulinux_dir)))
 $(eval $(call submodule_tool_template,dromajo,$(dromajo_dir)))
 $(eval $(call submodule_tool_template,bedrock,$(bedrock_dir)))
+$(eval $(call submodule_tool_template,qemu,$(gnu_dir)))
 
 .PHONY: tools_clean
 tools_clean:
 	rm -rf $(BP_SDK_TOOLS_TOUCH_DIR)/*
+	-$(MAKE) -C $(riscv-isa-sim) clean
 	-$(MAKE) -C $(bedrock_dir) clean
 	-$(MAKE) -C $(dromajo_dir)/build clean
 	-$(MAKE) -C $(gnu_dir) clean
