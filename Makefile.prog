@@ -15,6 +15,7 @@ zephyr_dir      := $(BP_SDK_DIR)/zephyr
 opcodes_dir     := $(BP_SDK_DIR)/riscv-opcodes
 
 define submodule_test_template
+.PHONY: $(1)
 $(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); $(GIT) rev-parse HEAD))
 $(BP_SDK_PROG_TOUCH_DIR)/$$($(1)_tag):
 	rm -rf $(BP_SDK_PROG_TOUCH_DIR)/$(1).*
@@ -59,13 +60,11 @@ riscv-tests_build:
 	$(MAKE) -C $(riscv_tests_dir) clean all
 
 beebs_build:
+	-@cd $(beebs_dir); $(PATCH) $(BP_SDK_PATCH_DIR)/beebs/*.patch
 	cd $(beebs_dir); ./configure --host=riscv64 --with-chip=generic \
 		--includedir=$(BP_SDK_INCLUDE_DIR) --libdir=$(BP_SDK_LIB_DIR)
-	$(MAKE) -C $(beebs_dir) clean all \
-		CC="$(CROSS_COMPILE)gcc" \
-		CFLAGS="-O2 -mabi=lp64d -march=rv64gc -mcmodel=medany" \
-		LDFLAGS="-L$(BP_SDK_LIB_DIR) -lperchbm"
-	$(FIND) $(beebs_dir)/src -type f -executable -exec cp {} {}.riscv \;
+	$(MAKE) -C $(beebs_dir) clean all
+	$(FIND) $(beebs_dir)/src -type f -executable -exec $(MV) {} {}.riscv \;
 
 coremark_build:
 	-@cd $(coremark_dir); $(PATCH) $(BP_SDK_PATCH_DIR)/coremark/*.patch
@@ -108,7 +107,6 @@ yocto_build:
 zephyr_build:
 	$(MAKE) -C $(zephyr_dir) all
 
-.PHONY: perch bootrom bp-demos bp-tests riscv-tests beebs coremark spec2000 spec2006 riscv-dv linux yocto zephyr
 $(eval $(call submodule_test_template,perch,$(perch_dir)))
 $(eval $(call submodule_test_template,bootrom,$(bootrom_dir)))
 $(eval $(call submodule_test_template,bp-demos,$(bp_demos_dir)))
