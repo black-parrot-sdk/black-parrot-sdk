@@ -1,12 +1,30 @@
-prereq_dir    :=$(BP_SDK_WORK_DIR)
+prereq_dir    := $(BP_SDK_WORK_DIR)
 python311_tag := $(BP_SDK_TOOLS_TOUCH_DIR)/python311.any
 openssl_tag   := $(BP_SDK_TOOLS_TOUCH_DIR)/openssl.any
+boost_tag     := $(BP_SDK_TOOLS_TOUCH_DIR)/boost.any
 
 # Some additional prereqs for Centos 7
 ifneq (,$(findstring CentOS Linux release 7,$(shell $(CAT) /etc/centos-release)))
 PREREQS += $(openssl_tag)
 PREREQS += $(python311_tag)
 endif
+PREREQS += $(boost_tag)
+
+BOOST_VERSION := 1.82.0
+BOOST := boost_$(subst .,_,$(BOOST_VERSION))
+BOOST_URL := https://boostorg.jfrog.io/artifactory/main/release/$(BOOST_VERSION)/source/$(BOOST).tar.gz
+BOOST_INSTALL := $(BP_SDK_INSTALL_DIR)/boost
+$(boost_tag):
+	cd $(BP_SDK_WORK_DIR); \
+		$(WGET) -qO- $(BOOST_URL) | $(TAR) xzv
+	cd $(BP_SDK_WORK_DIR)/$(BOOST); \
+		./bootstrap.sh --prefix=$(BOOST_ROOT)
+	cd $(BP_SDK_WORK_DIR)/$(BOOST); \
+		./b2 --prefix=$(BOOST_ROOT) \
+			toolset=gcc \
+			cxxflags="-std=c++14" \
+			linkflags="-std=c++14" \
+			install
 
 OPENSSL_VERSION := 1.1.1w
 OPENSSL := openssl-$(OPENSSL_VERSION)
