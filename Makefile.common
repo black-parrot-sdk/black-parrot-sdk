@@ -28,6 +28,8 @@ export BP_SDK_UCODE_DIR       := $(BP_SDK_INSTALL_DIR)/ucode
 export BP_SDK_PROG_TOUCH_DIR  := $(BP_SDK_INSTALL_DIR)/touchfiles/prog
 export BP_SDK_TOOLS_TOUCH_DIR := $(BP_SDK_INSTALL_DIR)/touchfiles/tools
 
+export BOOST_ROOT             := $(BP_SDK_INSTALL_DIR)
+
 ## Setup CAD tools
 # If the machine you are working on is bsg_cadenv compliant, then you do not
 # need to setup the cad tools, simply put bsg_cadenv in the same root dir.
