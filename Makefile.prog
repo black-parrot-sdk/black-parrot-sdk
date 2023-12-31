@@ -89,7 +89,7 @@ riscv-dv_build:
 	$(MAKE) -C $(riscvdv_dir) \
 		RISCV_GCC=riscv64-unknown-elf-dramfs-gcc \
 		RISCV_OBJCOPY=riscv64-unknown-elf-dramfs-objcopy \
-		RISCV_GCC_OPTS="-march=rv64imafdc -mabi=lp64d -L$(BP_SDK_LIB_DIR) -Wl,--whole-archive -lperchbm -Wl,--no-whole-archive"
+		RISCV_GCC_OPTS="-march=rv64imafdc -mabi=lp64d -mstrict-align -L$(BP_SDK_LIB_DIR) -Wl,--whole-archive -lperchbm -Wl,--no-whole-archive"
 	for f in $(riscvdv_dir)/out/asm_test/*.o; \
 		do [ -f "$$f" ] && $(MV) "$$f" "$${f$(PERCENT)o}riscv"; \
 	done

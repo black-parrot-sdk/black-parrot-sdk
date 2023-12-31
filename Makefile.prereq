@@ -12,7 +12,7 @@ PREREQS += $(boost_tag)
 
 BOOST_VERSION := 1.82.0
 BOOST := boost_$(subst .,_,$(BOOST_VERSION))
-BOOST_URL := https://boostorg.jfrog.io/artifactory/main/release/$(BOOST_VERSION)/source/$(BOOST).tar.gz
+BOOST_URL := https://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST).tar.gz/download
 BOOST_INSTALL := $(BP_SDK_INSTALL_DIR)/boost
 $(boost_tag):
 	cd $(BP_SDK_WORK_DIR); \
@@ -25,6 +25,7 @@ $(boost_tag):
 			cxxflags="-std=c++14" \
 			linkflags="-std=c++14" \
 			install
+	touch $@
 
 OPENSSL_VERSION := 1.1.1w
 OPENSSL := openssl-$(OPENSSL_VERSION)
@@ -54,7 +55,7 @@ $(python311_tag): $(openssl_tag)
 	$(MAKE) -C $(BP_SDK_WORK_DIR)/$(PYTHON311) altinstall
 	ln -nsf $(BP_SDK_INSTALL_DIR)/bin/python3.11 $(BP_SDK_INSTALL_DIR)/bin/python3
 	ln -nsf $(BP_SDK_INSTALL_DIR)/bin/pip3.11 $(BP_SDK_INSTALL_DIR)/bin/pip3
-	$(BP_SDK_INSTALL_DIR)/bin/pip3 install orderedmultidict
+	$(BP_SDK_INSTALL_DIR)/bin/pip3 install orderedmultidict pyyaml
 	touch $@
 
 prereqs: $(PREREQS)
