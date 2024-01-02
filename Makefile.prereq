@@ -53,9 +53,6 @@ $(python311_tag): $(openssl_tag)
 			--with-openssl-rpath=auto \
 			--prefix=$(BP_SDK_INSTALL_DIR)
 	$(MAKE) -C $(BP_SDK_WORK_DIR)/$(PYTHON311) altinstall
-	ln -nsf $(BP_SDK_INSTALL_DIR)/bin/python3.11 $(BP_SDK_INSTALL_DIR)/bin/python3
-	ln -nsf $(BP_SDK_INSTALL_DIR)/bin/pip3.11 $(BP_SDK_INSTALL_DIR)/bin/pip3
-	$(BP_SDK_INSTALL_DIR)/bin/pip3 install orderedmultidict pyyaml numpy
 	touch $@
 
 prereqs: $(PREREQS)
