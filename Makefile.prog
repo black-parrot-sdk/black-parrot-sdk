@@ -13,7 +13,7 @@ linux_dir       := $(BP_SDK_DIR)/linux
 yocto_dir       := $(BP_SDK_DIR)/yocto
 zephyr_dir      := $(BP_SDK_DIR)/zephyr
 opcodes_dir     := $(BP_SDK_DIR)/riscv-opcodes
-riscv_arch_dir  := $(BP_SDK_DIR)/riscv-arch-test
+rvarch_dir      := $(BP_SDK_DIR)/riscv-arch-test
 
 define submodule_test_template
 .PHONY: $(1)
@@ -96,9 +96,10 @@ riscv-dv_build:
 	done
 
 riscv-arch_build:
-	$(MAKE) -C $(riscv_arch_dir) all
-	$(FIND) $(riscv_arch_dir)/work/riscof -name "*-01.riscv" -exec $(MV) {} $(BP_SDK_PROG_DIR)/riscv-arch/ \;
-	$(FIND) $(riscv_arch_dir)/work/riscof -name "*-01.signature" -exec $(MV) {} $(BP_SDK_PROG_DIR)/riscv-arch/ \;
+	-@cd $(rvarch_dir)/riscv-arch-test; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-arch-test/riscv-arch-test/*.patch
+	$(MAKE) -C $(rvarch_dir) all
+	$(FIND) $(rvarch_dir)/work/riscof -name "*-01.riscv" -exec $(MV) {} $(BP_SDK_PROG_DIR)/riscv-arch/ \;
+	$(FIND) $(rvarch_dir)/work/riscof -name "*-01.signature" -exec $(MV) {} $(BP_SDK_PROG_DIR)/riscv-arch/ \;
 
 # Default Linux build is single core and terminates immediately
 OPENSBI_NCPUS ?= 1
@@ -118,7 +119,7 @@ $(eval $(call submodule_test_template,bootrom,$(bootrom_dir)))
 $(eval $(call submodule_test_template,bp-demos,$(bp_demos_dir)))
 $(eval $(call submodule_test_template,bp-tests,$(bp_tests_dir)))
 $(eval $(call submodule_test_template,riscv-tests,$(riscv_tests_dir)))
-$(eval $(call submodule_test_template,riscv-arch,$(riscv_arch_dir)))
+$(eval $(call submodule_test_template,riscv-arch,$(rvarch_dir)))
 $(eval $(call submodule_test_template,beebs,$(beebs_dir)))
 $(eval $(call submodule_test_template,coremark,$(coremark_dir)))
 $(eval $(call submodule_test_template,spec2000,$(spec2000_dir)))
