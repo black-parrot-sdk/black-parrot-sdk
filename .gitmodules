@@ -82,6 +82,11 @@
     url = https://github.com/black-parrot-sdk/spec2017.git
     branch = master
     ignore = untracked
+[submodule "bp-riscv-arch-test"]
+    path = riscv-arch-test
+    url = https://github.com/black-parrot-sdk/bp-riscv-arch-test.git
+    branch = master
+    ignore = untracked
 
 # BlackParrot wrappers for OSes
 [submodule "bp-zephyr"]

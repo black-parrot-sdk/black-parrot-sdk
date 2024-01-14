@@ -1,0 +1,28 @@
+diff --git a/scripts/config.sub b/scripts/config.sub
+index 9ccf09a..efca0cd 100755
+--- a/scripts/config.sub
++++ b/scripts/config.sub
+@@ -361,10 +361,10 @@ case $basic_machine in
+ 	  basic_machine=$basic_machine-pc
+ 	  ;;
+ 	# Object if more than one company name word.
+-	*-*-*)
+-		echo Invalid configuration \`"$1"\': machine \`"$basic_machine"\' not recognized 1>&2
+-		exit 1
+-		;;
++	#*-*-*)
++	#	echo Invalid test configuration0 \`"$1"\': machine \`"$basic_machine"\' not recognized 1>&2
++	#	exit 1
++	#	;;
+ 	# Recognize the basic CPU types with company name.
+ 	580-* \
+ 	| a29k-* \
+@@ -1524,6 +1524,8 @@ case $os in
+ 		;;
+ 	-none)
+ 		;;
++    -dramfs)
++        ;;
+ 	*)
+ 		# Get rid of the `-' at the beginning of $os.
+ 		os=`echo $os | sed 's/[^-]*-//'`
