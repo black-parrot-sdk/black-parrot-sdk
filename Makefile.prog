@@ -64,7 +64,9 @@ beebs_build:
 	-@cd $(beebs_dir); $(PATCH) $(BP_SDK_PATCH_DIR)/beebs/*.patch
 	cd $(beebs_dir); ./configure --host=riscv64 --with-chip=generic \
 		--includedir=$(BP_SDK_INCLUDE_DIR) --libdir=$(BP_SDK_LIB_DIR)
-	$(MAKE) -C $(beebs_dir) clean all
+	# This is a VPATH hack inspired by
+	# https://patchwork.ozlabs.org/project/buildroot/patch/1539902241-10211-1-git-send-email-sergio.prado@e-labworks.com/
+	$(MAKE) -C $(beebs_dir) clean all VPATH=$(BP_SDK_INSTALL_DIR)/riscv64-unknown-elf-dramfs/lib/
 	$(FIND) $(beebs_dir)/src -type f -executable -exec $(MV) {} {}.riscv \;
 
 coremark_build:
