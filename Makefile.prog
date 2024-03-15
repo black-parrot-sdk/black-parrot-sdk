@@ -34,11 +34,14 @@ endef
 
 PERCENT := %
 
+WITH_MARCH ?= rv64gc
+WITH_MABI ?= lp64d
+
 perch_build: $(BP_SDK_LIB_DIR)/libperch.a
 $(BP_SDK_LIB_DIR)/libperch.a:
 	$(GIT) submodule update --init $(opcodes_dir)
 	cp $(opcodes_dir)/encoding.h $(BP_SDK_INCLUDE_DIR)
-	$(MAKE) -C $(perch_dir) clean perch
+	$(MAKE) -C $(perch_dir) clean perch WITH_MARCH=$(WITH_MARCH) WITH_MABI=$(WITH_MABI)
 	mkdir -p $(BP_SDK_LIB_DIR)
 	mkdir -p $(BP_SDK_INCLUDE_DIR)
 	cp $(perch_dir)/libperch.a $(BP_SDK_LIB_DIR)
@@ -46,7 +49,7 @@ $(BP_SDK_LIB_DIR)/libperch.a:
 	cp $(perch_dir)/*.h $(BP_SDK_INCLUDE_DIR)
 
 bootrom_build:
-	$(MAKE) -C $(bootrom_dir)
+	$(MAKE) -C $(bootrom_dir) clean bootrom.riscv WITH_MARCH=$(WITH_MARCH) WITH_MABI=$(WITH_MABI)
 
 bp-demos_build:
 	$(MAKE) -C $(bp_demos_dir) clean all
