@@ -55,7 +55,7 @@ bp-demos_build:
 	$(MAKE) -C $(bp_demos_dir) clean all
 
 bp-tests_build:
-	$(MAKE) -C $(bp_tests_dir) clean all
+	$(MAKE) -C $(bp_tests_dir) clean all WITH_MARCH=$(WITH_MARCH) WITH_MABI=$(WITH_MABI)
 
 riscv-tests_build:
 	-@cd $(riscv_tests_dir);     $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-tests/*.patch
