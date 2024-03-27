@@ -1,0 +1,56 @@
+From 8a2512b5bffbe356cb5ef245bf01fa9a90c41dfc Mon Sep 17 00:00:00 2001
+From: Dan Petrisko <petrisko@cs.washington.edu>
+Date: Tue, 26 Mar 2024 22:47:38 -0700
+Subject: [PATCH] Zeroing registers for cosim
+
+---
+ firmware/fw_base.S | 33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
+
+diff --git a/firmware/fw_base.S b/firmware/fw_base.S
+index f7763f4..54efda5 100644
+--- a/firmware/fw_base.S
++++ b/firmware/fw_base.S
+@@ -47,6 +47,39 @@
+ 	.globl _start
+ 	.globl _start_warm
+ _start:
++    /* DWP clearing registers for cosim match */
++    li x0 , 0
++    li x1 , 0
++    li x2 , 0
++    li x3 , 0
++    li x4 , 0
++    li x5 , 0
++    li x6 , 0
++    li x7 , 0
++    li x8 , 0
++    li x9 , 0
++    li x10, 0
++    li x11, 0
++    li x12, 0
++    li x13, 0
++    li x14, 0
++    li x15, 0
++    li x16, 0
++    li x17, 0
++    li x18, 0
++    li x19, 0
++    li x20, 0
++    li x21, 0
++    li x22, 0
++    li x23, 0
++    li x24, 0
++    li x25, 0
++    li x26, 0
++    li x27, 0
++    li x28, 0
++    li x29, 0
++    li x30, 0
++    li x31, 0
+ 	/* Find preferred boot HART id */
+ 	MOV_3R	s0, a0, s1, a1, s2, a2
+ 	call	fw_boot_hart
+-- 
+2.16.5
+
