@@ -40,6 +40,9 @@ BSG_CADENV_DIR ?= $(BP_SDK_DIR)/bsg_cadenv
 export RISCV_TARGET  ?= riscv64-unknown-elf-dramfs
 export NEWLIB_TUPLE  ?= $(RISCV_TARGET)
 export CROSS_COMPILE ?= $(RISCV_TARGET)-
+export RISCV_OBJDUMP ?= $(CROSS_COMPILE)objdump -d -t
+export RISCV_OBJCOPY ?= $(CROSS_COMPILE)objcopy
+export RISCV_GCC     ?= $(CROSS_COMPILE)gcc
 
 export PATH := $(BP_SDK_BIN_DIR):$(PATH)
 
