@@ -78,10 +78,14 @@ prog_bsg: prog bsg_cadenv
 	$(MAKE) spec2017
 	# Requires access to Synopsys VCS
 	$(MAKE) riscv-dv
+	# Needs opam build
+	$(MAKE) riscv-arch
 	# Requires patience
-	$(MAKE) linux
+	#$(MAKE) linux
 	# Requires even more patience
 	#$(MAKE) yocto
+	# Requires yet more patience
+	#$(MAKE) zephyr
 
 sdk_clean:
 	-$(MAKE) prog_clean
