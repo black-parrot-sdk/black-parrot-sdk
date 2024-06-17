@@ -111,8 +111,8 @@ OPENSBI_NCPUS ?= 1
 WITH_SHELL    ?= $(linux_dir)/scripts/test_info.sh
 MEM_SIZE      ?= 64
 linux_build:
-	-@cd $(linux_dir)/opensbi; $(PATCH) $(BP_SDK_PATCH_DIR)/linux/opensbi/*.patch
-	-@cd $(linux_dir)/buildroot; $(PATCH) $(BP_SDK_PATCH_DIR)/linux/buildroot/*.patch
+	cd $(linux_dir)/opensbi; $(PATCH) $(BP_SDK_PATCH_DIR)/linux/opensbi/*.patch
+	cd $(linux_dir)/buildroot; $(PATCH) $(BP_SDK_PATCH_DIR)/linux/buildroot/*.patch
 	$(MAKE) -C $(linux_dir) linux.riscv OPENSBI_NCPUS=$(OPENSBI_NCPUS) WITH_SHELL=$(WITH_SHELL) MEM_SIZE=$(MEM_SIZE)
 
 yocto_build:

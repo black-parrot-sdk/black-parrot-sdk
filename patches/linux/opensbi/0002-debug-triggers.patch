@@ -1,0 +1,15 @@
+diff --git a/lib/sbi/sbi_hart.c b/lib/sbi/sbi_hart.c
+index cd974cc..cf270e3 100644
+--- a/lib/sbi/sbi_hart.c
++++ b/lib/sbi/sbi_hart.c
+@@ -913,8 +913,8 @@ __pmp_skip:
+ 	__check_ext_csr(SBI_HART_PRIV_VER_1_12,
+ 			CSR_MCYCLECFG, SBI_HART_EXT_SMCNTRPMF);
+ 	/* Detect if hart support sdtrig (debug triggers) */
+-	__check_ext_csr(SBI_HART_PRIV_VER_UNKNOWN,
+-			CSR_TSELECT, SBI_HART_EXT_SDTRIG);
++	//__check_ext_csr(SBI_HART_PRIV_VER_UNKNOWN,
++	//		CSR_TSELECT, SBI_HART_EXT_SDTRIG);
+ 
+ #undef __check_ext_csr
+ 
