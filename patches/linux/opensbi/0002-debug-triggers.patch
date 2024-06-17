@@ -1,0 +1,444 @@
+From 596d7abd7b6c84b58b3958d4dea5a4750147cd05 Mon Sep 17 00:00:00 2001
+From: Dan Petrisko <petrisko@cs.washington.edu>
+Date: Mon, 17 Jun 2024 13:32:38 -0700
+Subject: [PATCH 2/3] debug triggers
+
+---
+ lib/sbi/sbi_dbtr.c | 176 ++++++++++++++++++++++++-----------------------------
+ 1 file changed, 78 insertions(+), 98 deletions(-)
+
+diff --git a/lib/sbi/sbi_dbtr.c b/lib/sbi/sbi_dbtr.c
+index 9c92af6..84096c2 100644
+--- a/lib/sbi/sbi_dbtr.c
++++ b/lib/sbi/sbi_dbtr.c
+@@ -1,3 +1,8 @@
++YAML:7:20: error: unknown enumerated scalar
++BreakBeforeBraces: Custom
++                   ^~~~~~
++Error reading /mnt/users/ssd0/homes/petrisko/scratch/black-parrot-sdk/linux/opensbi/.clang-format: Invalid argument
++Can't find usable .clang-format, using LLVM style
+ /*
+  * SPDX-License-Identifier: BSD-2-Clause
+  *
+@@ -19,32 +24,30 @@
+ #include <sbi/riscv_encoding.h>
+ #include <sbi/riscv_asm.h>
+ 
+-
+ /** Offset of pointer to HART's debug triggers info in scratch space */
+ static unsigned long hart_state_ptr_offset;
+ 
+-#define dbtr_get_hart_state_ptr(__scratch)				\
++#define dbtr_get_hart_state_ptr(__scratch)                                     \
+ 	sbi_scratch_read_type((__scratch), void *, hart_state_ptr_offset)
+ 
+-#define dbtr_thishart_state_ptr()				\
++#define dbtr_thishart_state_ptr()                                              \
+ 	dbtr_get_hart_state_ptr(sbi_scratch_thishart_ptr())
+ 
+-#define dbtr_set_hart_state_ptr(__scratch, __hart_state)		\
+-	sbi_scratch_write_type((__scratch), void *, hart_state_ptr_offset, \
++#define dbtr_set_hart_state_ptr(__scratch, __hart_state)                       \
++	sbi_scratch_write_type((__scratch), void *, hart_state_ptr_offset,     \
+ 			       (__hart_state))
+ 
+-#define INDEX_TO_TRIGGER(_index)					\
+-	({								\
+-		struct sbi_dbtr_trigger *__trg = NULL;			\
+-		struct sbi_dbtr_hart_triggers_state *__hs = NULL;	\
+-		__hs = dbtr_get_hart_state_ptr(sbi_scratch_thishart_ptr()); \
+-		__trg = &__hs->triggers[_index];			\
+-		(__trg);						\
++#define INDEX_TO_TRIGGER(_index)                                               \
++	({                                                                     \
++		struct sbi_dbtr_trigger *__trg = NULL;                         \
++		struct sbi_dbtr_hart_triggers_state *__hs = NULL;              \
++		__hs = dbtr_get_hart_state_ptr(sbi_scratch_thishart_ptr());    \
++		__trg = &__hs->triggers[_index];                               \
++		(__trg);                                                       \
+ 	})
+ 
+-#define for_each_trig_entry(_base, _max, _etype, _entry)		\
+-	for (int _idx = 0; _entry = ((_etype *)_base + _idx),		\
+-	     _idx < _max;						\
++#define for_each_trig_entry(_base, _max, _etype, _entry)                       \
++	for (int _idx = 0; _entry = ((_etype *)_base + _idx), _idx < _max;     \
+ 	     _idx++, _entry = ((_etype *)_base + _idx))
+ 
+ #if __riscv_xlen == 64
+@@ -56,33 +59,29 @@ static unsigned long hart_state_ptr_offset;
+ #endif
+ 
+ /* must call with hs != NULL */
+-static inline bool sbi_dbtr_shmem_disabled(
+-	struct sbi_dbtr_hart_triggers_state *hs)
+-{
++static inline bool
++sbi_dbtr_shmem_disabled(struct sbi_dbtr_hart_triggers_state *hs) {
+ 	return (hs->shmem.phys_lo == SBI_DBTR_SHMEM_INVALID_ADDR &&
+-		hs->shmem.phys_hi == SBI_DBTR_SHMEM_INVALID_ADDR
+-		? true : false);
++			hs->shmem.phys_hi == SBI_DBTR_SHMEM_INVALID_ADDR
++		    ? true
++		    : false);
+ }
+ 
+ /* must call with hs != NULL */
+-static inline void sbi_dbtr_disable_shmem(
+-	struct sbi_dbtr_hart_triggers_state *hs)
+-{
++static inline void
++sbi_dbtr_disable_shmem(struct sbi_dbtr_hart_triggers_state *hs) {
+ 	hs->shmem.phys_lo = SBI_DBTR_SHMEM_INVALID_ADDR;
+ 	hs->shmem.phys_hi = SBI_DBTR_SHMEM_INVALID_ADDR;
+ }
+ 
+ /* must call with hs which is not disabled */
+-static inline void *hart_shmem_base(
+-	struct sbi_dbtr_hart_triggers_state *hs)
+-{
+-	return ((void *)(unsigned long)DBTR_SHMEM_MAKE_PHYS(
+-			hs->shmem.phys_hi, hs->shmem.phys_lo));
++static inline void *hart_shmem_base(struct sbi_dbtr_hart_triggers_state *hs) {
++	return ((void *)(unsigned long)DBTR_SHMEM_MAKE_PHYS(hs->shmem.phys_hi,
++							    hs->shmem.phys_lo));
+ }
+ 
+ static void sbi_trigger_init(struct sbi_dbtr_trigger *trig,
+-			     unsigned long type_mask, unsigned long idx)
+-{
++			     unsigned long type_mask, unsigned long idx) {
+ 	trig->type_mask = type_mask;
+ 	trig->state = 0;
+ 	trig->tdata1 = 0;
+@@ -91,8 +90,7 @@ static void sbi_trigger_init(struct sbi_dbtr_trigger *trig,
+ 	trig->index = idx;
+ }
+ 
+-static inline struct sbi_dbtr_trigger *sbi_alloc_trigger(void)
+-{
++static inline struct sbi_dbtr_trigger *sbi_alloc_trigger(void) {
+ 	int i;
+ 	struct sbi_dbtr_trigger *f_trig = NULL;
+ 	struct sbi_dbtr_hart_triggers_state *hart_state;
+@@ -120,8 +118,7 @@ static inline struct sbi_dbtr_trigger *sbi_alloc_trigger(void)
+ 	return f_trig;
+ }
+ 
+-static inline void sbi_free_trigger(struct sbi_dbtr_trigger *trig)
+-{
++static inline void sbi_free_trigger(struct sbi_dbtr_trigger *trig) {
+ 	struct sbi_dbtr_hart_triggers_state *hart_state;
+ 
+ 	if (trig == NULL)
+@@ -139,9 +136,10 @@ static inline void sbi_free_trigger(struct sbi_dbtr_trigger *trig)
+ 	hart_state->available_trigs++;
+ }
+ 
+-int sbi_dbtr_init(struct sbi_scratch *scratch, bool coldboot)
+-{
+-	struct sbi_trap_info trap = {0};
++int sbi_dbtr_init(struct sbi_scratch *scratch, bool coldboot) {
++	return SBI_SUCCESS;
++
++	struct sbi_trap_info trap = { 0 };
+ 	unsigned long tdata1;
+ 	unsigned long val;
+ 	int i;
+@@ -173,11 +171,11 @@ int sbi_dbtr_init(struct sbi_scratch *scratch, bool coldboot)
+ 		goto _probed;
+ 
+ 	for (i = 0; i < RV_MAX_TRIGGERS; i++) {
+-		csr_write_allowed(CSR_TSELECT, (ulong)&trap, i);
++		csr_write_allowed(CSR_TSELECT, (ulong) & trap, i);
+ 		if (trap.cause)
+ 			break;
+ 
+-		val = csr_read_allowed(CSR_TSELECT, (ulong)&trap);
++		val = csr_read_allowed(CSR_TSELECT, (ulong) & trap);
+ 		if (trap.cause)
+ 			break;
+ 
+@@ -188,15 +186,14 @@ int sbi_dbtr_init(struct sbi_scratch *scratch, bool coldboot)
+ 		if (val != i)
+ 			break;
+ 
+-		val = csr_read_allowed(CSR_TINFO, (ulong)&trap);
++		val = csr_read_allowed(CSR_TINFO, (ulong) & trap);
+ 		if (trap.cause) {
+ 			/*
+ 			 * If reading tinfo caused an exception, the
+ 			 * debugger must read tdata1 to discover the
+ 			 * type.
+ 			 */
+-			tdata1 = csr_read_allowed(CSR_TDATA1,
+-						  (ulong)&trap);
++			tdata1 = csr_read_allowed(CSR_TDATA1, (ulong) & trap);
+ 			if (trap.cause)
+ 				break;
+ 
+@@ -204,8 +201,7 @@ int sbi_dbtr_init(struct sbi_scratch *scratch, bool coldboot)
+ 				break;
+ 
+ 			sbi_trigger_init(INDEX_TO_TRIGGER(i),
+-					 BIT(TDATA1_GET_TYPE(tdata1)),
+-					 i);
++					 BIT(TDATA1_GET_TYPE(tdata1)), i);
+ 			hart_state->total_trigs++;
+ 		} else {
+ 			if (val == 1)
+@@ -218,14 +214,13 @@ int sbi_dbtr_init(struct sbi_scratch *scratch, bool coldboot)
+ 
+ 	hart_state->probed = 1;
+ 
+- _probed:
++_probed:
+ 	hart_state->available_trigs = hart_state->total_trigs;
+ 
+ 	return SBI_SUCCESS;
+ }
+ 
+-int sbi_dbtr_get_total_triggers(void)
+-{
++int sbi_dbtr_get_total_triggers(void) {
+ 	struct sbi_dbtr_hart_triggers_state *hs;
+ 	struct sbi_scratch *scratch = sbi_scratch_thishart_ptr();
+ 
+@@ -247,14 +242,13 @@ int sbi_dbtr_get_total_triggers(void)
+ 
+ int sbi_dbtr_setup_shmem(const struct sbi_domain *dom, unsigned long smode,
+ 			 unsigned long shmem_phys_lo,
+-			 unsigned long shmem_phys_hi)
+-{
++			 unsigned long shmem_phys_hi) {
+ 	u32 hartid = current_hartid();
+ 	struct sbi_dbtr_hart_triggers_state *hart_state;
+ 
+ 	if (dom && !sbi_domain_is_assigned_hart(dom, hartid)) {
+ 		sbi_dprintf("%s: calling hart not assigned to this domain\n",
+-			   __func__);
++			    __func__);
+ 		return SBI_ERR_DENIED;
+ 	}
+ 
+@@ -263,8 +257,8 @@ int sbi_dbtr_setup_shmem(const struct sbi_domain *dom, unsigned long smode,
+ 		return SBI_ERR_FAILED;
+ 
+ 	/* call is to disable shared memory */
+-	if (shmem_phys_lo == SBI_DBTR_SHMEM_INVALID_ADDR
+-	    && shmem_phys_hi == SBI_DBTR_SHMEM_INVALID_ADDR) {
++	if (shmem_phys_lo == SBI_DBTR_SHMEM_INVALID_ADDR &&
++	    shmem_phys_hi == SBI_DBTR_SHMEM_INVALID_ADDR) {
+ 		sbi_dbtr_disable_shmem(hart_state);
+ 		return SBI_SUCCESS;
+ 	}
+@@ -277,9 +271,9 @@ int sbi_dbtr_setup_shmem(const struct sbi_domain *dom, unsigned long smode,
+ 	if (shmem_phys_lo & SBI_DBTR_SHMEM_ALIGN_MASK)
+ 		return SBI_ERR_INVALID_PARAM;
+ 
+-	if (dom && !sbi_domain_check_addr(dom,
+-		  DBTR_SHMEM_MAKE_PHYS(shmem_phys_hi, shmem_phys_lo), smode,
+-		  SBI_DOMAIN_READ | SBI_DOMAIN_WRITE))
++	if (dom && !sbi_domain_check_addr(
++			dom, DBTR_SHMEM_MAKE_PHYS(shmem_phys_hi, shmem_phys_lo),
++			smode, SBI_DOMAIN_READ | SBI_DOMAIN_WRITE))
+ 		return SBI_ERR_INVALID_ADDRESS;
+ 
+ 	hart_state->shmem.phys_lo = shmem_phys_lo;
+@@ -289,8 +283,7 @@ int sbi_dbtr_setup_shmem(const struct sbi_domain *dom, unsigned long smode,
+ }
+ 
+ static void dbtr_trigger_setup(struct sbi_dbtr_trigger *trig,
+-			       struct sbi_dbtr_data_msg *recv)
+-{
++			       struct sbi_dbtr_data_msg *recv) {
+ 	unsigned long tdata1;
+ 
+ 	if (!trig)
+@@ -336,16 +329,15 @@ static void dbtr_trigger_setup(struct sbi_dbtr_trigger *trig,
+ 	}
+ }
+ 
+-static inline void update_bit(unsigned long new, int nr, volatile unsigned long *addr)
+-{
++static inline void update_bit(unsigned long new, int nr,
++			      volatile unsigned long *addr) {
+ 	if (new)
+ 		__set_bit(nr, addr);
+ 	else
+ 		__clear_bit(nr, addr);
+ }
+ 
+-static void dbtr_trigger_enable(struct sbi_dbtr_trigger *trig)
+-{
++static void dbtr_trigger_enable(struct sbi_dbtr_trigger *trig) {
+ 	unsigned long state;
+ 	unsigned long tdata1;
+ 
+@@ -357,20 +349,20 @@ static void dbtr_trigger_enable(struct sbi_dbtr_trigger *trig)
+ 
+ 	switch (TDATA1_GET_TYPE(tdata1)) {
+ 	case RISCV_DBTR_TRIG_MCONTROL:
+-		update_bit(state & RV_DBTR_BIT_MASK(TS, U),
+-			   RV_DBTR_BIT(MC, U), &trig->tdata1);
+-		update_bit(state & RV_DBTR_BIT_MASK(TS, S),
+-			   RV_DBTR_BIT(MC, S), &trig->tdata1);
++		update_bit(state & RV_DBTR_BIT_MASK(TS, U), RV_DBTR_BIT(MC, U),
++			   &trig->tdata1);
++		update_bit(state & RV_DBTR_BIT_MASK(TS, S), RV_DBTR_BIT(MC, S),
++			   &trig->tdata1);
+ 		break;
+ 	case RISCV_DBTR_TRIG_MCONTROL6:
+ 		update_bit(state & RV_DBTR_BIT_MASK(TS, VU),
+ 			   RV_DBTR_BIT(MC6, VU), &trig->tdata1);
+ 		update_bit(state & RV_DBTR_BIT_MASK(TS, VS),
+ 			   RV_DBTR_BIT(MC6, VS), &trig->tdata1);
+-		update_bit(state & RV_DBTR_BIT_MASK(TS, U),
+-			   RV_DBTR_BIT(MC6, U), &trig->tdata1);
+-		update_bit(state & RV_DBTR_BIT_MASK(TS, S),
+-			   RV_DBTR_BIT(MC6, S), &trig->tdata1);
++		update_bit(state & RV_DBTR_BIT_MASK(TS, U), RV_DBTR_BIT(MC6, U),
++			   &trig->tdata1);
++		update_bit(state & RV_DBTR_BIT_MASK(TS, S), RV_DBTR_BIT(MC6, S),
++			   &trig->tdata1);
+ 		break;
+ 	default:
+ 		break;
+@@ -391,8 +383,7 @@ static void dbtr_trigger_enable(struct sbi_dbtr_trigger *trig)
+ 	csr_write(CSR_TDATA1, trig->tdata1);
+ }
+ 
+-static void dbtr_trigger_disable(struct sbi_dbtr_trigger *trig)
+-{
++static void dbtr_trigger_disable(struct sbi_dbtr_trigger *trig) {
+ 	unsigned long tdata1;
+ 
+ 	if (!trig && !(trig->state & RV_DBTR_BIT_MASK(TS, MAPPED)))
+@@ -419,8 +410,7 @@ static void dbtr_trigger_disable(struct sbi_dbtr_trigger *trig)
+ 	csr_write(CSR_TDATA1, trig->tdata1);
+ }
+ 
+-static void dbtr_trigger_clear(struct sbi_dbtr_trigger *trig)
+-{
++static void dbtr_trigger_clear(struct sbi_dbtr_trigger *trig) {
+ 	if (!trig && !(trig->state & RV_DBTR_BIT_MASK(TS, MAPPED)))
+ 		return;
+ 
+@@ -429,8 +419,7 @@ static void dbtr_trigger_clear(struct sbi_dbtr_trigger *trig)
+ 	csr_write(CSR_TDATA2, 0x0);
+ }
+ 
+-static int dbtr_trigger_supported(unsigned long type)
+-{
++static int dbtr_trigger_supported(unsigned long type) {
+ 	switch (type) {
+ 	case RISCV_DBTR_TRIG_MCONTROL:
+ 	case RISCV_DBTR_TRIG_MCONTROL6:
+@@ -442,8 +431,7 @@ static int dbtr_trigger_supported(unsigned long type)
+ 	return 0;
+ }
+ 
+-static int dbtr_trigger_valid(unsigned long type, unsigned long tdata)
+-{
++static int dbtr_trigger_valid(unsigned long type, unsigned long tdata) {
+ 	switch (type) {
+ 	case RISCV_DBTR_TRIG_MCONTROL:
+ 		if (!(tdata & RV_DBTR_BIT_MASK(MC, DMODE)) &&
+@@ -462,8 +450,7 @@ static int dbtr_trigger_valid(unsigned long type, unsigned long tdata)
+ 	return 0;
+ }
+ 
+-int sbi_dbtr_num_trig(unsigned long data, unsigned long *out)
+-{
++int sbi_dbtr_num_trig(unsigned long data, unsigned long *out) {
+ 	unsigned long type = TDATA1_GET_TYPE(data);
+ 	u32 hartid = current_hartid();
+ 	unsigned long total = 0;
+@@ -487,16 +474,15 @@ int sbi_dbtr_num_trig(unsigned long data, unsigned long *out)
+ 			total++;
+ 	}
+ 
+-	sbi_dprintf("%s: hart%d: total triggers of type %lu: %lu\n",
+-		    __func__, hartid, type, total);
++	sbi_dprintf("%s: hart%d: total triggers of type %lu: %lu\n", __func__,
++		    hartid, type, total);
+ 
+ 	*out = total;
+ 	return SBI_SUCCESS;
+ }
+ 
+-int sbi_dbtr_read_trig(unsigned long smode,
+-		       unsigned long trig_idx_base, unsigned long trig_count)
+-{
++int sbi_dbtr_read_trig(unsigned long smode, unsigned long trig_idx_base,
++		       unsigned long trig_count) {
+ 	struct sbi_dbtr_data_msg *xmit;
+ 	struct sbi_dbtr_trigger *trig;
+ 	struct sbi_dbtr_shmem_entry *entry;
+@@ -530,9 +516,8 @@ int sbi_dbtr_read_trig(unsigned long smode,
+ 	return SBI_SUCCESS;
+ }
+ 
+-int sbi_dbtr_install_trig(unsigned long smode,
+-			  unsigned long trig_count, unsigned long *out)
+-{
++int sbi_dbtr_install_trig(unsigned long smode, unsigned long trig_count,
++			  unsigned long *out) {
+ 	void *shmem_base = NULL;
+ 	struct sbi_dbtr_shmem_entry *entry;
+ 	struct sbi_dbtr_data_msg *recv;
+@@ -588,7 +573,7 @@ int sbi_dbtr_install_trig(unsigned long smode,
+ 		recv = (struct sbi_dbtr_data_msg *)(&entry->data);
+ 		xmit = (struct sbi_dbtr_id_msg *)(&entry->id);
+ 
+-		dbtr_trigger_setup(trig,  recv);
++		dbtr_trigger_setup(trig, recv);
+ 		dbtr_trigger_enable(trig);
+ 		xmit->idx = cpu_to_lle(trig->index);
+ 		sbi_hart_unmap_saddr();
+@@ -598,8 +583,7 @@ int sbi_dbtr_install_trig(unsigned long smode,
+ }
+ 
+ int sbi_dbtr_uninstall_trig(unsigned long trig_idx_base,
+-			    unsigned long trig_idx_mask)
+-{
++			    unsigned long trig_idx_mask) {
+ 	unsigned long trig_mask = trig_idx_mask << trig_idx_base;
+ 	unsigned long idx = trig_idx_base;
+ 	struct sbi_dbtr_trigger *trig;
+@@ -623,8 +607,7 @@ int sbi_dbtr_uninstall_trig(unsigned long trig_idx_base,
+ }
+ 
+ int sbi_dbtr_enable_trig(unsigned long trig_idx_base,
+-			 unsigned long trig_idx_mask)
+-{
++			 unsigned long trig_idx_mask) {
+ 	unsigned long trig_mask = trig_idx_mask << trig_idx_base;
+ 	unsigned long idx = trig_idx_base;
+ 	struct sbi_dbtr_trigger *trig;
+@@ -643,10 +626,8 @@ int sbi_dbtr_enable_trig(unsigned long trig_idx_base,
+ 	return SBI_SUCCESS;
+ }
+ 
+-int sbi_dbtr_update_trig(unsigned long smode,
+-			 unsigned long trig_idx_base,
+-			 unsigned long trig_idx_mask)
+-{
++int sbi_dbtr_update_trig(unsigned long smode, unsigned long trig_idx_base,
++			 unsigned long trig_idx_mask) {
+ 	unsigned long trig_mask = trig_idx_mask << trig_idx_base;
+ 	unsigned long idx = trig_idx_base;
+ 	struct sbi_dbtr_data_msg *recv;
+@@ -683,8 +664,7 @@ int sbi_dbtr_update_trig(unsigned long smode,
+ }
+ 
+ int sbi_dbtr_disable_trig(unsigned long trig_idx_base,
+-			  unsigned long trig_idx_mask)
+-{
++			  unsigned long trig_idx_mask) {
+ 	unsigned long trig_mask = trig_idx_mask << trig_idx_base;
+ 	unsigned long idx = trig_idx_base;
+ 	struct sbi_dbtr_trigger *trig;
+-- 
+2.16.5
+
