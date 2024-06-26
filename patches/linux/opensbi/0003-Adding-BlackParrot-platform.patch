@@ -73,7 +73,7 @@ index 0000000..f4cdf1a
 +# Some of these are guessed based on GCC compiler capabilities
 +#
 +PLATFORM_RISCV_XLEN = 64
-+PLATFORM_RISCV_ABI = lp64
++PLATFORM_RISCV_ABI = lp64d
 +PLATFORM_RISCV_ISA = rv64imafdc
 +PLATFORM_RISCV_CODE_MODEL = medany
 +
@@ -284,6 +284,12 @@ index 0000000..99d23c1
 +                int *poweroff = (int *) poweroff_ptr;
 +                *poweroff = reason;
 +            }
++            bp_console_putc('\n')
++            bp_console_putc('.')
++            bp_console_putc('.')
++            bp_console_putc('.')
++            bp_console_putc('\n')
++            while (1);
 +    }
 +}
 +
