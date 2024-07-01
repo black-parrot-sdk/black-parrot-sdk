@@ -1,0 +1,30 @@
+From c8132e917fa09373e097c602081c35381871f463 Mon Sep 17 00:00:00 2001
+From: Dan Petrisko <petrisko@cs.washington.edu>
+Date: Wed, 27 Mar 2024 01:54:55 -0700
+Subject: [PATCH] Adding cosim hack
+
+---
+ arch/riscv/mm/init.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/arch/riscv/mm/init.c b/arch/riscv/mm/init.c
+index 0798bd861dcb..f77b62cd51ba 100644
+--- a/arch/riscv/mm/init.c
++++ b/arch/riscv/mm/init.c
+@@ -806,8 +806,11 @@ static __init void set_satp_mode(uintptr_t dtb_pa)
+ 	identity_satp = PFN_DOWN((uintptr_t)&early_pg_dir) | satp_mode;
+ 
+ 	local_flush_tlb_all();
+-	csr_write(CSR_SATP, identity_satp);
+-	hw_satp = csr_swap(CSR_SATP, 0ULL);
++    // DWP: Prevent spurious cosim mismatch
++    // For BP, we never have this support anyway
++	//csr_write(CSR_SATP, identity_satp);
++	//hw_satp = csr_swap(CSR_SATP, 0ULL);
++    csr_write(CSR_SATP, 0ULL);
+ 	local_flush_tlb_all();
+ 
+ 	if (hw_satp != identity_satp) {
+-- 
+2.16.5
+

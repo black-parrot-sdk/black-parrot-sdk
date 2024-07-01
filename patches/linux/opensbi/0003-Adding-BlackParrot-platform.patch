@@ -1,7 +1,7 @@
-From e64b491a384599314724d8650cfd2de9912c2cac Mon Sep 17 00:00:00 2001
+From 8e7f00e45a98f733e07312b73ccb0eedd473a93d Mon Sep 17 00:00:00 2001
 From: Dan Petrisko <petrisko@cs.washington.edu>
-Date: Sat, 3 Feb 2024 09:08:35 -0800
-Subject: [PATCH] Adding BlackParrot Platform
+Date: Mon, 17 Jun 2024 13:33:25 -0700
+Subject: [PATCH 3/3] Adding BlackParrot platform
 
 ---
  platform/generic/blackparrot/Kconfig           |  15 ++
