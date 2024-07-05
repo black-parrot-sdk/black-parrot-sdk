@@ -1,0 +1,55 @@
+From d77cbf23f6c5907b38b88a9a661aa3db7a4ca028 Mon Sep 17 00:00:00 2001
+From: Dan Petrisko <petrisko@cs.washington.edu>
+Date: Fri, 5 Jul 2024 13:51:10 -0700
+Subject: [PATCH] Zeroing registers to start
+
+---
+ src/riscv_asm_program_gen.sv | 32 ++++++++++++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
+
+diff --git a/src/riscv_asm_program_gen.sv b/src/riscv_asm_program_gen.sv
+index 4c96924..b16a9bd 100644
+--- a/src/riscv_asm_program_gen.sv
++++ b/src/riscv_asm_program_gen.sv
+@@ -73,6 +73,38 @@ class riscv_asm_program_gen extends uvm_object;
+     for (int hart = 0; hart < cfg.num_of_harts; hart++) begin
+       string sub_program_name[$];
+       instr_stream.push_back($sformatf("h%0d_start:", hart));
++      instr_stream.push_back($sformatf("li x0, 0"));
++      instr_stream.push_back($sformatf("li x1, 0"));
++      instr_stream.push_back($sformatf("li x2, 0"));
++      instr_stream.push_back($sformatf("li x3, 0"));
++      instr_stream.push_back($sformatf("li x4, 0"));
++      instr_stream.push_back($sformatf("li x5, 0"));
++      instr_stream.push_back($sformatf("li x6, 0"));
++      instr_stream.push_back($sformatf("li x7, 0"));
++      instr_stream.push_back($sformatf("li x8, 0"));
++      instr_stream.push_back($sformatf("li x9, 0"));
++      instr_stream.push_back($sformatf("li x10, 0"));
++      instr_stream.push_back($sformatf("li x11, 0"));
++      instr_stream.push_back($sformatf("li x12, 0"));
++      instr_stream.push_back($sformatf("li x13, 0"));
++      instr_stream.push_back($sformatf("li x14, 0"));
++      instr_stream.push_back($sformatf("li x15, 0"));
++      instr_stream.push_back($sformatf("li x16, 0"));
++      instr_stream.push_back($sformatf("li x17, 0"));
++      instr_stream.push_back($sformatf("li x18, 0"));
++      instr_stream.push_back($sformatf("li x19, 0"));
++      instr_stream.push_back($sformatf("li x20, 0"));
++      instr_stream.push_back($sformatf("li x21, 0"));
++      instr_stream.push_back($sformatf("li x22, 0"));
++      instr_stream.push_back($sformatf("li x23, 0"));
++      instr_stream.push_back($sformatf("li x24, 0"));
++      instr_stream.push_back($sformatf("li x25, 0"));
++      instr_stream.push_back($sformatf("li x26, 0"));
++      instr_stream.push_back($sformatf("li x27, 0"));
++      instr_stream.push_back($sformatf("li x28, 0"));
++      instr_stream.push_back($sformatf("li x29, 0"));
++      instr_stream.push_back($sformatf("li x30, 0"));
++      instr_stream.push_back($sformatf("li x31, 0"));
+       if (!cfg.bare_program_mode) begin
+         setup_misa();
+         // Create all page tables
+-- 
+2.16.5
+
