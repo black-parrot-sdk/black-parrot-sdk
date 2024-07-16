@@ -1,3 +1,12 @@
+From 915342d52174919dc1c5d12b1c3a7b336fe2f561 Mon Sep 17 00:00:00 2001
+From: Mark Wyse
+Date: Mon, 15 Jul 2024 10:48:52 -0700
+Subject: [PATCH 2/3] [PATCH 2/3] debug triggers
+
+---
+ lib/sbi/sbi_hart.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
 diff --git a/lib/sbi/sbi_hart.c b/lib/sbi/sbi_hart.c
 index cd974cc..cf270e3 100644
 --- a/lib/sbi/sbi_hart.c
@@ -13,3 +22,6 @@ index cd974cc..cf270e3 100644
  
  #undef __check_ext_csr
  
+-- 
+2.16.5
+
