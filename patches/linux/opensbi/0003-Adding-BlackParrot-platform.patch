@@ -1,14 +1,14 @@
-From e64b491a384599314724d8650cfd2de9912c2cac Mon Sep 17 00:00:00 2001
-From: Dan Petrisko <petrisko@cs.washington.edu>
-Date: Sat, 3 Feb 2024 09:08:35 -0800
-Subject: [PATCH] Adding BlackParrot Platform
+From d87006fda7460b43943ecd55d9a31e19f9681e08 Mon Sep 17 00:00:00 2001
+From: Mark Wyse
+Date: Mon, 15 Jul 2024 10:49:13 -0700
+Subject: [PATCH 3/3] [PATCH 3/3] Adding BlackParrot platform
 
 ---
  platform/generic/blackparrot/Kconfig           |  15 ++
  platform/generic/blackparrot/configs/defconfig |   0
  platform/generic/blackparrot/objects.mk        |  92 ++++++++++
- platform/generic/blackparrot/platform.c        | 238 +++++++++++++++++++++++++
- 4 files changed, 345 insertions(+)
+ platform/generic/blackparrot/platform.c        | 244 +++++++++++++++++++++++++
+ 4 files changed, 351 insertions(+)
  create mode 100644 platform/generic/blackparrot/Kconfig
  create mode 100644 platform/generic/blackparrot/configs/defconfig
  create mode 100644 platform/generic/blackparrot/objects.mk
@@ -40,7 +40,7 @@ new file mode 100644
 index 0000000..e69de29
 diff --git a/platform/generic/blackparrot/objects.mk b/platform/generic/blackparrot/objects.mk
 new file mode 100644
-index 0000000..f4cdf1a
+index 0000000..205c4a8
 --- /dev/null
 +++ b/platform/generic/blackparrot/objects.mk
 @@ -0,0 +1,92 @@
@@ -73,7 +73,7 @@ index 0000000..f4cdf1a
 +# Some of these are guessed based on GCC compiler capabilities
 +#
 +PLATFORM_RISCV_XLEN = 64
-+PLATFORM_RISCV_ABI = lp64
++PLATFORM_RISCV_ABI = lp64d
 +PLATFORM_RISCV_ISA = rv64imafdc
 +PLATFORM_RISCV_CODE_MODEL = medany
 +
@@ -138,10 +138,10 @@ index 0000000..f4cdf1a
 +
 diff --git a/platform/generic/blackparrot/platform.c b/platform/generic/blackparrot/platform.c
 new file mode 100644
-index 0000000..99d23c1
+index 0000000..4ee121b
 --- /dev/null
 +++ b/platform/generic/blackparrot/platform.c
-@@ -0,0 +1,238 @@
+@@ -0,0 +1,244 @@
 +/*
 + * SPDX-License-Identifier: BSD-2-Clause
 + *
@@ -284,6 +284,12 @@ index 0000000..99d23c1
 +                int *poweroff = (int *) poweroff_ptr;
 +                *poweroff = reason;
 +            }
++            bp_console_putc('\n');
++            bp_console_putc('.');
++            bp_console_putc('.');
++            bp_console_putc('.');
++            bp_console_putc('\n');
++            while (1);
 +    }
 +}
 +
