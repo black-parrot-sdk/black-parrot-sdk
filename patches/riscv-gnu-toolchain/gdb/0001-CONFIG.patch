@@ -1,6 +1,6 @@
-From 3af7da0eea7da9789f160599956b00471f25d6c1 Mon Sep 17 00:00:00 2001
+From c81c7ef623adc65c624b41987ec9e45b7d365aff Mon Sep 17 00:00:00 2001
 From: Dan Petrisko <petrisko@cs.washington.edu>
-Date: Sun, 20 Aug 2023 01:19:41 -0700
+Date: Sun, 25 Aug 2024 21:01:07 -0700
 Subject: [PATCH] CONFIG
 
 ---
@@ -8,23 +8,23 @@ Subject: [PATCH] CONFIG
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/config.sub b/config.sub
-index dba16e84c77..b68ebb92ae6 100755
+index 9a7a3ed642d..03a3f8becfd 100755
 --- a/config.sub
 +++ b/config.sub
-@@ -1754,7 +1754,7 @@ case $os in
+@@ -1760,7 +1760,7 @@ case $os in
  	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
  	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
  	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
--	     | fiwix* )
-+	     | fiwix* | dramfs*)
+-	     | fiwix* | mlibc* | cos* | mbr* )
++	     | fiwix* | mlibc* | cos* | mbr* | dramfs* )
  		;;
  	# This one is extra strict with allowed versions
  	sco3.2v2 | sco3.2v[4-9]* | sco5v6*)
-@@ -1792,6 +1792,8 @@ case $kernel-$os in
+@@ -1817,6 +1817,8 @@ case $kernel-$os in
  		;;
  	*-eabi* | *-gnueabi*)
  		;;
-+    elf-dramfs)
++    elf-dramfs-)
 +        ;;
  	-*)
  		# Blank kernel with real OS is always fine.

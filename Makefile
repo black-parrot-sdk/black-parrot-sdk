@@ -40,6 +40,8 @@ apply_patches: checkout
 	$(call patch_if_new,$(gnu_dir)/binutils,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/binutils)
 	$(call patch_if_new,$(gnu_dir)/gcc,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gcc)
 	$(call patch_if_new,$(gnu_dir)/gdb,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gdb)
+	git submodule sync --recursive $(gnu_dir)
+	@echo "Patching successful, ignore errors"
 
 sdk_lite: apply_patches
 	$(MAKE) prereqs
