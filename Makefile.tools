@@ -23,7 +23,7 @@ gnulinux: gnudramfs
 
 gnulinux_build:
 	cd $(gnu_dir); \
-		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gc --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
+		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-arch=rv64gcb --with-abi=lp64d --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
 			--enable-linux --disable-gdb --enable-qemu-system \
 			--with-target-cflags="-mstrict-align -mcmodel=medany" \
 			--with-target-cxxflags="-mstrict-align -mcmodel=medany"
@@ -31,9 +31,8 @@ gnulinux_build:
 	$(MAKE) -C $(gnu_dir) install
 
 gnudramfs_build:
-	cd $(gnu_dir); $(GIT) submodule sync; $(GIT) submodule update --init --remote newlib
 	cd $(gnu_dir); \
-		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-multilib-generator="rv64g-lp64d--;rv64gc-lp64d--" --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
+		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-multilib-generator="rv64g-lp64d--;rv64gcb-lp64d--" --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \
 			--disable-linux --disable-gdb --disable-qemu-system \
 			--with-target-cflags="-mstrict-align -mcmodel=medany" \
 			--with-target-cxxflags="-mstrict-align -mcmodel=medany"

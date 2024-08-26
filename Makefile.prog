@@ -34,7 +34,7 @@ endef
 
 PERCENT := %
 
-WITH_MARCH ?= rv64gc
+WITH_MARCH ?= rv64gcb
 WITH_MABI ?= lp64d
 
 perch_build: $(BP_SDK_LIB_DIR)/libperch.a
@@ -58,13 +58,11 @@ bp-tests_build:
 	$(MAKE) -C $(bp_tests_dir) clean all WITH_MARCH=$(WITH_MARCH) WITH_MABI=$(WITH_MABI)
 
 riscv-tests_build:
-	-@cd $(riscv_tests_dir);     $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-tests/*.patch
-	-@cd $(riscv_tests_dir)/env; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-tests/env/*.patch
 	@cd $(riscv_tests_dir); ./configure --target=$(RISCV_TARGET)
 	$(MAKE) -C $(riscv_tests_dir) clean all
+	$(FIND) $(riscv_tests_dir)/isa -type f -executable -name "rv64*" -exec $(MV) {} {}.riscv \;
 
 beebs_build:
-	-@cd $(beebs_dir); $(PATCH) $(BP_SDK_PATCH_DIR)/beebs/*.patch
 	cd $(beebs_dir); ./configure --host=riscv64 --with-chip=generic \
 		--includedir=$(BP_SDK_INCLUDE_DIR) --libdir=$(BP_SDK_LIB_DIR)
 	# This is a VPATH hack inspired by
@@ -73,7 +71,6 @@ beebs_build:
 	$(FIND) $(beebs_dir)/src -type f -executable -exec $(MV) {} {}.riscv \;
 
 coremark_build:
-	-@cd $(coremark_dir); $(PATCH) $(BP_SDK_PATCH_DIR)/coremark/*.patch
 	$(MAKE) -C $(coremark_dir)/barebones -fcore_portme.mak \
 			ITERATIONS=10 \
 			PORT_CC="$(CROSS_COMPILE)gcc" \
@@ -91,7 +88,6 @@ spec2017_build:
 	$(MAKE) -C $(spec2017_dir)
 
 riscv-dv_build:
-	-@cd $(riscvdv_dir); $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-dv/*.patch
 	$(MAKE) -C $(riscvdv_dir) \
 		RISCV_GCC=riscv64-unknown-elf-dramfs-gcc \
 		RISCV_OBJCOPY=riscv64-unknown-elf-dramfs-objcopy \
@@ -111,8 +107,6 @@ OPENSBI_NCPUS ?= 1
 WITH_SHELL    ?= $(linux_dir)/scripts/test_shutdown.sh
 MEM_SIZE      ?= 64
 linux_build:
-	-cd $(linux_dir)/opensbi; $(PATCH) $(BP_SDK_PATCH_DIR)/linux/opensbi/*.patch
-	-cd $(linux_dir)/buildroot; $(PATCH) $(BP_SDK_PATCH_DIR)/linux/buildroot/*.patch
 	$(MAKE) -C $(linux_dir) linux.riscv OPENSBI_NCPUS=$(OPENSBI_NCPUS) WITH_SHELL=$(WITH_SHELL) MEM_SIZE=$(MEM_SIZE)
 
 yocto_build:

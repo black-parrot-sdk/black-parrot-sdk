@@ -41,6 +41,17 @@ apply_patches: checkout
 	$(call patch_if_new,$(gnu_dir)/gcc,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gcc)
 	$(call patch_if_new,$(gnu_dir)/gdb,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gdb)
 	git submodule sync --recursive $(gnu_dir)
+	$(call patch_if_new,$(riscv_tests_dir),$(BP_SDK_PATCH_DIR)/riscv-tests)
+	$(call patch_if_new,$(riscv_tests_dir)/env,$(BP_SDK_PATCH_DIR)/riscv-tests/env)
+	git submodule sync --recursive $(riscv_tests_dir)
+	$(call patch_if_new,$(beebs_dir),$(BP_SDK_PATCH_DIR)/beebs)
+	git submodule sync --recursive $(beebs_dir)
+	$(call patch_if_new,$(coremark_dir),$(BP_SDK_PATCH_DIR)/coremark)
+	git submodule sync --recursive $(coremark_dir)
+	$(call patch_if_new,$(riscvdv_dir),$(BP_SDK_PATCH_DIR)/riscv-dv)
+	git submodule sync --recursive $(riscvdv_dir)
+	$(call patch_if_new,$(linux_dir)/opensbi,$(BP_SDK_PATCH_DIR)/linux/opensbi)
+	$(call patch_if_new,$(linux_dir)/buildroot,$(BP_SDK_PATCH_DIR)/linux/buildroot)
 	@echo "Patching successful, ignore errors"
 
 sdk_lite: apply_patches
