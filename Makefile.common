@@ -1,18 +1,19 @@
 ## Set variables needed for building tools
-export GCC       ?= gcc
-export CMAKE     ?= $(if $(shell which cmake3),cmake3,cmake)
-export PYTHON    ?= $(if $(shell which python3),python3,python)
-export XXD       ?= xxd
-export CURL      ?= curl
-export GIT       ?= git
-export FIND      ?= find
-export CP        ?= cp
-export MKDIR     ?= mkdir
-export MV        ?= mv
-export PATCH     ?= git apply --ignore-whitespace --ignore-space-change
-export TAR       ?= tar
-export WGET      ?= wget
-export CAT       ?= cat
+export GCC         ?= gcc
+export CMAKE       ?= $(if $(shell which cmake3),cmake3,cmake)
+export PYTHON      ?= $(if $(shell which python3),python3,python)
+export XXD         ?= xxd
+export CURL        ?= curl
+export GIT         ?= git
+export FIND        ?= find
+export CP          ?= cp
+export MKDIR       ?= mkdir
+export MV          ?= mv
+export PATCH       ?= git apply --ignore-whitespace --ignore-space-change
+export CHECK_PATCH ?= $(PATCH) --check --reverse
+export TAR         ?= tar
+export WGET        ?= wget
+export CAT         ?= cat
 
 ## Directories to install into
 export BP_SDK_PROG_DIR        := $(BP_SDK_DIR)/prog
@@ -29,6 +30,12 @@ export BP_SDK_PROG_TOUCH_DIR  := $(BP_SDK_INSTALL_DIR)/touchfiles/prog
 export BP_SDK_TOOLS_TOUCH_DIR := $(BP_SDK_INSTALL_DIR)/touchfiles/tools
 
 export BOOST_ROOT             := $(BP_SDK_INSTALL_DIR)
+
+define patch_if_new
+	$(eval $@_src_root = $(1))
+	$(eval $@_patch_root = $(2))
+	cd ${$@_src_root}; $(CHECK_PATCH) ${$@_patch_root}/*.patch || $(PATCH) ${$@_patch_root}/*.patch
+endef
 
 ## Setup CAD tools
 # If the machine you are working on is bsg_cadenv compliant, then you do not

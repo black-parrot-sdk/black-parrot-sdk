@@ -9,7 +9,7 @@ define submodule_tool_template
 $(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); $(GIT) rev-parse HEAD))
 $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag):
 	rm -rf $(BP_SDK_TOOLS_TOUCH_DIR)/$(1).*
-	cd $(BP_SDK_DIR); $(GIT) submodule update --init --recursive $(GIT_SUBMODULE_DEPTH) $(2)
+	cd $(BP_SDK_DIR); $(GIT) submodule update --init --recursive --recommend-shallow $(GIT_SUBMODULE_DEPTH) $(2)
 	+$(MAKE) $(1)_build
 	touch $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag)
 $(1): | $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag)
@@ -32,10 +32,6 @@ gnulinux_build:
 	$(MAKE) -C $(gnu_dir) install
 
 gnudramfs_build:
-	-cd $(gnu_dir); $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/*.patch
-	-cd $(gnu_dir)/binutils; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/binutils/*.patch
-	-cd $(gnu_dir)/gcc; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gcc/*.patch
-	-cd $(gnu_dir)/gdb; $(PATCH) $(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gdb/*.patch
 	cd $(gnu_dir); $(GIT) submodule sync; $(GIT) submodule update --init --remote newlib
 	cd $(gnu_dir); \
 		./configure --prefix=$(BP_SDK_INSTALL_DIR) --with-multilib-generator="rv64g-lp64d--;rv64gc-lp64d--" --with-cmodel=medany --with-tune=bsg_blackparrot --with-isa-spec=2.2 \

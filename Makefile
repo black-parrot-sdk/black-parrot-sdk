@@ -34,7 +34,14 @@ pull_sdk: checkout
 		$(CURL) -L $(SDK_URL)/$(SDK_TAG)/prog.tar.gz \
 	   	| tar -xvz
 
-sdk_lite: checkout
+apply_patches: checkout
+	git submodule update --init --recursive --recommend-shallow $(gnu_dir)
+	$(call patch_if_new,$(gnu_dir),$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain)
+	$(call patch_if_new,$(gnu_dir)/binutils,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/binutils)
+	$(call patch_if_new,$(gnu_dir)/gcc,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gcc)
+	$(call patch_if_new,$(gnu_dir)/gdb,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gdb)
+
+sdk_lite: apply_patches
 	$(MAKE) prereqs
 	$(MAKE) linker
 	$(MAKE) -j1 bedrock

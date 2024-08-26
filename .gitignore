@@ -8,3 +8,4 @@ work/
 sdk.tar.gz
 prog.tar.gz
 riscv.ld
+*.swp
