@@ -1,3 +1,5 @@
+From: Dan Petrisko <petrisko@cs.washington.edu>
+---
 diff --git a/config/riscv64/chips/generic/chip.cfg b/config/riscv64/chips/generic/chip.cfg
 index 16ce7e4..0f0d5d3 100644
 --- a/config/riscv64/chips/generic/chip.cfg

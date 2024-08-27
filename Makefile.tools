@@ -9,7 +9,6 @@ define submodule_tool_template
 $(1)_tag ?= $(addprefix $(1)., $(shell cd $(2); $(GIT) rev-parse HEAD))
 $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag):
 	rm -rf $(BP_SDK_TOOLS_TOUCH_DIR)/$(1).*
-	cd $(BP_SDK_DIR); $(GIT) submodule update --init --recursive --recommend-shallow $(GIT_SUBMODULE_DEPTH) $(2)
 	+$(MAKE) $(1)_build
 	touch $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag)
 $(1): | $(BP_SDK_TOOLS_TOUCH_DIR)/$$($(1)_tag)

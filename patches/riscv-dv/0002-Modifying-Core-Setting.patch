@@ -1,3 +1,5 @@
+From: Dan Petrisko <petrisko@cs.washington.edu>
+---
 diff --git a/target/rv64gc/riscv_core_setting.sv b/target/rv64gc/riscv_core_setting.sv
 index 376b90f..acf8aa8 100644
 --- a/target/rv64gc/riscv_core_setting.sv

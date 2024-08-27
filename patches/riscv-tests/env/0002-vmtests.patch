@@ -1,3 +1,5 @@
+From: Dan Petrisko <petrisko@cs.washington.edu>
+---
 diff --git a/v/vm.c b/v/vm.c
 index 178d90b..9a70910 100644
 --- a/v/vm.c

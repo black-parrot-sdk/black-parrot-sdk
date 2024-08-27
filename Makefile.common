@@ -34,7 +34,12 @@ export BOOST_ROOT             := $(BP_SDK_INSTALL_DIR)
 define patch_if_new
 	$(eval $@_src_root = $(1))
 	$(eval $@_patch_root = $(2))
-	cd ${$@_src_root}; $(CHECK_PATCH) ${$@_patch_root}/*.patch || $(PATCH) ${$@_patch_root}/*.patch
+	$(eval $@_patch_list = $(wildcard $($@_patch_root)/*.patch))
+	for p in ${$@_patch_list}; \
+	do \
+		cd ${$@_src_root}; $(CHECK_PATCH) $$p && continue; \
+		cd ${$@_src_root}; echo $$p; git am $$p; \
+	done
 endef
 
 ## Setup CAD tools
