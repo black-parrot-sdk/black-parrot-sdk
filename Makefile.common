@@ -26,8 +26,9 @@ export BP_SDK_LIB64_DIR       := $(BP_SDK_INSTALL_DIR)/lib64
 export BP_SDK_INCLUDE_DIR     := $(BP_SDK_INSTALL_DIR)/include
 export BP_SDK_LINKER_DIR      := $(BP_SDK_INSTALL_DIR)/linker
 export BP_SDK_UCODE_DIR       := $(BP_SDK_INSTALL_DIR)/ucode
-export BP_SDK_PROG_TOUCH_DIR  := $(BP_SDK_INSTALL_DIR)/touchfiles/prog
-export BP_SDK_TOOLS_TOUCH_DIR := $(BP_SDK_INSTALL_DIR)/touchfiles/tools
+export BP_SDK_TOUCH_DIR       := $(BP_SDK_INSTALL_DIR)/touchfiles
+export BP_SDK_PROG_TOUCH_DIR  := $(BP_SDK_TOUCH_DIR)/prog
+export BP_SDK_TOOLS_TOUCH_DIR := $(BP_SDK_TOUCH_DIR)/tools
 
 export BOOST_ROOT             := $(BP_SDK_INSTALL_DIR)
 
