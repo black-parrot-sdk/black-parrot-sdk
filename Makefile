@@ -6,6 +6,9 @@ export BP_SDK_DIR ?= $(shell git rev-parse --show-toplevel)
 .PHONY: tidy_progs tidy bleach_all
 .DEFAULT: sdk
 
+# Uncomment this to reduce clone times
+GIT_SUBMODULE_DEPTH ?= --depth 500
+
 include $(BP_SDK_DIR)/Makefile.common
 include $(BP_SDK_DIR)/Makefile.tools
 include $(BP_SDK_DIR)/Makefile.prereq
@@ -123,7 +126,4 @@ tidy: tidy_progs
 #  Use with caution.
 bleach_all:
 	cd $(BP_SDK_DIR); git clean -fdx; git submodule deinit -f .
-
-# Uncomment this to reduce clone times
-#GIT_SUBMODULE_DEPTH ?= --depth 1000
 
