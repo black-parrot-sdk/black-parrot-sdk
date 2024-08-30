@@ -1,3 +1,5 @@
+From: Dan Petrisko <petrisko@cs.washington.edu>
+---
 diff --git a/riscv-test-suite/env/test_macros.h b/riscv-test-suite/env/test_macros.h
 index be19bf8..5575074 100644
 --- a/riscv-test-suite/env/test_macros.h

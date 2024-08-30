@@ -1,3 +1,5 @@
+From: Dan Petrisko <petrisko@cs.washington.edu>
+---
 diff --git a/p/riscv_test.h b/p/riscv_test.h
 index 7bf35cf..b42a639 100644
 --- a/p/riscv_test.h

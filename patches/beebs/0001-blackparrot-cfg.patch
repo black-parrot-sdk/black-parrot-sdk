@@ -1,3 +1,5 @@
+From: Dan Petrisko <petrisko@cs.washington.edu>
+---
 diff --git a/config/riscv64/chips/generic/chip.cfg b/config/riscv64/chips/generic/chip.cfg
 index 16ce7e4..0f0d5d3 100644
 --- a/config/riscv64/chips/generic/chip.cfg
@@ -31,7 +33,7 @@ index 16ce7e4..0f0d5d3 100644
 +supportdir=`readlink -m $srcdir/support/`
 +#TODO: Find a way to pass the CC from outside
 +export CC="riscv64-unknown-elf-dramfs-gcc"
-+export CHIP_CFLAGS="-O2 -march=rv64gc -mabi=lp64d -mcmodel=medany -I$supportdir -I$includedir -DBAREMETAL -DBOARD_REPEAT_FACTOR=2"
++export CHIP_CFLAGS="-O2 -march=rv64gcb -mabi=lp64d -mcmodel=medany -I$supportdir -I$includedir -DBAREMETAL -DBOARD_REPEAT_FACTOR=2"
 +#TODO: Link to perch instead of having these duplicate C files
 +export CHIP_LDFLAGS="-T$BP_SDK_LINKER_DIR/riscv.ld -L$libdir $BP_SDK_DIR/perch/bsg_newlib_intf.c $BP_SDK_DIR/perch/bp_utils.c"
 +

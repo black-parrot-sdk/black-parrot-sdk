@@ -1,3 +1,6 @@
+From: Dan Petrisko <petrisko@cs.washington.edu>
+---
+
 diff --git a/.gitmodules b/.gitmodules
 index 6da2382..81afaaa 100644
 --- a/.gitmodules

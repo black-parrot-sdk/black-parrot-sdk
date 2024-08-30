@@ -34,16 +34,29 @@ pull_sdk: checkout
 		$(CURL) -L $(SDK_URL)/$(SDK_TAG)/prog.tar.gz \
 	   	| tar -xvz
 
-apply_patches: checkout
-	git submodule update --init --recursive --recommend-shallow $(gnu_dir)
+patch_tag ?= $(addprefix $(BP_SDK_TOUCH_DIR)/patch.,$(shell $(GIT) rev-parse HEAD))
+apply_patches: $(patch_tag)
+$(patch_tag):
+	$(MAKE) checkout
+	git submodule update --init --recursive --recommend-shallow
 	$(call patch_if_new,$(gnu_dir),$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain)
 	$(call patch_if_new,$(gnu_dir)/binutils,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/binutils)
 	$(call patch_if_new,$(gnu_dir)/gcc,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gcc)
 	$(call patch_if_new,$(gnu_dir)/gdb,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gdb)
-	git submodule sync --recursive $(gnu_dir)
+	cd $(gnu_dir); git submodule sync newlib
+	cd $(gnu_dir); git submodule update --remote newlib
+	$(call patch_if_new,$(riscv_tests_dir),$(BP_SDK_PATCH_DIR)/riscv-tests)
+	$(call patch_if_new,$(riscv_tests_dir)/env,$(BP_SDK_PATCH_DIR)/riscv-tests/env)
+	$(call patch_if_new,$(beebs_dir),$(BP_SDK_PATCH_DIR)/beebs)
+	$(call patch_if_new,$(coremark_dir),$(BP_SDK_PATCH_DIR)/coremark)
+	$(call patch_if_new,$(riscvdv_dir),$(BP_SDK_PATCH_DIR)/riscv-dv)
+	$(call patch_if_new,$(linux_dir)/opensbi,$(BP_SDK_PATCH_DIR)/linux/opensbi)
+	$(call patch_if_new,$(linux_dir)/buildroot,$(BP_SDK_PATCH_DIR)/linux/buildroot)
+	git submodule sync --recursive
+	touch $@
 	@echo "Patching successful, ignore errors"
 
-sdk_lite: apply_patches
+sdk_lite: $(patch_tag)
 	$(MAKE) prereqs
 	$(MAKE) linker
 	$(MAKE) -j1 bedrock

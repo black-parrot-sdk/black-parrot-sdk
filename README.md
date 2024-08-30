@@ -24,6 +24,7 @@ platform. We welcome contributions for other images and scripts to build for oth
 Before building the SDK, refer to [the relevant section in the README on BlackParrot Simulation Environment](https://github.com/black-parrot/black-parrot-sim#prerequisites) for preparing required tools and libraries.
 
     make checkout # initialize submodules
+    make apply_patches # patch all submodules to build for BlackParrot
     # Set whatever variables your platform requires in Makefile.platform
     #   or select a pre-configured platform from {dromajo_cosim, zynqparrot}
     make sdk  # you can use the -j N flag to parallelize
