@@ -36,10 +36,19 @@ define patch_if_new
 	$(eval $@_src_root = $(1))
 	$(eval $@_patch_root = $(2))
 	$(eval $@_patch_list = $(wildcard $($@_patch_root)/*.patch))
+	$(eval $@_patch_is_top = $(findstring patches,$(lastword $(subst /, ,$(dir $($@_patch_root))))))
 	for p in ${$@_patch_list}; \
 	do \
+		echo "Checking if patch is applicable"; \
 		cd ${$@_src_root}; $(CHECK_PATCH) $$p && continue; \
+		echo "Patch is unapplied..."; \
+		if [ $@_patch_is_top ]; then \
+		echo "Applying patch to sub-directory ${$@_src_root}}; \
 		cd ${$@_src_root}; echo $$p; git am $$p; \
+		else \
+		echo "Applying patch to top-level ${$@_src_root}}; \
+		cd ${$@_src_root}; echo $$p; git apply $$p; \
+		fi \
 	done
 endef
 
