@@ -4,7 +4,8 @@ export BP_SDK_DIR ?= $(shell git rev-parse --show-toplevel)
 .PHONY: sdk_lite sdk sdk_clean
 .PHONY: perch prog_lite prog
 .PHONY: tidy_progs tidy bleach_all
-.DEFAULT: sdk
+
+all: apply_patches
 
 include $(BP_SDK_DIR)/Makefile.common
 include $(BP_SDK_DIR)/Makefile.tools
@@ -35,9 +36,8 @@ pull_sdk: checkout
 	   	| tar -xvz
 
 patch_tag ?= $(addprefix $(BP_SDK_TOUCH_DIR)/patch.,$(shell $(GIT) rev-parse HEAD))
-apply_patches: $(patch_tag)
-$(patch_tag):
-	$(MAKE) checkout
+apply_patches: | $(patch_tag)
+$(patch_tag): checkout
 	git submodule update --init --recursive --recommend-shallow
 	$(call patch_if_new,$(gnu_dir),$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain)
 	$(call patch_if_new,$(gnu_dir)/binutils,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/binutils)
@@ -56,7 +56,7 @@ $(patch_tag):
 	touch $@
 	@echo "Patching successful, ignore errors"
 
-sdk_lite: $(patch_tag)
+sdk_lite: apply_patches
 	$(MAKE) prereqs
 	$(MAKE) linker
 	$(MAKE) -j1 bedrock
