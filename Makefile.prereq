@@ -53,6 +53,7 @@ $(python311_tag): $(openssl_tag)
 			--with-openssl-rpath=auto \
 			--prefix=$(BP_SDK_INSTALL_DIR)
 	$(MAKE) -C $(BP_SDK_WORK_DIR)/$(PYTHON311) altinstall
+	$(BP_SDK_BIN_DIR)/pip3.11 install orderedmultidict
 	touch $@
 
 prereqs: $(PREREQS)
