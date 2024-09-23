@@ -22,10 +22,11 @@ $(TARGET_DIRS):
 # checkout submodules, but not recursively
 checkout: | $(TARGET_DIRS)
 	git fetch --all
-	cd $(BP_SDK_DIR); git submodule update --init
+	git submodule sync --recursive
+	git submodule update --init
 
 # Pulls the latest tools and unpacks into the SDK install location
-pull_sdk: checkout
+pull_sdk:
 	$(eval SDK_URL := https://github.com/black-parrot-sdk/black-parrot-sdk/releases/download/)
 	$(eval SDK_TAG := $(shell git describe --tags --abbrev=0))
 	cd $(BP_SDK_DIR); \
@@ -37,7 +38,8 @@ pull_sdk: checkout
 
 patch_tag ?= $(addprefix $(BP_SDK_TOUCH_DIR)/patch.,$(shell $(GIT) rev-parse HEAD))
 apply_patches: | $(patch_tag)
-$(patch_tag): checkout
+$(patch_tag):
+	$(MAKE) checkout
 	git submodule update --init --recursive --recommend-shallow
 	$(call patch_if_new,$(gnu_dir),$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain)
 	$(call patch_if_new,$(gnu_dir)/binutils,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/binutils)
@@ -52,7 +54,6 @@ $(patch_tag): checkout
 	$(call patch_if_new,$(riscvdv_dir),$(BP_SDK_PATCH_DIR)/riscv-dv)
 	$(call patch_if_new,$(linux_dir)/opensbi,$(BP_SDK_PATCH_DIR)/linux/opensbi)
 	$(call patch_if_new,$(linux_dir)/buildroot,$(BP_SDK_PATCH_DIR)/linux/buildroot)
-	git submodule sync --recursive
 	touch $@
 	@echo "Patching successful, ignore errors"
 
