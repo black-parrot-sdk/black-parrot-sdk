@@ -75,23 +75,23 @@ prog: prog_lite
 
 prog_bsg: prog
 	# Requires access to bsg_cadenv
-	$(MAKE) bsg_cadenv
+	$(MAKE) -j1 bsg_cadenv
 	# Requires access to spec2000
-	$(MAKE) spec2000
+	$(MAKE) -j1 spec2000
 	# Requires access to spec2006
-	$(MAKE) spec2006
+	$(MAKE) -j1 spec2006
 	# Requires access to spec2017
-	$(MAKE) spec2017
+	$(MAKE) -j1 spec2017
 	# Requires access to Synopsys VCS
-	$(MAKE) riscv-dv
+	$(MAKE) -j1 riscv-dv
 	# Needs opam build
-	$(MAKE) riscv-arch
+	$(MAKE) -j1 riscv-arch
 	# Requires patience
-	#$(MAKE) linux
+	$(MAKE) -j1 linux
 	# Requires even more patience
-	#$(MAKE) yocto
+	#$(MAKE) -j1 yocto
 	# Requires yet more patience
-	#$(MAKE) zephyr
+	#$(MAKE) -j1 zephyr
 
 ## This target just wipes the whole repo clean.
 #  Use with caution.
