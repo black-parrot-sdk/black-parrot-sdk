@@ -61,7 +61,7 @@ sdk_bsg: sdk
 	# Placeholder
 
 ## Even the "lite" programs require the full sdk toolchain
-prog_lite: sdk_lite
+prog_lite: apply_patches
 	$(MAKE) -j1 perch
 	$(MAKE) -j1 bootrom
 	$(MAKE) -j1 bp-demos
