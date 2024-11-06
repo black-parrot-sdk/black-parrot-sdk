@@ -1,0 +1,49 @@
+
+$(eval $(call bsg_fn_build_if_new,gnulinux,$(BP_SDK_GNU_DIR),$(BP_SDK_TOOLS_TOUCH_DIR)))
+%/.gnulinux_build: build.gnudramfs
+	@$(CD) $(@D); \
+		./configure --prefix=$(BP_SDK_INSTALL_DIR) \
+			--enable-linux --disable-gdb --disable-qemu-system \
+			--with-arch=rv64gcb --with-abi=lp64d --with-cmodel=medany \
+			--with-tune=bsg_blackparrot --with-isa-spec=2.2 \
+			--with-target-cflags="-mstrict-align -mcmodel=medany" \
+			--with-target-cxxflags="-mstrict-align -mcmodel=medany"; \
+			$(MAKE) linux && $(MAKE) install;
+
+$(eval $(call bsg_fn_build_if_new,gnudramfs,$(BP_SDK_GNU_DIR),$(BP_SDK_TOOLS_TOUCH_DIR)))
+%/.gnudramfs_build:
+	@$(eval export NEWLIB_TUPLE := "riscv64-unknown-elf-dramfs")
+	@$(CD) $(@D); \
+		./configure --prefix=$(BP_SDK_INSTALL_DIR) \
+			--with-newlib-src="$(BP_SDK_NEWLIB_DIR)" \
+			--disable-linux --disable-gdb --disable-qemu-system \
+			--with-multilib-generator="rv64g-lp64d--;rv64gcb-lp64d--" --with-cmodel=medany \
+			--with-tune=bsg_blackparrot --with-isa-spec=2.2 \
+			--with-target-cflags="-mstrict-align -mcmodel=medany" \
+			--with-target-cxxflags="-mstrict-align -mcmodel=medany"; \
+			$(MAKE) && $(MAKE) install;
+	@$(CP) $(BP_SDK_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(BP_SDK_BIN_DIR)
+
+$(eval $(call bsg_fn_build_if_new,dromajo,$(BP_SDK_DROMAJO_DIR),$(BP_SDK_TOOLS_TOUCH_DIR)))
+%/.dromajo_build:
+	@$(eval SOURCE_DIR := $(@D))
+	@$(eval BUILD_DIR := $(@D)/build)
+	@$(MKDIR) -p $(BUILD_DIR)
+	@$(CMAKE) -S $(SOURCE_DIR) -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release
+	@$(MAKE) -C $(BUILD_DIR)
+	@$(CP) $(BUILD_DIR)/dromajo $(BP_SDK_BIN_DIR);
+	@$(CP) $(BUILD_DIR)/libdromajo_cosim.a $(BP_SDK_LIB_DIR);
+	@$(CP) $(SOURCE_DIR)/include/dromajo_cosim.h $(BP_SDK_INCLUDE_DIR);
+
+$(eval $(call bsg_fn_build_if_new,bedrock,$(BP_SDK_BEDROCK_DIR),$(BP_SDK_TOOLS_TOUCH_DIR)))
+%/.bedrock_build:
+	@$(MAKE) -C $(@D) bins
+	@$(CP) $(@D)/roms/*.bin $(@D)/roms/*.addr $(@D)/roms/*.mem $(BP_SDK_RISCV_UCODE_DIR);
+
+$(eval $(call bsg_fn_build_if_new,spike,$(BP_SDK_SPIKE_DIR),$(BP_SDK_TOOLS_TOUCH_DIR)))
+%/.spike_build:
+	@$(CD) $(@D); \
+		./configure --prefix=$(BP_SDK_INSTALL_DIR) \
+		--without-boost --without-boost-asio --without-boost-regex; \
+		$(MAKE) && $(MAKE) install
+
