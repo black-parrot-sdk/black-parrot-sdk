@@ -9,6 +9,10 @@
     url = https://github.com/riscv/riscv-opcodes.git
     branch = master
     ignore = untracked
+[submodule "riscv-isa-sim"]
+    path = riscv-isa-sim
+    url = https://github.com/riscv/riscv-isa-sim
+    ignore = untracked
 
 # Upstream Benchmarks
 [submodule "beebs"]
@@ -38,6 +42,10 @@
     url = https://github.com/bsg-external/dromajo
     branch = blackparrot_mods_1208
     ignore = untracked
+[submodule "bsg_newlib_dramfs"]
+    path = bsg_newlib_dramfs
+    url = https://github.com/bespoke-silicon-group/bsg_newlib_dramfs
+    branch = dramfs
 
 # BlackParrot libraries
 [submodule "perch"]

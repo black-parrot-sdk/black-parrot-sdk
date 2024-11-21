@@ -1,106 +1,100 @@
 TOP ?= $(shell git rev-parse --show-toplevel)
-
-.PHONY: checkout
-.PHONY: sdk_lite sdk sdk_clean
-.PHONY: perch prog_lite prog
-.PHONY: tidy_progs tidy bleach_all
-
-all: apply_patches
-
 include $(TOP)/Makefile.common
-include $(TOP)/Makefile.tools
-include $(TOP)/Makefile.prereq
-include $(TOP)/Makefile.prog
-include $(TOP)/Makefile.platform
-include $(TOP)/Makefile.linker
+include $(TOP)/Makefile.env
 
-## This is the list of target directories that tools and libraries will be installed into
-override TARGET_DIRS := $(BP_SDK_BIN_DIR) $(BP_SDK_LIB_DIR) $(BP_SDK_INCLUDE_DIR) $(BP_SDK_LINKER_DIR) $(BP_SDK_PROG_TOUCH_DIR) $(BP_SDK_TOOLS_TOUCH_DIR) $(BP_SDK_WORK_DIR)
-$(TARGET_DIRS):
-	mkdir -p $@
+include $(BP_SDK_MK_DIR)/Makefile.sdk
+include $(BP_SDK_MK_DIR)/Makefile.prog
 
-# checkout submodules, but not recursively
-checkout: | $(TARGET_DIRS)
-	git fetch --all
-	git submodule sync --recursive
-	git submodule update --init
+checkout: ## checkout submodules, but not recursively
+	@$(MKDIR) -p $(BP_SDK_BIN_DIR) \
+		$(BP_SDK_LIB_DIR) \
+		$(BP_SDK_INCLUDE_DIR) \
+		$(BP_SDK_LINKER_DIR) \
+		$(BP_SDK_PROG_TOUCH_DIR) \
+		$(BP_SDK_TOOLS_TOUCH_DIR) \
+		$(BP_SDK_RISCV_INCLUDE_DIR) \
+		$(BP_SDK_RISCV_LIB_DIR) \
+		$(BP_SDK_RISCV_LINKER_DIR) \
+		$(BP_SDK_RISCV_UCODE_DIR) \
+		$(BP_SDK_WORK_DIR)
+	@$(GIT) fetch --all
+	@$(GIT) submodule sync
+	@$(GIT) submodule update --init
 
-patch_tag ?= $(addprefix $(BP_SDK_TOUCH_DIR)/patch.,$(shell $(GIT) rev-parse HEAD))
-apply_patches: | $(patch_tag)
-$(patch_tag):
-	$(MAKE) checkout
-	git submodule update --init --recursive --recommend-shallow
-	$(call patch_if_new,$(gnu_dir),$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain)
-	$(call patch_if_new,$(gnu_dir)/binutils,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/binutils)
-	$(call patch_if_new,$(gnu_dir)/gcc,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gcc)
-	$(call patch_if_new,$(gnu_dir)/gdb,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gdb)
-	cd $(gnu_dir); git submodule sync newlib
-	cd $(gnu_dir); git submodule update --remote newlib
-	$(call patch_if_new,$(riscv_tests_dir),$(BP_SDK_PATCH_DIR)/riscv-tests)
-	$(call patch_if_new,$(riscv_tests_dir)/env,$(BP_SDK_PATCH_DIR)/riscv-tests/env)
-	$(call patch_if_new,$(beebs_dir),$(BP_SDK_PATCH_DIR)/beebs)
-	$(call patch_if_new,$(coremark_dir),$(BP_SDK_PATCH_DIR)/coremark)
-	$(call patch_if_new,$(riscvdv_dir),$(BP_SDK_PATCH_DIR)/riscv-dv)
-	$(call patch_if_new,$(linux_dir)/opensbi,$(BP_SDK_PATCH_DIR)/linux/opensbi)
-	$(call patch_if_new,$(linux_dir)/buildroot,$(BP_SDK_PATCH_DIR)/linux/buildroot)
-	touch $@
+apply_patches: ## applies patches to submodules
+apply_patches: build.patch
+$(eval $(call bsg_fn_build_if_new,patch,$(CURDIR),$(BP_SDK_TOUCH_DIR)))
+%/.patch_build: checkout
+	@$(GIT) submodule sync --recursive
+	@$(GIT) submodule update --init --recursive --recommend-shallow
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_GNU_DIR),$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_GNU_DIR)/gcc,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gcc)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_GNU_DIR),$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_GNU_DIR)/binutils,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/binutils)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_GNU_DIR)/gcc,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gcc)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_GNU_DIR)/gdb,$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain/gdb)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_RISCV_TESTS_DIR),$(BP_SDK_PATCH_DIR)/riscv-tests)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_RISCV_TESTS_DIR)/env,$(BP_SDK_PATCH_DIR)/riscv-tests/env)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_BEEBS_DIR),$(BP_SDK_PATCH_DIR)/beebs)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_COREMARK_DIR),$(BP_SDK_PATCH_DIR)/coremark)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_RISCVDV_DIR),$(BP_SDK_PATCH_DIR)/riscv-dv)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_LINUX_DIR)/opensbi,$(BP_SDK_PATCH_DIR)/linux/opensbi)
+	@$(call bsg_fn_patch_if_new,$(BP_SDK_LINUX_DIR)/buildroot,$(BP_SDK_PATCH_DIR)/linux/buildroot)
 	@echo "Patching successful, ignore errors"
 
+sdk_lite: # minimal SDK toolset
 sdk_lite: apply_patches
-	$(MAKE) prereqs
-	$(MAKE) linker
-	$(MAKE) -j1 bedrock
-	$(MAKE) dromajo
-	$(MAKE) gnudramfs
+	@$(MAKE) build.boost
+ifeq ($(CENTOS7),1)
+	@$(MAKE) build.python
+endif
+	@$(MAKE) -j1 build.bedrock
+	@$(MAKE) build.dromajo
+	@$(MAKE) build.gnudramfs
 
-## This target makes the sdk tools
+sdk: ## standard SDK tools
 sdk: sdk_lite
-	$(MAKE) gnu
+	@$(MAKE) build.spike
+	@$(MAKE) build.gnulinux
 
+sdk_bsg: ## additional SDK setup for BSG users
 sdk_bsg: sdk
 	# Placeholder
 
-## Even the "lite" programs require the full sdk toolchain
+prog_lite: ## minimal programs for demo purposes
 prog_lite: apply_patches
-	$(MAKE) -j1 perch
-	$(MAKE) -j1 bootrom
-	$(MAKE) -j1 bp-demos
-	$(MAKE) -j1 bp-tests
+	@$(MAKE) -j1 build.perch
+	@$(MAKE) -j1 build.bootrom
+	@$(MAKE) -j1 build.bp-demos
+	@$(MAKE) -j1 build.bp-tests
 
-## This target makes all of the programs
+prog: ## standard programs
 prog: prog_lite
-	$(MAKE) -j1 riscv-tests
-	$(MAKE) -j1 coremark
-	$(MAKE) -j1 beebs
+	@$(MAKE) -j1 build.riscv-tests
+	@$(MAKE) -j1 build.coremark
+	@$(MAKE) -j1 build.beebs
 
+prog_bsg: ## additional programs for BSG users
 prog_bsg: prog
-	# Requires access to bsg_cadenv
-	$(MAKE) -j1 bsg_cadenv
 	# Requires access to spec2000
-	$(MAKE) -j1 spec2000
+	@$(MAKE) -j1 build.spec2000
 	# Requires access to spec2006
-	$(MAKE) -j1 spec2006
+	@$(MAKE) -j1 build.spec2006
 	# Requires access to spec2017
-	$(MAKE) -j1 spec2017
+	@$(MAKE) -j1 build.spec2017
 	# Requires access to Synopsys VCS
-	$(MAKE) -j1 riscv-dv
+	@$(MAKE) -j1 build.riscv-dv
 	# Needs opam build
-	$(MAKE) -j1 riscv-arch
+	@$(MAKE) -j1 build.riscv-arch
 	# Requires patience
-	$(MAKE) -j1 linux
-	# Requires even more patience
-	#$(MAKE) -j1 yocto
+	@$(MAKE) -j1 build.linux
 	# Requires yet more patience
-	#$(MAKE) -j1 zephyr
+	@$(MAKE) -j1 build.zephyr
 
-## This target just wipes the whole repo clean.
-#  Use with caution.
-bleach_all:
-	cd $(TOP); git clean -fdx; git submodule deinit -f .
-
+#############################
 # Extra convenience targets
-# Pulls the latest tools and unpacks into the SDK install location
-pull_sdk:
+#############################
+pull_sdk: ## (experimental) pulls the latest tools and unpacks the SDK
 	$(eval SDK_URL := https://github.com/black-parrot-sdk/black-parrot-sdk/releases/download/)
 	$(eval SDK_TAG := $(shell git describe --tags --abbrev=0))
 	cd $(TOP); \
@@ -109,11 +103,4 @@ pull_sdk:
 	cd $(TOP); \
 		$(CURL) -L $(SDK_URL)/$(SDK_TAG)/prog.tar.gz \
 		| tar -xvz
-
-# panic_room only build takes 15 minutes (versus 45 minutes for sdk_lite)
-# to build on 4 cores; it leaves out unnecessary dependencies that make
-# build failures more likely. (dromajo, dejagnu, gdb)
-panic_room: checkout
-	$(MAKE) linker
-	$(MAKE) gnudramfs
 

@@ -7,22 +7,27 @@ features for bare-metal programs, with and without accelerators attached.
 
 # Getting started
 
-## Quickstart: Download a pre-built toolchain (Alpha)
+    # Meta Makefile Commands
+    make help # Prints available targets
+    make bleach_all # Wipes the repo clean
+    make checkout # Checkout submodules
 
-Pre-built programs and toolchains can be downloaded at this repo's [releases page](https://github.com/black-parrot-sdk/black-parrot-sdk/releases). These are intended for compute or bandwidth constrained users, as well as classes or labs which may not have the permissions required to install necessary pre-requisites. To use them instead of building the SDK yourself:
-
-    make checkout # initialize submodules
-    make pull_sdk # Download and unpack pre-built SDK
-
-This will grab both the tools and a few pre-built benchmark suites. From there you should be able to
-build further programs using the tool installation. Toolchains were built on Ubuntu 20.04 using this
-[image](registry.gitlab.com/dpetrisko/black-parrot-sdk), but should run on any modern Linux
-platform. We welcome contributions for other images and scripts to build for other platforms.
+  apply_patches                  applies patches to submodules
+  bleach_all                     wipes the whole repo clean. Use with caution
+  checkout                       checkout submodules, but not recursively
+  help                           prints this message
+  prog_bsg                       additional programs for BSG users
+  prog_lite                      minimal programs for demo purposes
+  prog                           standard programs
+  pull_sdk                       (experimental) pulls the latest tools and unpacks the SDK
+  sdk_bsg                        additional SDK setup for BSG users
+  sdk                            standard SDK tools
 
 ## Building the SDK
 
 Before building the SDK, refer to [the relevant section in the README on BlackParrot Simulation Environment](https://github.com/black-parrot/black-parrot-sim#prerequisites) for preparing required tools and libraries.
 
+    make help # Print Makefile meta-targets
     make checkout # initialize submodules
     make apply_patches # patch all submodules to build for BlackParrot
     # Set whatever variables your platform requires in Makefile.platform
@@ -30,8 +35,13 @@ Before building the SDK, refer to [the relevant section in the README on BlackPa
     make sdk  # you can use the -j N flag to parallelize
     make prog # only makes a subset of programs. See Makefile for the full list of commands
 
+There are also sub-targets for building specific components of the SDK:
+
+    make build.% builds a specific target if out of date
+    make rebuild.% forces a rebuild
+
 For each suite in this directory, `make <suite>` will build the tests within and copy the resulting
-.riscv binaries to ./prog/suite/example.riscv
+.riscv binaries to ./install/prog/suite/example.riscv
 
 The build process tries to be intelligent and only rebuild if a submodule has changed since the last build. To forcibly build a test suite, use `make <suite>_manual`.
 
@@ -127,3 +137,16 @@ Dromajo supports tracing. This option is enabled by adding --trace=0 to the drom
 
     0 3 0x0000000080000108 (0x06f00113) x 2 0x000000000000006f
     core_id priv_level pc (instruction) writeback_reg writeback_data
+
+## Quickstart: Download a pre-built toolchain (Alpha)
+
+Pre-built programs and toolchains can be downloaded at this repo's [releases page](https://github.com/black-parrot-sdk/black-parrot-sdk/releases). These are intended for compute or bandwidth constrained users, as well as classes or labs which may not have the permissions required to install necessary pre-requisites. To use them instead of building the SDK yourself:
+
+    make checkout # initialize submodules
+    make pull_sdk # Download and unpack pre-built SDK
+
+This will grab both the tools and a few pre-built benchmark suites. From there you should be able to
+build further programs using the tool installation. Toolchains were built on Ubuntu 20.04 using this
+[image](registry.gitlab.com/dpetrisko/black-parrot-sdk), but should run on any modern Linux
+platform. We welcome contributions for other images and scripts to build for other platforms.
+

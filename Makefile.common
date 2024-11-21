@@ -1,90 +1,164 @@
-## Set common environment variables
-SHELL:=/bin/bash
+#############################
+# Makefile functions
+#############################
+# Saves initial values so that we can filter them later
+VARS_OLD := $(.VARIABLES)
 
-## Directories to install into
-export BP_SDK_DIR             ?= $(TOP)
-export BP_SDK_PROG_DIR        ?= $(BP_SDK_DIR)/prog
-export BP_SDK_PATCH_DIR       ?= $(BP_SDK_DIR)/patches
-export BP_SDK_WORK_DIR        ?= $(BP_SDK_DIR)/work
-export BP_SDK_INSTALL_DIR     ?= $(BP_SDK_DIR)/install
-export BP_SDK_BIN_DIR         ?= $(BP_SDK_INSTALL_DIR)/bin
-export BP_SDK_LIB_DIR         ?= $(BP_SDK_INSTALL_DIR)/lib
-export BP_SDK_LIB64_DIR       ?= $(BP_SDK_INSTALL_DIR)/lib64
-export BP_SDK_INCLUDE_DIR     ?= $(BP_SDK_INSTALL_DIR)/include
-export BP_SDK_LINKER_DIR      ?= $(BP_SDK_INSTALL_DIR)/linker
-export BP_SDK_UCODE_DIR       ?= $(BP_SDK_INSTALL_DIR)/ucode
-export BP_SDK_TOUCH_DIR       ?= $(BP_SDK_INSTALL_DIR)/touchfiles
-export BP_SDK_PROG_TOUCH_DIR  ?= $(BP_SDK_TOUCH_DIR)/prog
-export BP_SDK_TOOLS_TOUCH_DIR ?= $(BP_SDK_TOUCH_DIR)/tools
+# Global Makefile settings
+SHELL := /bin/bash
+EXTRAMAKEFLAGS += --warn-undefined-variables
+MAKEFLAGS += $(EXTRAMAKEFLAGS)
 
-ifeq ($(TOP),$(BP_SDK_DIR))
-export BP_RTL_DIR ?= $(TOP)/../black-parrot
-include $(BP_RTL_DIR)/Makefile.common
+# Global help target
+.DEFAULT_GOAL: help
+.PHONY: help
+help: ## prints this message
+	@egrep -h '\s##\s' $(MAKEFILE_LIST) | sort \
+		| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m  %-30s\033[0m %s\n", $$1, $$2}'
 
-export BP_TOOLS_DIR ?= $(TOP)/../black-parrot-tools
-include $(BP_TOOLS_DIR)/Makefile.common
+# Global reset
+.PHONY: bleach_all
+bleach_all: ## wipes the whole repo clean. Use with caution
+	@cd $(TOP); git clean -ffdx; git submodule deinit -f .
 
-#export BP_SDK_DIR ?= $(TOP)/../black-parrot-sdk
-#include $(BP_SDK_DIR)/Makefile.common
+define bsg_fn_upper
+$(shell echo $(1) | tr a-z A-Z)
+endef
+define bsg_fn_lower
+$(shell echo $(1) | tr A-Z a-z)
+endef
+bsg_var_blank :=
+define bsg_var_newline
 
-## Setup CAD tools
-# If the machine you are working on is bsg_cadenv compliant, then you do not
-# need to setup the cad tools, simply put bsg_cadenv in the same root dir.
-BSG_CADENV_DIR ?= $(BP_SDK_DIR)/bsg_cadenv
-bsg_cadenv: $(BSG_CADENV_DIR)
-$(BSG_CADENV_DIR):
-	git clone git@github.com:bespoke-silicon-group/bsg_cadenv.git $@
-	# Overriding specifically for BSG
-	sed -i "s#vcs/L-2016.06-SP2-15#vcs/U-2023.03-SP1#g" $@/machines/*
--include $(BSG_CADENV_DIR)/cadenv.mk
-endif
+$(bsg_var_blank)
+endef
 
-define patch_if_new
-	$(eval $@_src_root = $(1))
-	$(eval $@_patch_root = $(2))
-	$(eval $@_patch_list = $(wildcard $($@_patch_root)/*.patch))
-	$(eval $@_patch_is_top = $(findstring patches,$(lastword $(subst /, ,$(dir $($@_patch_root))))))
-	for p in ${$@_patch_list}; \
+bsg_var_percent := %
+
+define bsg_fn_patch_if_new
+	$(eval apply_stage_patch := git apply --ignore-whitespace --ignore-space-change)
+	$(eval apply_commit_patch := git am --ignore-whitespace --ignore-space-change)
+	$(eval check_patch := $(apply_stage_patch) --check --reverse)
+	$(eval src_root := $(1))
+	$(eval patch_root := $(2))
+	$(eval patch_list := $(wildcard $(patch_root)/*.patch))
+	$(eval patch_is_top := $(findstring patches,$(lastword $(subst /, ,$(dir $(patch_root))))))
+	for p in $(patch_list); \
 	do \
-		echo "Checking if patch is applicable"; \
-		cd ${$@_src_root}; $(CHECK_PATCH) $$p && continue; \
+		echo "Checking if patch $$p is applicable"; \
+		cd $(src_root); $(check_patch) $$p && continue; \
 		echo "Patch is unapplied..."; \
-		if [ $@_patch_is_top ]; then \
-		echo "Applying patch to sub-directory ${$@_src_root}}; \
-		cd ${$@_src_root}; echo $$p; git am $$p; \
+		if [ ! -z "$$patch_is_top" ]; then \
+		echo "Applying patch to sub-directory $(src_root);" \
+		cd $(src_root); $(apply_commit_patch) $$p; \
+		echo "Patch applied!"; \
 		else \
-		echo "Applying patch to top-level ${$@_src_root}}; \
-		cd ${$@_src_root}; echo $$p; git apply $$p; \
+		echo "Applying patch to top-level $(src_root);" \
+		cd $(src_root); $(apply_stage_patch) $$p; \
+		echo "Patch applied!"; \
 		fi \
 	done
 endef
 
-## Cross compilation
-export BOOST_ROOT    ?= $(BP_SDK_INSTALL_DIR)
+define bsg_fn_build_tag
+	$(eval name := $(1))
+	$(eval src_dir := $(2))
+	$(eval touch_dir := $(3))
+	$(eval tag := $(4))
+	$(eval internal_target := $(src_dir)/.$(name)_build)
+	$(eval external_target := build.$(name))
+	$(eval rebuild_target := rebuild.$(name))
+$(external_target): | $(tag)
+$(rebuild_target):
+	rm -f $(touch_dir)/$(name).*
+	+$(MAKE) $(tag)
+$(tag):
+	+$(MAKE) $(internal_target)
+	touch $(tag)
+endef
 
-export RISCV_TARGET  ?= riscv64-unknown-elf-dramfs
-export NEWLIB_TUPLE  ?= $(RISCV_TARGET)
-export CROSS_COMPILE ?= $(RISCV_TARGET)-
-export RISCV_OBJDUMP ?= $(CROSS_COMPILE)objdump -d -t
-export RISCV_OBJCOPY ?= $(CROSS_COMPILE)objcopy
-export RISCV_GCC     ?= $(CROSS_COMPILE)gcc
+define bsg_fn_build_if_missing
+	$(eval name := $(1))
+	$(eval src_dir := $(2))
+	$(eval touch_dir := $(3))
+	$(eval tag := $(addprefix $(touch_dir)/$(name).,any))
+	$(call bsg_fn_build_tag,$(name),$(src_dir),$(touch_dir),$(tag))
+endef
 
-## Set variables needed for building tools
-export GCC         ?= gcc
-export CMAKE       ?= $(if $(shell which cmake3),cmake3,cmake)
-export PYTHON      ?= $(if $(shell which python3),python3,python)
-export XXD         ?= xxd
-export CURL        ?= curl
-export GIT         ?= git
-export FIND        ?= find
-export CP          ?= cp
-export MKDIR       ?= mkdir
-export MV          ?= mv
-export APPLY_PATCH ?= git apply --ignore-whitespace --ignore-space-change
-export CHECK_PATCH ?= $(APPLY_PATCH) --check --reverse
-export TAR         ?= tar
-export WGET        ?= wget
-export CAT         ?= cat
+define bsg_fn_build_if_new
+	$(eval name := $(1))
+	$(eval src_dir := $(2))
+	$(eval touch_dir := $(3))
+	$(eval hash := $(shell cd $(src_dir); git rev-parse HEAD))
+	$(eval tag := $(addprefix $(touch_dir)/$(name).,$(hash)))
+	$(call bsg_fn_build_tag,$(name),$(src_dir),$(touch_dir),$(tag))
+endef
 
-export PATH := $(BP_SDK_BIN_DIR):$(PATH)
+define bsg_fn_info
+	$(eval $@_msg = $(1))
+	$(eval $@_prefix = "BSG-INFO: ")
+	echo "${$@_prefix} ${$@_msg}";
+endef
+
+define bsg_fn_warn
+	$(eval $@_msg = $(1))
+	$(eval $@_prefix = "BSG-WARN: ")
+	echo "${$@_prefix} ${$@_msg}";
+endef
+
+define bsg_fn_error
+	$(eval $@_msg = $(1))
+	$(eval $@_prefix = "BSG-ERROR: ")
+	echo "${$@_prefix} ${$@_msg}"; \
+	exit -1;
+endef
+
+#############################
+# Paths
+#############################
+BP_SDK_DIR             ?= $(TOP)
+BP_SDK_MK_DIR          ?= $(BP_SDK_DIR)/mk
+BP_SDK_PATCH_DIR       ?= $(BP_SDK_DIR)/patches
+BP_SDK_WORK_DIR        ?= $(BP_SDK_DIR)/work
+BP_SDK_INSTALL_DIR     ?= $(BP_SDK_DIR)/install
+BP_SDK_BIN_DIR         ?= $(BP_SDK_INSTALL_DIR)/bin
+BP_SDK_LIB_DIR         ?= $(BP_SDK_INSTALL_DIR)/lib
+BP_SDK_LIB64_DIR       ?= $(BP_SDK_INSTALL_DIR)/lib64
+BP_SDK_INCLUDE_DIR     ?= $(BP_SDK_INSTALL_DIR)/include
+BP_SDK_TOUCH_DIR       ?= $(BP_SDK_INSTALL_DIR)/touchfiles
+BP_SDK_PROG_TOUCH_DIR  ?= $(BP_SDK_TOUCH_DIR)/prog
+BP_SDK_TOOLS_TOUCH_DIR ?= $(BP_SDK_TOUCH_DIR)/tools
+
+BP_SDK_GNU_DIR         ?= $(BP_SDK_DIR)/riscv-gnu-toolchain
+BP_SDK_DROMAJO_DIR     ?= $(BP_SDK_DIR)/dromajo
+BP_SDK_SPIKE_DIR       ?= $(BP_SDK_DIR)/riscv-isa-sim
+BP_SDK_BEDROCK_DIR     ?= $(BP_SDK_DIR)/bedrock
+BP_SDK_LINKER_DIR      ?= $(BP_SDK_DIR)/linker
+
+BP_SDK_PERCH_DIR       ?= $(BP_SDK_DIR)/perch
+BP_SDK_BOOTROM_DIR     ?= $(BP_SDK_DIR)/bootrom
+BP_SDK_BP_DEMOS_DIR    ?= $(BP_SDK_DIR)/bp-demos
+BP_SDK_BP_TESTS_DIR    ?= $(BP_SDK_DIR)/bp-tests
+BP_SDK_RISCV_TESTS_DIR ?= $(BP_SDK_DIR)/riscv-tests
+BP_SDK_BEEBS_DIR       ?= $(BP_SDK_DIR)/beebs
+BP_SDK_COREMARK_DIR    ?= $(BP_SDK_DIR)/coremark
+BP_SDK_SPEC2000_DIR    ?= $(BP_SDK_DIR)/spec2000
+BP_SDK_SPEC2006_DIR    ?= $(BP_SDK_DIR)/spec2006
+BP_SDK_SPEC2017_DIR    ?= $(BP_SDK_DIR)/spec2017
+BP_SDK_RISCVDV_DIR     ?= $(BP_SDK_DIR)/riscv-dv
+BP_SDK_LINUX_DIR       ?= $(BP_SDK_DIR)/linux
+BP_SDK_YOCTO_DIR       ?= $(BP_SDK_DIR)/yocto
+BP_SDK_ZEPHYR_DIR      ?= $(BP_SDK_DIR)/zephyr
+BP_SDK_OPCODES_DIR     ?= $(BP_SDK_DIR)/riscv-opcodes
+BP_SDK_RVARCH_DIR      ?= $(BP_SDK_DIR)/riscv-arch-test
+BP_SDK_NEWLIB_DIR      ?= $(BP_SDK_DIR)/bsg_newlib_dramfs
+
+BSG_CADENV_DIR         ?= $(BP_SDK_DIR)/bsg_cadenv
+
+BP_SDK_RISCV_DIR         ?= $(BP_SDK_INSTALL_DIR)/riscv
+BP_SDK_RISCV_INCLUDE_DIR ?= $(BP_SDK_RISCV_DIR)/include
+BP_SDK_RISCV_LIB_DIR     ?= $(BP_SDK_RISCV_DIR)/lib
+BP_SDK_RISCV_LINKER_DIR  ?= $(BP_SDK_RISCV_DIR)/linker
+BP_SDK_RISCV_PROG_DIR    ?= $(BP_SDK_RISCV_DIR)/prog
+BP_SDK_RISCV_UCODE_DIR   ?= $(BP_SDK_RISCV_DIR)/ucode
 
