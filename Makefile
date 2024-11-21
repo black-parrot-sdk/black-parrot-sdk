@@ -25,6 +25,10 @@ apply_patches: ## applies patches to submodules
 apply_patches: build.patch
 $(eval $(call bsg_fn_build_if_new,patch,$(CURDIR),$(BP_SDK_TOUCH_DIR)))
 %/.patch_build: checkout
+	# Disable long checkouts
+	@$(CD) $(BP_SDK_GNU_DIR); $(GIT) config --local submodule.qemu.update none
+	@$(CD) $(BP_SDK_GNU_DIR); $(GIT) config --local submodule.spike.update none
+	@$(CD) $(BP_SDK_GNU_DIR); $(GIT) config --local submodule.dejagnu.update none
 	@$(GIT) submodule sync --recursive
 	@$(GIT) submodule update --init --recursive --recommend-shallow
 	@$(call bsg_fn_patch_if_new,$(BP_SDK_GNU_DIR),$(BP_SDK_PATCH_DIR)/riscv-gnu-toolchain)
