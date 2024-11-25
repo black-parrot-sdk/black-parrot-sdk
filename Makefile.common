@@ -19,7 +19,7 @@ help: ## prints this message
 # Global reset
 .PHONY: bleach_all
 bleach_all: ## wipes the whole repo clean. Use with caution
-	@cd $(TOP); git clean -ffdx; git submodule deinit -f .
+	@cd $(BP_SDK_DIR); git clean -ffdx; git submodule deinit -f .
 
 define bsg_fn_upper
 $(shell echo $(1) | tr a-z A-Z)

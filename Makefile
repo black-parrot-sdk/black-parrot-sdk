@@ -44,7 +44,7 @@ $(eval $(call bsg_fn_build_if_new,patch,$(CURDIR),$(BP_SDK_TOUCH_DIR)))
 	@$(call bsg_fn_patch_if_new,$(BP_SDK_RISCVDV_DIR),$(BP_SDK_PATCH_DIR)/riscv-dv)
 	@$(call bsg_fn_patch_if_new,$(BP_SDK_LINUX_DIR)/opensbi,$(BP_SDK_PATCH_DIR)/linux/opensbi)
 	@$(call bsg_fn_patch_if_new,$(BP_SDK_LINUX_DIR)/buildroot,$(BP_SDK_PATCH_DIR)/linux/buildroot)
-	@echo "Patching successful, ignore errors"
+	@$(ECHO) "Patching successful, ignore errors"
 
 sdk_lite: # minimal SDK toolset
 sdk_lite: apply_patches
@@ -101,10 +101,10 @@ prog_bsg: prog
 pull_sdk: ## (experimental) pulls the latest tools and unpacks the SDK
 	$(eval SDK_URL := https://github.com/black-parrot-sdk/black-parrot-sdk/releases/download/)
 	$(eval SDK_TAG := $(shell git describe --tags --abbrev=0))
-	cd $(TOP); \
+	@$(CD) $(BP_SDK_DIR); \
 		$(CURL) -L $(SDK_URL)/$(SDK_TAG)/tools.tar.gz \
-		| tar -xvz
-	cd $(TOP); \
+		| $(TAR) -xvz
+	@$(CD) $(BP_SDK_DIR); \
 		$(CURL) -L $(SDK_URL)/$(SDK_TAG)/prog.tar.gz \
-		| tar -xvz
+		| $(TAR) -xvz
 
