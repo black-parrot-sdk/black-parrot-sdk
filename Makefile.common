@@ -119,8 +119,8 @@ endef
 BP_SDK_DIR             ?= $(TOP)
 BP_SDK_MK_DIR          ?= $(BP_SDK_DIR)/mk
 BP_SDK_PATCH_DIR       ?= $(BP_SDK_DIR)/patches
-BP_SDK_WORK_DIR        ?= $(BP_SDK_DIR)/work
 BP_SDK_INSTALL_DIR     ?= $(BP_SDK_DIR)/install
+BP_SDK_WORK_DIR        ?= $(BP_SDK_INSTALL_DIR)/work
 BP_SDK_BIN_DIR         ?= $(BP_SDK_INSTALL_DIR)/bin
 BP_SDK_LIB_DIR         ?= $(BP_SDK_INSTALL_DIR)/lib
 BP_SDK_LIB64_DIR       ?= $(BP_SDK_INSTALL_DIR)/lib64
