@@ -46,7 +46,7 @@ $(patch_tag):
 	touch $@
 	@echo "Patching successful, ignore errors"
 
-sdk_lite: apply_patches
+sdk_lite:
 	$(MAKE) prereqs
 	$(MAKE) linker
 	$(MAKE) -j1 bedrock
@@ -54,21 +54,21 @@ sdk_lite: apply_patches
 	$(MAKE) gnudramfs
 
 ## This target makes the sdk tools
-sdk: sdk_lite
+sdk:
 	$(MAKE) gnu
 
 sdk_bsg: sdk
 	# Placeholder
 
 ## Even the "lite" programs require the full sdk toolchain
-prog_lite: sdk_lite
+prog_lite:
 	$(MAKE) -j1 perch
 	$(MAKE) -j1 bootrom
 	$(MAKE) -j1 bp-demos
 	$(MAKE) -j1 bp-tests
 
 ## This target makes all of the programs
-prog: prog_lite
+prog:
 	$(MAKE) -j1 riscv-tests
 	$(MAKE) -j1 coremark
 	$(MAKE) -j1 beebs
