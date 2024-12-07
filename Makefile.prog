@@ -37,6 +37,8 @@ PERCENT := %
 WITH_MARCH ?= rv64gcb
 WITH_MABI ?= lp64d
 
+COH_PROTO ?= "ei msi mesi moesif hybrid none"
+
 perch_build: $(BP_SDK_LIB_DIR)/libperch.a
 $(BP_SDK_LIB_DIR)/libperch.a:
 	$(GIT) submodule update --init $(opcodes_dir)
@@ -49,7 +51,7 @@ $(BP_SDK_LIB_DIR)/libperch.a:
 	cp $(perch_dir)/*.h $(BP_SDK_INCLUDE_DIR)
 
 bootrom_build:
-	$(MAKE) -C $(bootrom_dir) clean bootrom.riscv WITH_MARCH=$(WITH_MARCH) WITH_MABI=$(WITH_MABI)
+	$(MAKE) -C $(bootrom_dir) clean all COH_PROTO=$(COH_PROTO) WITH_MARCH=$(WITH_MARCH) WITH_MABI=$(WITH_MABI)
 
 bp-demos_build:
 	$(MAKE) -C $(bp_demos_dir) clean all
