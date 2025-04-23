@@ -1,172 +1,278 @@
-variables:
-  GIT_STRATEGY: fetch
-  GIT_SUBMODULE_STRATEGY: recursive
-  GIT_SUBMODULE_UPDATE_FLAGS: --jobs ${CI_NUM_CORES}
 
-stages:
-  - checkout
-  - tools
-  - linker
-  - perch
-  - prog
-  - zip
-  - publish
+# Include common GitLab CI macros
+include: '.gitlab-ci.common.yml'
 
-.job_template: &job_definition
-  only:
-    - pushes
-  artifacts:
-    when: always
-    paths:
-      - "*.log"
-      - include/
-      - lib/
-      - linker/
-      - install/
-      - prog/
-      - bedrock/
-    expire_in: "1 day"
+###################################################
+## Mixins
+###################################################
+.bp_sdk_mixin:
+  variables:
+    REPO_NAME: "black-parrot-sdk"
+    # template variables
+    DOCKER_PLATFORM: "setme"
+    CONTAINER_IMAGE: "${REGISTRY_IMAGE}:${DOCKER_PLATFORM}"
+    # used internally
+    TOOLS_PACKAGE: "tools-${DOCKER_PLATFORM}"
+    TOOLS_INSTALL_TAG: "${TOOLS_PACKAGE}-install"
+    TOOLS_ARTIFACT: "${TOOLS_INSTALL_TAG}-${TOOL}"
+    TOOLS_WILDCARD: "${TOOLS_INSTALL_TAG}-*"
+    SDK_PACKAGE: "sdk"
+    SDK_INSTALL_TAG: "${SDK_PACKAGE}-install"
+    SDK_ARTIFACT: "${SDK_INSTALL_TAG}-all"
+    SDK_WILDCARD: "${SDK_INSTALL_TAG}-*"
+    RISCV_PACKAGE: "riscv"
+    RISCV_INSTALL_TAG: "${RISCV_PACKAGE}-install"
+    RISCV_ARTIFACT: "${RISCV_INSTALL_TAG}-${PROG}"
+    RISCV_WILDCARD: "${RISCV_INSTALL_TAG}-*"
+    # exported to make sure things go in the right place
+    BP_WORK_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-sdk-work"
+    BP_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-sdk-install"
+    BP_RISCV_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-sdk-riscv"
 
-checkout:
-  <<: *job_definition
-  stage: checkout
+###################################################
+## templates
+###################################################
+
+.image_job:
+  extends: [.docker_template, .bp_sdk_mixin]
   script:
-    - make bleach_all
-    - make checkout -j ${CI_NUM_CORES} | tee checkout.log
+    - echo "[CI] building image ${CONTAINER_IMAGE}" | tee -a ${JOB_LOG}
+    - docker build docker -f docker/Dockerfile.${DOCKER_PLATFORM}
+        --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ${CONTAINER_IMAGE}
+        --build-arg USER_NAME="${USER_NAME}"
+        --build-arg USER_ID="${USER_ID}"
+        --build-arg GROUP_NAME="${GROUP_NAME}"
+        --build-arg GROUP_ID="${GROUP_ID}"
+        --build-arg OTHER_GROUPS="${OTHER_GROUPS}"
+        -t ${CONTAINER_IMAGE} >> ${JOB_LOG} 2>&1
+  rules:
+    - !reference [.docker_template, rules]
+    - changes:
+        paths:
+          # variable expansion of DOCKER_PLATFORM doesn't seem to work here
+          - docker/Dockerfile.*
+          - docker/entrypoint.*
+          - docker/requirements.txt
 
-build_bedrock:
-  <<: *job_definition
-  stage: tools
+.build_tools_job:
+  extends: [.repo_template, .bp_sdk_mixin]
+  variables:
+    TOOL: "setme"
   script:
-    - make bedrock -j1 | tee bedrock.log
-  dependencies:
-    - checkout 
+    - export DISABLE_MULTILIB=1
+    - echo "[CI] doing makefile checkout" | tee -a ${JOB_LOG}
+    - make -j${CORES_PER_JOB} checkout >> ${JOB_LOG} 2>&1
+    - echo "[CI] repatching ${TOOL}" | tee -a ${JOB_LOG}
+    - make -j${CORES_PER_JOB} repatch.${TOOL} >> ${JOB_LOG} 2>&1
+    - echo "[CI] rebuilding ${TOOL}" | tee -a ${JOB_LOG}
+    - make -j${CORES_PER_JOB} rebuild.${TOOL} >> ${JOB_LOG} 2>&1
+    - echo "[CI] moving installation directory to build output" | tee -a ${JOB_LOG}
+    - mv ${BP_INSTALL_DIR} ${JOB_SUCCESS_ROOT}/${TOOLS_ARTIFACT}
+  rules: !reference [.repo_template, rules]
 
-build_dromajo:
-  <<: *job_definition
-  stage: tools
+.scatter_tools_job:
+  extends: [.upload_template, .bp_sdk_mixin]
+  variables:
+    # template variables
+    API_WILDCARD: "${TOOLS_WILDCARD}"
+    API_PACKAGE_NAME: "${TOOLS_PACKAGE}"
+    API_PACKAGE_VER: "${COMMIT_REF_SLUG}"
   script:
-    - make dromajo -j ${CI_NUM_CORES} | tee dromajo.log
-  dependencies:
-    - checkout 
+    - echo "[CI] publishing to url ${API_CURL_URL}" | tee -a ${JOB_LOG}
+  rules: !reference [.upload_template, rules]
 
-build_gnu:
-  <<: *job_definition
-  stage: tools
+.gather_tools_job:
+  extends: [.download_template, .bp_sdk_mixin]
+  variables:
+    # template variables
+    API_WILDCARD: "${TOOLS_PACKAGE}"
+    API_PACKAGE_NAME: "${TOOLS_PACKAGE}"
+    API_PACKAGE_VER: "${COMMIT_REF_SLUG}"
   script:
-    - make gnudramfs -j ${CI_NUM_CORES} | tee gnudramfs.log
-    - make gnulinux -j ${CI_NUM_CORES} | tee gnulinux.log
-  dependencies:
-    - checkout 
+    - echo "[CI] downloaded from url ${API_CURL_URL}" | tee -a ${JOB_LOG}
+  rules: !reference [.download_template, rules]
 
-build_linker:
-  <<: *job_definition
-  stage: linker
+.build_sdk_job:
+  extends: [.repo_template, .bp_sdk_mixin]
+  variables:
+    SDK_PROGS: "bedrock perch bootrom"
   script:
-    - make linker -j1 | tee linker.log
-  dependencies:
-    - build_bedrock
-    - build_dromajo
-    - build_gnu
+    - echo "[CI] moving dependencies to installation directory" | tee -a ${JOB_LOG}
+    - mv ${JOB_DEPS_ROOT}/${TOOLS_PACKAGE} ${BP_INSTALL_DIR} >> ${JOB_LOG} 2>&1
+    - echo "[CI] doing makefile checkout"
+    - make -j${CORES_PER_JOB} checkout >> ${JOB_LOG} 2>&1
+    - echo "[CI] building sdk" | tee -a ${JOB_LOG}
+    - |
+      for PROG in ${SDK_PROGS}; do
+          echo "[CI] repatching ${PROG}" | tee -a ${JOB_LOG}
+          make repatch.${PROG} >> ${JOB_LOG} 2>&1
+          echo "[CI] rebuilding ${PROG}" | tee -a ${JOB_LOG}
+          make rebuild.${PROG} >> ${JOB_LOG} 2>&1
+      done
+    - mv ${BP_INSTALL_DIR} ${JOB_SUCCESS_ROOT}/${TOOLS_ARTIFACT}
+    - mv ${BP_RISCV_DIR} ${JOB_SUCCESS_ROOT}/${SDK_ARTIFACT}
+  rules: !reference [.repo_template, rules]
 
-build_perch:
-  <<: *job_definition
-  stage: perch
+.build_riscv_job:
+  extends: [.repo_template, .bp_sdk_mixin]
+  variables:
+    PROG: "setme"
   script:
-    - make perch -j1 | tee perch.log
-  dependencies:
-    - build_linker
+    - echo "[CI] moving dependencies to installation directory" | tee -a ${JOB_LOG}
+    - mv ${JOB_DEPS_ROOT}/${TOOLS_ARTIFACT} ${BP_INSTALL_DIR} >> ${JOB_LOG} 2>&1
+    - mv ${JOB_DEPS_ROOT}/${SDK_ARTIFACT} ${BP_RISCV_DIR}
+    - echo "[CI] doing makefile checkout" | tee -a ${JOB_LOG}
+    - make -j${CORES_PER_JOB} checkout >> ${JOB_LOG} 2>&1
+    - echo "[CI] repatching ${PROG}" | tee -a ${JOB_LOG}
+    - make repatch.${PROG} >> ${JOB_LOG} 2>&1
+    - echo "[CI] rebuilding ${PROG}" | tee -a ${JOB_LOG}
+    - make rebuild.${PROG} >> ${JOB_LOG} 2>&1
+    - echo "[CI] moving installation directory to build output" | tee -a ${JOB_LOG}
+    - mv ${BP_RISCV_DIR} ${JOB_SUCCESS_ROOT}/${RISCV_ARTIFACT}
+  rules: !reference [.repo_template, rules]
 
-build_bootrom:
-  <<: *job_definition
-  stage: prog
+.scatter_riscv_job:
+  extends: [.upload_template, .bp_sdk_mixin]
+  variables:
+    # template variables
+    API_WILDCARD: "${RISCV_WILDCARD}"
+    API_PACKAGE_NAME: "${RISCV_PACKAGE}"
+    API_PACKAGE_VER: "${COMMIT_REF_SLUG}"
   script:
-    - make bootrom -j1 | tee bootrom.log
-  dependencies:
-    - build_perch
+    - echo "[CI] publishing to url ${API_CURL_URL}" | tee -a ${JOB_LOG}
+  rules: !reference [.upload_template, rules]
 
-build_bp-demos:
-  <<: *job_definition
-  stage: prog
+.gather_riscv_job:
+  extends: [.download_template, .bp_sdk_mixin]
+  variables:
+    # template variables
+    API_WILDCARD: "${RISCV_PACKAGE}"
+    API_PACKAGE_NAME: "${RISCV_PACKAGE}"
+    API_PACKAGE_VER: "${COMMIT_REF_SLUG}"
   script:
-    - make bp-demos -j1 | tee bp-demos.log
-  dependencies:
-    - build_perch
+    - echo "[CI] downloaded from url ${API_CURL_URL}" | tee -a ${JOB_LOG}
+  rules: !reference [.download_template, rules]
 
-build_bp-tests:
-  <<: *job_definition
-  stage: prog
+.smoke_job:
+  extends: [.repo_template, .bp_sdk_mixin]
+  variables:
+    SIM: "setme"
+    SUITE: "setme"
+    PROG: "setme"
   script:
-    - make bp-tests -j1 | tee bp-tests.log
-  dependencies:
-    - build_perch
+    - SMOKE_SCRIPT="./ci/smoke-sim.sh"
+    - echo "[CI] moving dependencies to installation directory" | tee -a ${JOB_LOG}
+    - mv ${JOB_DEPS_ROOT}/${TOOLS_PACKAGE} ${BP_INSTALL_DIR} >> ${JOB_LOG} 2>&1
+    - mv ${JOB_DEPS_ROOT}/${RISCV_PACKAGE} ${BP_RISCV_DIR}
+    - echo "[CI] running script for ${SMOKE_SCRIPT}" | tee -a ${JOB_LOG}
+    - ./ci/common/run-ci.sh ${SMOKE_SCRIPT} ${SIM} ${SUITE} ${PROG}
+  rules: !reference [.repo_template, rules]
 
-build_riscv-tests:
-  <<: *job_definition
-  stage: prog
-  script:
-    - make riscv-tests -j1 | tee riscv-tests.log
-  dependencies:
-    - build_perch
+###################################################
+## Actual Jobs
+###################################################
 
-build_coremark:
-  <<: *job_definition
-  stage: prog
-  script:
-    - make coremark -j1 | tee coremark.log
-  dependencies:
-    - build_perch
+# We couple dependencies here while we wait for this feature
+# https://gitlab.com/gitlab-org/gitlab/-/issues/423456
+# needs:
+#  parallel:
+#    matrix:
+#      - DOCKER_PLATFORM: $DOCKER_PLATFORM
 
-build_beebs:
-  <<: *job_definition
-  stage: prog
-  script:
-    - make beebs -j1 | tee beebs.log
-  dependencies:
-    - build_perch
+image-tools:
+  extends: [.image_job]
+  parallel:
+    matrix:
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+  needs: []
+  rules: !reference [.image_job, rules]
 
-zip_tools:
-  stage: zip
-  script:
-    - tar -czvf tools.tar.gz install/ | tee zip_tools.log
-  artifacts:
-    when: on_success
-    paths:
-      - "*.log"
-      - tools.tar.gz
-    expire_in: "1 day"
-  dependencies:
-    - build_bedrock
-    - build_dromajo
-    - build_gnu
+build-tools:
+  extends: [.build_tools_job]
+  parallel:
+    matrix:
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+        TOOL: ["dromajo", "gnudramfs"]
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+        TOOL: ["spike", "gnulinux"]
+  needs: [{job: image-tools, optional: true}]
+  rules: !reference [.build_tools_job, rules]
 
-zip_prog:
-  stage: zip
-  script:
-    - tar -czvf prog.tar.gz prog/ linker/ bedrock/ | tee zip_prog.log
-  artifacts:
-    when: on_success
-    paths:
-      - "*.log"
-      - prog.tar.gz
-  dependencies:
-    - build_perch
-    - build_linker
-    - build_bootrom
-    - build_bp-demos
-    - build_bp-tests
-    - build_riscv-tests
-    - build_coremark
-    - build_beebs
+scatter-tools:
+  extends: [.scatter_tools_job]
+  parallel:
+    matrix:
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+  needs: [{job: build-tools}]
+  rules: !reference [.scatter_tools_job, rules]
 
-publish_tag:
-  stage: publish
-  when: manual
-  script:
-    - gh config set prompt disabled
-    - if [ "$CI_RELEASE_TAG" == "" ]; then echo "Please set CI_RELEASE_TAG"; exit 1; fi
-    - gh release create ${CI_RELEASE_TAG} tools.tar.gz prog.tar.gz --repo black-parrot-sdk/black-parrot-sdk
-  dependencies:
-    - zip_tools
-    - zip_prog
+gather-tools:
+  extends: [.gather_tools_job]
+  parallel:
+    matrix:
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+  needs: [{job: scatter-tools, optional: true}]
+
+build-sdk:
+  extends: [.build_sdk_job]
+  parallel:
+    matrix:
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+  needs: [{job: gather-tools}]
+  rules: !reference [.build_sdk_job, rules]
+
+build-riscv:
+  extends: [.build_riscv_job]
+  parallel:
+    matrix:
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+        PROG: ["bp-demos", "bp-tests", "riscv-tests"]
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+        PROG: ["coremark", "beebs"]
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+        PROG: ["riscv-arch"]
+      # only build on centos because we rely on cad tools
+      - DOCKER_PLATFORM: ["centos7"]
+        PROG: ["riscv-dv"]
+  needs: [{job: build-sdk}]
+  rules: !reference [.build_riscv_job, rules]
+
+scatter-riscv:
+  extends: [.scatter_riscv_job]
+  parallel:
+    matrix:
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+  needs: [{job: build-riscv}]
+  rules: !reference [.scatter_riscv_job, rules]
+
+gather-riscv:
+  extends: [.gather_riscv_job]
+  parallel:
+    matrix:
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+  needs: [{job: scatter-riscv, optional: true}]
+  rules: !reference [.gather_riscv_job, rules]
+
+smoke-riscv:
+  extends: [.smoke_job]
+  parallel:
+    matrix:
+     - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+       SIM: ["dromajo"]
+       SUITE: ["bp-demos"]
+       PROG: ["lfs_demo.riscv"]
+     - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+       SIM: ["dromajo"]
+       SUITE: ["bp-tests"]
+       PROG: ["hello_world.riscv", "cache_hammer.riscv"]
+     - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+       SIM: ["dromajo"]
+       SUITE: ["riscv-tests"]
+       PROG: ["rv64ui-p-.riscv"]
+     - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+       SIM: ["dromajo"]
+       SUITE: ["beebs"]
+       PROG: ["aha-compress.riscv"]
+  needs: [{job: gather-riscv}, {job: gather-tools}]
+  rules: !reference [.smoke_job, rules]
 

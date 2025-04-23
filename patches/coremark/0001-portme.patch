@@ -113,7 +113,7 @@ index 8159469..d8196c4
 -#File : core_portme.mak
 +CFLAGS   ?= $(PORT_CFLAGS)
 +CFLAGS   += -O3 -g
-+CFLAGS   += -march=rv64gcb -mabi=lp64d -mcmodel=medany -mstrict-align
++CFLAGS   += -march=rv64gc_zba_zbb_zbs -mabi=lp64d -mcmodel=medany -mstrict-align
 +CFLAGS   += -mtune=bsg_blackparrot
 +CFLAGS   += -ffast-math
 +CFLAGS   += -funswitch-loops -flto
