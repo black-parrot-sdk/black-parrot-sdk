@@ -1,0 +1,50 @@
+
+DISABLE_MULTILIB ?=
+ifeq ($(DISABLE_MULTILIB),)
+GNU_CONFIGURE_FLAGS += --enable-multilib
+GNU_CONFIGURE_FLAGS += --with-multilib-generator="rv64g-lp64d--;rv64gcb-lp64d--"
+endif
+GNU_CONFIGURE_FLAGS += --disable-gdb --disable-qemu-system --with-sim=spike
+GNU_CONFIGURE_FLAGS += --with-isa-spec=2.2 --with-cmodel=medany
+GNU_CONFIGURE_FLAGS += --with-target-cflags="-mstrict-align -mcmodel=medany"
+GNU_CONFIGURE_FLAGS += --with-target-cxxflags="-mstrict-align -mcmodel=medany"
+
+$(eval $(call bsg_tgt_build_submodule,gnulinux,$(BP_GNU_DIR),$(BP_TOUCH_DIR),,$(BP_WORK_DIR)))
+%/.gnulinux_build:
+	@$(eval EXTRA_CONFIGURE_FLAGS := $(GNU_CONFIGURE_FLAGS))
+	@$(eval EXTRA_CONFIGURE_FLAGS += --enable-linux)
+	@$(call bsg_fn_default_configure,$(@D),$<,$(BP_INSTALL_DIR),$(EXTRA_CONFIGURE_FLAGS))
+	@$(MAKE) -C $(@D) linux
+	@$(MAKE) -C $(@D) install
+	@$(call bsg_fn_strip_binaries, $(BP_INSTALL_DIR))
+
+$(eval $(call bsg_tgt_build_submodule,gnudramfs,$(BP_GNU_DIR),$(BP_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.gnudramfs_build:
+	@$(eval EXTRA_CONFIGURE_FLAGS := $(GNU_CONFIGURE_FLAGS))
+	@$(eval EXTRA_CONFIGURE_FLAGS += --disable-linux)
+	@$(eval EXTRA_CONFIGURE_FLAGS += --with-newlib-src="$(BP_NEWLIB_DIR)")
+	@$(eval EXTRA_CONFIGURE_FLAGS += --with-tune=bsg_blackparrot)
+	@$(eval export NEWLIB_TUPLE := "riscv64-unknown-elf-dramfs")
+	@$(call bsg_fn_default_configure,$(@D),$<,$(BP_INSTALL_DIR),$(EXTRA_CONFIGURE_FLAGS))
+	@$(MAKE) -C $(@D) newlib
+	@$(MAKE) -C $(@D) install
+	@$(CP) $(BP_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(BP_BIN_DIR)
+	@$(call bsg_fn_strip_binaries, $(BP_INSTALL_DIR))
+
+$(eval $(call bsg_tgt_build_submodule,dromajo,$(BP_DROMAJO_DIR),$(BP_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.dromajo_build:
+	@$(eval EXTRA_CONFIGURE_FLAGS := )
+	@$(call bsg_fn_default_cmake,$(@D),$<,$(BP_INSTALL_DIR),$(EXTRA_CONFIGURE_FLAGS))
+	@$(MAKE) -C $(@D)
+	@$(CP) $(@D)/dromajo $(BP_BIN_DIR)
+	@$(CP) $(@D)/libdromajo_cosim.a $(BP_LIB_DIR)
+	@$(CP) $</include/* $(BP_INCLUDE_DIR)
+	@$(call bsg_fn_strip_binaries, $(BP_INSTALL_DIR))
+
+$(eval $(call bsg_tgt_build_submodule,spike,$(BP_SPIKE_DIR),$(BP_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.spike_build:
+	@$(eval EXTRA_CONFIGURE_FLAGS := --without-boost --without-boost-asio --without-boost-regex)
+	@$(call bsg_fn_default_configure,$(@D),$<,$(BP_INSTALL_DIR),$(EXTRA_CONFIGURE_FLAGS))
+	@$(MAKE) -C $(@D) install
+	@$(call bsg_fn_strip_binaries, $(BP_INSTALL_DIR))
+

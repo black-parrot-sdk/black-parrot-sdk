@@ -1,0 +1,198 @@
+From c18dba81988b5be9653a8e296de86a9199aaf07b Mon Sep 17 00:00:00 2001
+From: Dan Petrisko <petrisko@cs.washington.edu>
+Date: Tue, 8 Apr 2025 22:43:51 -0700
+Subject: [PATCH] Adding rsub
+
+---
+ run.py | 44 ++++++++++++++++++++++----------------------
+ 1 file changed, 22 insertions(+), 22 deletions(-)
+
+diff --git a/run.py b/run.py
+index 4097c9f..8703cb6 100644
+--- a/run.py
++++ b/run.py
+@@ -146,57 +146,57 @@ def parse_iss_yaml(iss, iss_yaml, isa, priv, setting_dir, debug_cmd):
+ 
+     # Path to the "scripts" subdirectory
+     my_path = os.path.dirname(os.path.realpath(__file__))
+     scripts_dir = os.path.join(my_path, "scripts")   # Search for matched ISS
+ 
+     # Search for matched ISS
+     for entry in yaml_data:
+         if entry['iss'] == iss:
+             logging.info("Found matching ISS: {}".format(entry['iss']))
+             cmd = entry['cmd'].rstrip()
+-            cmd = re.sub("\<path_var\>",
++            cmd = re.sub(r"\<path_var\>",
+                          get_env_var(entry['path_var'], debug_cmd=debug_cmd),
+                          cmd)
+             m = re.search(r"rv(?P<xlen>[0-9]+?)(?P<variant>[a-zA-Z_]+?)$", isa)
+             if m:
+-                cmd = re.sub("\<xlen\>", m.group('xlen'), cmd)
++                cmd = re.sub(r"\<xlen\>", m.group('xlen'), cmd)
+             else:
+                 logging.error("Illegal ISA {}".format(isa))
+             if iss == "ovpsim":
+-                cmd = re.sub("\<cfg_path\>", setting_dir, cmd)
++                cmd = re.sub(r"\<cfg_path\>", setting_dir, cmd)
+             elif iss == "whisper":
+                 if m:
+                     # TODO: Support u/s mode
+                     variant = re.sub('g', 'imafd', m.group('variant'))
+-                    cmd = re.sub("\<variant\>", variant, cmd)
++                    cmd = re.sub(r"\<variant\>", variant, cmd)
+             else:
+-                cmd = re.sub("\<variant\>", isa, cmd)
+-            cmd = re.sub("\<priv\>", priv, cmd)
+-            cmd = re.sub("\<scripts_path\>", scripts_dir, cmd)
+-            cmd = re.sub("\<config_path\>", yaml_dir, cmd)
++                cmd = re.sub(r"\<variant\>", isa, cmd)
++            cmd = re.sub(r"\<priv\>", priv, cmd)
++            cmd = re.sub(r"\<scripts_path\>", scripts_dir, cmd)
++            cmd = re.sub(r"\<config_path\>", yaml_dir, cmd)
+             return cmd
+     logging.error("Cannot find ISS {}".format(iss))
+     sys.exit(RET_FAIL)
+ 
+ 
+ def get_iss_cmd(base_cmd, elf, log):
+     """Get the ISS simulation command
+ 
+     Args:
+       base_cmd : Original command template
+       elf      : ELF file to run ISS simualtion
+       log      : ISS simulation log name
+ 
+     Returns:
+       cmd      : Command for ISS simulation
+     """
+-    cmd = re.sub("\<elf\>", elf, base_cmd)
++    cmd = re.sub(r"\<elf\>", elf, base_cmd)
+     cmd += (" &> {}".format(log))
+     return cmd
+ 
+ 
+ def do_compile(compile_cmd, test_list, core_setting_dir, cwd, ext_dir,
+                cmp_opts, output_dir, debug_cmd, lsf_cmd):
+     """Compile the instruction generator
+ 
+     Args:
+       compile_cmd         : Compile command for the generator
+@@ -206,28 +206,28 @@ def do_compile(compile_cmd, test_list, core_setting_dir, cwd, ext_dir,
+       ext_dir             : User extension directory
+       cmp_opts            : Compile options for the generator
+       output_dir          : Output directory of the ELF files
+       debug_cmd           : Produce the debug cmd log without running
+       lsf_cmd             : LSF command used to run the instruction generator
+     """
+     if not ((len(test_list) == 1) and (
+             test_list[0]['test'] == 'riscv_csr_test')):
+         logging.info("Building RISC-V instruction generator")
+         for cmd in compile_cmd:
+-            cmd = re.sub("<out>", os.path.abspath(output_dir), cmd)
+-            cmd = re.sub("<setting>", core_setting_dir, cmd)
++            cmd = re.sub(r"<out>", os.path.abspath(output_dir), cmd)
++            cmd = re.sub(r"<setting>", core_setting_dir, cmd)
+             if ext_dir == "":
+-                cmd = re.sub("<user_extension>", "<cwd>/user_extension", cmd)
++                cmd = re.sub(r"<user_extension>", "<cwd>/user_extension", cmd)
+             else:
+-                cmd = re.sub("<user_extension>", ext_dir, cmd)
+-            cmd = re.sub("<cwd>", cwd, cmd)
+-            cmd = re.sub("<cmp_opts>", cmp_opts, cmd)
++                cmd = re.sub(r"<user_extension>", ext_dir, cmd)
++            cmd = re.sub(r"<cwd>", cwd, cmd)
++            cmd = re.sub(r"<cmp_opts>", cmp_opts, cmd)
+             if lsf_cmd:
+                 cmd = lsf_cmd + " " + cmd
+                 run_parallel_cmd([cmd], debug_cmd=debug_cmd)
+             else:
+                 logging.debug("Compile command: {}".format(cmd))
+                 run_cmd(cmd, debug_cmd=debug_cmd)
+ 
+ 
+ def run_csr_test(cmd_list, cwd, csr_file, isa, iterations, lsf_cmd,
+                  end_signature_addr, timeout_s, output_dir, debug_cmd):
+@@ -267,23 +267,23 @@ def do_simulate(sim_cmd, simulator, test_list, cwd, sim_opts, seed_gen,
+       lsf_cmd               : LSF command used to run the instruction generator
+       timeout_s             : Timeout limit in seconds
+       log_suffix            : Simulation log file name suffix
+       batch_size            : Number of tests to generate per run
+       output_dir            : Output directory of the ELF files
+       verbose               : Verbose logging
+       check_return_code     : Check return code of the command
+       debug_cmd             : Produce the debug cmd log without running
+     """
+     cmd_list = []
+-    sim_cmd = re.sub("<out>", os.path.abspath(output_dir), sim_cmd)
+-    sim_cmd = re.sub("<cwd>", cwd, sim_cmd)
+-    sim_cmd = re.sub("<sim_opts>", sim_opts, sim_cmd)
++    sim_cmd = re.sub(r"<out>", os.path.abspath(output_dir), sim_cmd)
++    sim_cmd = re.sub(r"<cwd>", cwd, sim_cmd)
++    sim_cmd = re.sub(r"<sim_opts>", sim_opts, sim_cmd)
+ 
+     logging.info("Running RISC-V instruction generator")
+     sim_seed = {}
+     for test in test_list:
+         iterations = test['iterations']
+         logging.info("Generating {} {}".format(iterations, test['test']))
+         if iterations > 0:
+             # Running a CSR test
+             if test['test'] == 'riscv_csr_test':
+                 run_csr_test(cmd_list, cwd, csr_file, isa, iterations, lsf_cmd,
+@@ -297,21 +297,21 @@ def do_simulate(sim_cmd, simulator, test_list, cwd, sim_opts, seed_gen,
+                     "Running {} with {} batches".format(test['test'],
+                                                         batch_cnt))
+                 for i in range(0, batch_cnt):
+                     test_id = '{}_{}'.format(test['test'], i)
+                     rand_seed = seed_gen.get(test_id, i * batch_cnt)
+                     if i < batch_cnt - 1:
+                         test_cnt = batch_size
+                     else:
+                         test_cnt = iterations - i * batch_size
+                     if simulator == "pyflow":
+-                        sim_cmd = re.sub("<test_name>", test['gen_test'],
++                        sim_cmd = re.sub(r"<test_name>", test['gen_test'],
+                                          sim_cmd)
+                         cmd = lsf_cmd + " " + sim_cmd.rstrip() + \
+                               (" --num_of_tests={}".format(test_cnt)) + \
+                               (" --start_idx={}".format(i * batch_size)) + \
+                               (" --asm_file_name={}/asm_test/{}".format(
+                                   output_dir, test['test'])) + \
+                               (" --log_file_name={}/sim_{}_{}{}.log ".format(
+                                   output_dir,
+                                   test['test'], i, log_suffix)) + \
+                               (" --target=%s " % (target)) + \
+@@ -321,26 +321,26 @@ def do_simulate(sim_cmd, simulator, test_list, cwd, sim_opts, seed_gen,
+                         cmd = lsf_cmd + " " + sim_cmd.rstrip() + \
+                               (" +UVM_TESTNAME={} ".format(test['gen_test'])) + \
+                               (" +num_of_tests={} ".format(test_cnt)) + \
+                               (" +start_idx={} ".format(i * batch_size)) + \
+                               (" +asm_file_name={}/asm_test/{} ".format(
+                                   output_dir, test['test'])) + \
+                               (" -l {}/sim_{}_{}{}.log ".format(
+                                   output_dir, test['test'], i, log_suffix))
+                     if verbose and simulator != "pyflow":
+                         cmd += "+UVM_VERBOSITY=UVM_HIGH "
+-                    cmd = re.sub("<seed>", str(rand_seed), cmd)
+-                    cmd = re.sub("<test_id>", test_id, cmd)
++                    cmd = re.sub(r"<seed>", str(rand_seed), cmd)
++                    cmd = re.sub(r"<test_id>", test_id, cmd)
+                     sim_seed[test_id] = str(rand_seed)
+                     if "gen_opts" in test:
+                         if simulator == "pyflow":
+-                            test['gen_opts'] = re.sub("\+", "--",
++                            test['gen_opts'] = re.sub(r"\+", "--",
+                                                       test['gen_opts'])
+                             cmd += test['gen_opts']
+                         else:
+                             cmd += test['gen_opts']
+                     if not re.search("c", isa):
+                         cmd += "+disable_compressed_instr=1 "
+                     if lsf_cmd:
+                         cmd_list.append(cmd)
+                     else:
+                         logging.info(
+-- 
+2.18.4
+

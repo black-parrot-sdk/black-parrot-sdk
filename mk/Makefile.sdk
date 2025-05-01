@@ -1,98 +1,41 @@
 
-BOOST_VERSION := 1.82.0
-BOOST := boost_$(subst .,_,$(BOOST_VERSION))
-BOOST_URL := https://sourceforge.net/projects/boost/files/boost
-BOOST_DOWNLOAD := $(BOOST_URL)/$(BOOST_VERSION)/$(BOOST).tar.gz/download
-$(eval $(call bsg_fn_build_if_missing,boost,$(BP_SDK_WORK_DIR),$(BP_SDK_TOUCH_DIR)))
-%/.boost_build:
-	@$(CD) $(@D); \
-		$(WGET) -qO- $(BOOST_DOWNLOAD) | $(TAR) xzv
-	@$(CD) $(@D)/$(BOOST); \
-		./bootstrap.sh --prefix=$(BP_SDK_INSTALL_DIR)
-	@$(CD) $(@D)/$(BOOST); \
-		./b2 --prefix=$(BP_SDK_INSTALL_DIR) \
-			toolset=gcc \
-			cxxflags="-std=c++14" \
-			linkflags="-std=c++14" \
-			install
+$(eval $(call bsg_tgt_build_submodule,linker,$(BP_LINKER_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.linker_build:
+	@$(eval LINK_GEN := $</linker_gen.py)
+	@$(PYTHON) $(LINK_GEN) $(PLATFORM_DRAM_BASE) $(PLATFORM_SP) > $(BP_RISCV_LINKER_DIR)/riscv.ld
 
-OPENSSL_VERSION := 1.1.1w
-OPENSSL := openssl-$(OPENSSL_VERSION)
-OPENSSL_URL := https://www.openssl.org/source/$(OPENSSL).tar.gz
-OPENSSL_INSTALL := $(BP_SDK_WORK_DIR)/openssl
-$(eval $(call bsg_fn_build_if_missing,openssl,$(BP_SDK_WORK_DIR),$(BP_SDK_TOUCH_DIR)))
-%/.openssl_build:
-	@$(CD) $(@D); \
-		$(WGET) -qO- $(OPENSSL_URL) | $(TAR) xzv
-	@$(CD) $(@D)/$(OPENSSL); \
-		./config shared --prefix=$(OPENSSL_INSTALL) --openssldir=$(OPENSSL_INSTALL); \
-		$(MAKE) && $(MAKE) install
+$(eval $(call bsg_tgt_build_submodule,bedrock,$(BP_BEDROCK_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.bedrock_build: | build.linker
+	@$(MAKE) -C $< dirs
+	@$(MAKE) -C $< as
+	@$(MAKE) -C $< bins
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(CP) $</roms/*.bin $</roms/*.addr $</roms/*.mem $(PROG_DIR)
 
-PYTHON311_VERSION := 3.11.4
-PYTHON311 := Python-$(PYTHON311_VERSION)
-PIP311 := pip-$(PYTHON311_VERSION)
-PYTHON311_URL := https://github.com/python/cpython/archive/refs/tags/v$(PYTHON311_VERSION).tar.gz
-#PYTHON311_URL := https://www.python.org/ftp/python/$(PYTHON311_VERSION)/$(PYTHON311).tgz
-$(eval $(call bsg_fn_build_if_missing,python,$(BP_SDK_WORK_DIR),$(BP_SDK_TOUCH_DIR)))
-%/.python_build: build.openssl
-	$(CD) $(@D); \
-		$(WGET) -qO- $(PYTHON311_URL) | $(TAR) xzv
-	$(CD) $(@D)/*$(PYTHON311_VERSION); \
-		./configure \
-			LDFLAGS="-L$(OPENSSL_INSTALL)/lib" \
-			--with-openssl=$(OPENSSL_INSTALL) \
-			--with-openssl-rpath=auto \
-			--prefix=$(BP_SDK_INSTALL_DIR); \
-		$(MAKE) altinstall
-	$(SYMLINK) $(BP_SDK_BIN_DIR)/{python3.11,python3}
-	$(SYMLINK) $(BP_SDK_BIN_DIR)/{pip3.11,pip3}
-	$(PIP) install orderedmultidict pyyaml
+$(eval $(call bsg_tgt_build_submodule,perch,$(BP_PERCH_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.perch_build: | build.bedrock
+	@$(eval export CROSS_COMPILE=riscv64-unknown-elf-dramfs-)
+	@$(eval export WITH_MARCH=$(PLATFORM_MARCH))
+	@$(eval export WITH_MABI=$(PLATFORM_MABI))
+	@$(eval export BP_SDK_INCLUDE_DIR=$(BP_RISCV_INCLUDE_DIR))
+	@$(eval export BP_SDK_LIB_DIR=$(BP_RISCV_LIB_DIR))
+	@$(CP) $</riscv-opcodes/encoding.h $(BP_RISCV_INCLUDE_DIR)
+	@$(MAKE) -C $< clean perch
+	@$(CP) $</libperch.a $(BP_RISCV_LIB_DIR)
+	@$(CP) $</libperchbm.a $(BP_RISCV_LIB_DIR)
+	@$(CP) $</*.h $(BP_RISCV_INCLUDE_DIR)
 
-$(eval $(call bsg_fn_build_if_new,gnulinux,$(BP_SDK_GNU_DIR),$(BP_SDK_TOOLS_TOUCH_DIR)))
-%/.gnulinux_build: build.gnudramfs
-	@$(CD) $(@D); \
-		./configure --prefix=$(BP_SDK_INSTALL_DIR) \
-			--enable-linux --disable-gdb --disable-qemu-system \
-			--with-arch=rv64gcb --with-abi=lp64d --with-cmodel=medany \
-			--with-tune=bsg_blackparrot --with-isa-spec=2.2 \
-			--with-target-cflags="-mstrict-align -mcmodel=medany" \
-			--with-target-cxxflags="-mstrict-align -mcmodel=medany"; \
-			$(MAKE) linux && $(MAKE) install;
-
-$(eval $(call bsg_fn_build_if_new,gnudramfs,$(BP_SDK_GNU_DIR),$(BP_SDK_TOOLS_TOUCH_DIR)))
-%/.gnudramfs_build:
-	@$(eval export NEWLIB_TUPLE := "riscv64-unknown-elf-dramfs")
-	@$(CD) $(@D); \
-		./configure --prefix=$(BP_SDK_INSTALL_DIR) \
-			--with-newlib-src="$(BP_SDK_NEWLIB_DIR)" \
-			--disable-linux --disable-gdb --disable-qemu-system \
-			--with-multilib-generator="rv64g-lp64d--;rv64gcb-lp64d--" --with-cmodel=medany \
-			--with-tune=bsg_blackparrot --with-isa-spec=2.2 \
-			--with-target-cflags="-mstrict-align -mcmodel=medany" \
-			--with-target-cxxflags="-mstrict-align -mcmodel=medany"; \
-			$(MAKE) && $(MAKE) install;
-	@$(CP) $(BP_SDK_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(BP_SDK_BIN_DIR)
-
-$(eval $(call bsg_fn_build_if_new,dromajo,$(BP_SDK_DROMAJO_DIR),$(BP_SDK_TOOLS_TOUCH_DIR)))
-%/.dromajo_build:
-	@$(eval SOURCE_DIR := $(@D))
-	@$(eval BUILD_DIR := $(@D)/build)
-	@$(MKDIR) -p $(BUILD_DIR)
-	@$(CMAKE) -S $(SOURCE_DIR) -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release
-	@$(MAKE) -C $(BUILD_DIR)
-	@$(CP) $(BUILD_DIR)/dromajo $(BP_SDK_BIN_DIR);
-	@$(CP) $(BUILD_DIR)/libdromajo_cosim.a $(BP_SDK_LIB_DIR);
-	@$(CP) $(SOURCE_DIR)/include/dromajo_cosim.h $(BP_SDK_INCLUDE_DIR);
-
-$(eval $(call bsg_fn_build_if_new,bedrock,$(BP_SDK_BEDROCK_DIR),$(BP_SDK_TOOLS_TOUCH_DIR)))
-%/.bedrock_build:
-	@$(MAKE) -C $(@D) bins
-	@$(CP) $(@D)/roms/*.bin $(@D)/roms/*.addr $(@D)/roms/*.mem $(BP_SDK_RISCV_UCODE_DIR);
-
-$(eval $(call bsg_fn_build_if_new,spike,$(BP_SDK_SPIKE_DIR),$(BP_SDK_TOOLS_TOUCH_DIR)))
-%/.spike_build:
-	@$(CD) $(@D); \
-		./configure --prefix=$(BP_SDK_INSTALL_DIR) \
-		--without-boost --without-boost-asio --without-boost-regex; \
-		$(MAKE) && $(MAKE) install
+$(eval $(call bsg_tgt_build_submodule,bootrom,$(BP_BOOTROM_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.bootrom_build: | build.bedrock
+	@$(eval export CROSS_COMPILE=riscv64-unknown-elf-dramfs-)
+	@$(eval export WITH_MARCH=$(PLATFORM_MARCH))
+	@$(eval export WITH_MABI=$(PLATFORM_MABI))
+	@$(eval export BP_SDK_UCODE_DIR=$(BP_RISCV_DIR)/bedrock)
+	@$(MAKE) -C $< clean bootrom.riscv
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 

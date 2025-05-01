@@ -1,156 +1,182 @@
 
-define bsg_fn_build_prog_if_new
-	$(eval name := $(1))
-	$(eval src_dir := $(2))
-	$(eval install_dir := $(3))
-	$(eval touch_dir := $(install_dir)/touchfiles/prog)
-	$(eval prog_dir := $(install_dir)/riscv/prog/$(name))
-	$(shell mkdir -p $(prog_dir))
-	$(call bsg_fn_build_if_new,$(name),$(src_dir),$(touch_dir))
-	find $(src_dir) -type f -name "*.riscv" -exec cp {} $(prog_dir) \;
-endef
-
-$(BP_SDK_RISCV_LINKER_DIR)/riscv.ld: $(BP_SDK_LINKER_DIR)/linker_gen.py
-	$(eval LINK_GEN := $(BP_SDK_LINKER_DIR)/linker_gen.py)
-	@$(PYTHON) $(LINK_GEN) $(PLATFORM_DRAM_BASE) $(PLATFORM_SP) > $@
-
-$(eval $(call bsg_fn_build_prog_if_new,perch,$(BP_SDK_PERCH_DIR),$(BP_SDK_INSTALL_DIR)))
-%/.perch_build: $(BP_SDK_RISCV_LINKER_DIR)/riscv.ld
-	@$(CP) $(BP_SDK_OPCODES_DIR)/encoding.h $(BP_SDK_RISCV_INCLUDE_DIR)
-	@$(CD) $(@D); \
-		CROSS_COMPILE="riscv64-unknown-elf-dramfs-" \
-		WITH_MARCH=$(PLATFORM_MARCH) WITH_MABI=$(PLATFORM_MABI) \
-		BP_SDK_INCLUDE_DIR=$(BP_SDK_RISCV_INCLUDE_DIR) \
-		$(MAKE) clean perch; \
-		$(CP) libperch.a $(BP_SDK_RISCV_LIB_DIR); \
-		$(CP) libperchbm.a $(BP_SDK_RISCV_LIB_DIR); \
-		$(CP) *.h $(BP_SDK_RISCV_INCLUDE_DIR);
-
-$(eval $(call bsg_fn_build_prog_if_new,bootrom,$(BP_SDK_BOOTROM_DIR),$(BP_SDK_INSTALL_DIR)))
-%/.bootrom_build:
-	@$(CD) $(@D); \
-		BP_SDK_UCODE_DIR=$(BP_SDK_RISCV_UCODE_DIR) \
-		CROSS_COMPILE="riscv64-unknown-elf-dramfs-" \
-		WITH_MARCH=$(PLATFORM_MARCH) WITH_MABI=$(PLATFORM_MABI) \
-		$(MAKE) clean bootrom.riscv
-
-$(eval $(call bsg_fn_build_prog_if_new,bp-demos,$(BP_SDK_BP_DEMOS_DIR),$(BP_SDK_INSTALL_DIR)))
+$(eval $(call bsg_tgt_build_submodule,bp-demos,$(BP_DEMOS_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.bp-demos_build:
-	@$(CD) $(@D); \
-		CROSS_COMPILE="riscv64-unknown-elf-dramfs-" \
-		BP_SDK_LINKER_DIR=$(BP_SDK_RISCV_LINKER_DIR) \
-		BP_SDK_INCLUDE_DIR=$(BP_SDK_RISCV_INCLUDE_DIR) \
-		BP_SDK_LIB_DIR=$(BP_SDK_RISCV_LIB_DIR) \
-		WITH_MARCH=$(PLATFORM_MARCH) WITH_MABI=$(PLATFORM_MABI) \
-		$(MAKE) clean all
+	@$(eval export CROSS_COMPILE=riscv64-unknown-elf-dramfs-)
+	@$(eval export WITH_MARCH=$(PLATFORM_MARCH))
+	@$(eval export WITH_MABI=$(PLATFORM_MABI))
+	@$(eval export BP_SDK_LINKER_DIR=$(BP_RISCV_LINKER_DIR))
+	@$(eval export BP_SDK_INCLUDE_DIR=$(BP_RISCV_INCLUDE_DIR))
+	@$(eval export BP_SDK_LIB_DIR=$(BP_RISCV_LIB_DIR))
+	@$(MAKE) -C $< clean all
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	$(MKDIR) -p $(PROG_DIR)
+	$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
-$(eval $(call bsg_fn_build_prog_if_new,bp-tests,$(BP_SDK_BP_TESTS_DIR),$(BP_SDK_INSTALL_DIR)))
+$(eval $(call bsg_tgt_build_submodule,bp-tests,$(BP_TESTS_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.bp-tests_build:
-	@$(CD) $(@D); \
-		CROSS_COMPILE="riscv64-unknown-elf-dramfs-" \
-		BP_SDK_INCLUDE_DIR=$(BP_SDK_RISCV_INCLUDE_DIR) \
-		BP_SDK_LINKER_DIR=$(BP_SDK_RISCV_LINKER_DIR) \
-		BP_SDK_LIB_DIR=$(BP_SDK_RISCV_LIB_DIR) \
-		WITH_MARCH=$(PLATFORM_MARCH) WITH_MABI=$(PLATFORM_MABI) \
-		$(MAKE) clean all
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(eval export CROSS_COMPILE=riscv64-unknown-elf-dramfs-)
+	@$(eval export WITH_MARCH=$(PLATFORM_MARCH))
+	@$(eval export WITH_MABI=$(PLATFORM_MABI))
+	@$(eval export BP_SDK_LINKER_DIR=$(BP_RISCV_LINKER_DIR))
+	@$(eval export BP_SDK_INCLUDE_DIR=$(BP_RISCV_INCLUDE_DIR))
+	@$(eval export BP_SDK_LIB_DIR=$(BP_RISCV_LIB_DIR))
+	@$(MAKE) -C $< clean all
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
-$(eval $(call bsg_fn_build_prog_if_new,riscv-tests,$(BP_SDK_RISCV_TESTS_DIR),$(BP_SDK_INSTALL_DIR)))
+$(eval $(call bsg_tgt_build_submodule,riscv-tests,$(BP_RISCV_TESTS_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.riscv-tests_build:
-	@$(CD) $(@D); \
-		RISCV_PREFIX="riscv64-unknown-elf-dramfs-" \
-		./configure --target=$(RISCV_TARGET); \
-		$(MAKE) clean all; \
-		$(FIND) ./isa -type f -executable -name "rv64*" -exec $(MV) {} {}.riscv \;
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(eval export RISCV_PREFIX=riscv64-unknown-elf-dramfs-)
+	@$(CD) $(@D); $</configure --target=$(RISCV_TARGET)
+	@$(MAKE) -C $(@D) isa
+	@$(MAKE) -C $(@D) benchmarks
+	@$(FIND) $(@D)/isa -type f -executable -name "rv64*" -exec $(MV) {} {}.riscv \;
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $(@D) -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
-$(eval $(call bsg_fn_build_prog_if_new,beebs,$(BP_SDK_BEEBS_DIR),$(BP_SDK_INSTALL_DIR)))
+# This is a VPATH hack inspired by
+# https://patchwork.ozlabs.org/project/buildroot/patch/1539902241-10211-1-git-send-email-sergio.prado@e-labworks.com/
+$(eval $(call bsg_tgt_build_submodule,beebs,$(BP_BEEBS_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.beebs_build:
-	# This is a VPATH hack inspired by
-	# https://patchwork.ozlabs.org/project/buildroot/patch/1539902241-10211-1-git-send-email-sergio.prado@e-labworks.com/
-	@$(CD) $(@D); \
-		BP_SDK_DIR=$(BP_SDK_DIR) BP_SDK_LINKER_DIR=$(BP_SDK_RISCV_LINKER_DIR) \
-		./configure \
-			--host=riscv64 \
-			--with-chip=generic \
-			--includedir=$(BP_SDK_RISCV_INCLUDE_DIR) \
-			--libdir=$(BP_SDK_RISCV_LIB_DIR); \
-		$(MAKE) all VPATH=$(BP_SDK_INSTALL_DIR)/riscv64-unknown-elf-dramfs/lib/; \
-		$(FIND) ./src -type f -executable -exec $(MV) {} {}.riscv \;
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(eval export BP_SDK_DIR=$(BP_DIR))
+	@$(eval export BP_SDK_LINKER_DIR=$(BP_RISCV_LINKER_DIR))
+	@$(CD) $<; ./configure \
+		--host=riscv64 \
+		--with-chip=generic \
+		--includedir=$(BP_RISCV_INCLUDE_DIR) \
+		--libdir=$(BP_RISCV_LIB_DIR)
+	@$(MAKE) -C $< all VPATH=$(BP_INSTALL_DIR)/riscv64-unknown-elf-dramfs/lib/
+	@$(FIND) $</src -type f -executable -exec $(MV) {} {}.riscv \;
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $</src -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
-$(eval $(call bsg_fn_build_prog_if_new,coremark,$(BP_SDK_COREMARK_DIR),$(BP_SDK_INSTALL_DIR)))
+$(eval $(call bsg_tgt_build_submodule,coremark,$(BP_COREMARK_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.coremark_build:
-	@$(CD) $(@D); \
-			ITERATIONS=10 \
-			PORT_CC="riscv64-unknown-elf-dramfs-gcc" \
-			PORT_LD_FLAGS="-T$(BP_SDK_RISCV_LINKER_DIR)/riscv.ld -L$(BP_SDK_RISCV_LIB_DIR) -Wl,--whole-archive -lperch -Wl,--no-whole-archive" \
-			PORT_CFLAGS="-I$(BP_SDK_RISCV_INCLUDE_DIR)" \
-		$(MAKE) -C barebones -fcore_portme.mak clean coremark.riscv
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(eval export ITERATIONS=10)
+	@$(eval export PORT_CC=riscv64-unknown-elf-dramfs-gcc)
+	@$(eval export PORT_LD_FLAGS=-L$(BP_RISCV_LIB_DIR) -Wl,--whole-archive -lperch -Wl,--no-whole-archive)
+	@$(eval export PORT_CFLAGS=-I$(BP_RISCV_INCLUDE_DIR) -T$(BP_RISCV_LINKER_DIR)/riscv.ld)
+	@$(MAKE) -C $</barebones -fcore_portme.mak clean coremark.riscv
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $</barebones -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
-$(eval $(call bsg_fn_build_prog_if_new,spec2000,$(BP_SDK_SPEC2000_DIR),$(BP_SDK_INSTALL_DIR)))
+$(eval $(call bsg_tgt_build_submodule,spec2000,$(BP_SPEC2000_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.spec2000_build:
-	@$(CD) $(@D); \
-		CROSS_COMPILE="riscv64-unknown-elf-dramfs-" \
-		BP_SDK_INCLUDE_DIR=$(BP_SDK_RISCV_INCLUDE_DIR) \
-		BP_SDK_LINKER_DIR=$(BP_SDK_RISCV_LINKER_DIR) \
-		BP_SDK_LIB_DIR=$(BP_SDK_RISCV_LIB_DIR) \
-		$(MAKE)
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(eval export CROSS_COMPILE=riscv64-unknown-elf-dramfs-)
+	@$(eval export BP_SDK_INCLUDE_DIR=$(BP_RISCV_INCLUDE_DIR))
+	@$(eval export BP_SDK_LINKER_DIR=$(BP_RISCV_LINKER_DIR))
+	@$(eval export BP_SDK_LIB_DIR=$(BP_RISCV_LIB_DIR))
+	@$(MAKE) -C $<
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
-$(eval $(call bsg_fn_build_prog_if_new,spec2006,$(BP_SDK_SPEC2006_DIR),$(BP_SDK_INSTALL_DIR)))
+$(eval $(call bsg_tgt_build_submodule,spec2006,$(BP_SPEC2006_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.spec2006_build:
-	@$(CD) $(@D); \
-		CROSS_COMPILE="riscv64-unknown-elf-dramfs-" \
-		BP_SDK_INCLUDE_DIR=$(BP_SDK_RISCV_INCLUDE_DIR) \
-		BP_SDK_LINKER_DIR=$(BP_SDK_RISCV_LINKER_DIR) \
-		BP_SDK_LIB_DIR=$(BP_SDK_RISCV_LIB_DIR) \
-		$(MAKE)
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(eval export CROSS_COMPILE=riscv64-unknown-elf-dramfs-)
+	@$(eval export BP_SDK_INCLUDE_DIR=$(BP_RISCV_INCLUDE_DIR))
+	@$(eval export BP_SDK_LINKER_DIR=$(BP_RISCV_LINKER_DIR))
+	@$(eval export BP_SDK_LIB_DIR=$(BP_RISCV_LIB_DIR))
+	@$(MAKE) -C $<
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
-$(eval $(call bsg_fn_build_prog_if_new,spec2017,$(BP_SDK_SPEC2017_DIR),$(BP_SDK_INSTALL_DIR)))
+$(eval $(call bsg_tgt_build_submodule,spec2017,$(BP_SPEC2017_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.spec2017_build:
-	@$(CD) $(@D); \
-		CROSS_COMPILE="riscv64-unknown-elf-dramfs-" \
-		BP_SDK_INCLUDE_DIR=$(BP_SDK_RISCV_INCLUDE_DIR) \
-		BP_SDK_LINKER_DIR=$(BP_SDK_RISCV_LINKER_DIR) \
-		BP_SDK_LIB_DIR=$(BP_SDK_RISCV_LIB_DIR) \
-		$(MAKE)
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(eval export CROSS_COMPILE=riscv64-unknown-elf-dramfs-)
+	@$(eval export BP_SDK_INCLUDE_DIR=$(BP_RISCV_INCLUDE_DIR))
+	@$(eval export BP_SDK_LINKER_DIR=$(BP_RISCV_LINKER_DIR))
+	@$(eval export BP_SDK_LIB_DIR=$(BP_RISCV_LIB_DIR))
+	@$(MAKE) -C $<
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
-$(eval $(call bsg_fn_build_prog_if_new,riscv-dv,$(BP_SDK_RISCVDV_DIR),$(BP_SDK_INSTALL_DIR)))
-%/.riscv-dv_build:
-	@$(CD) $(@D); \
-		PYTHON=$(PYTHON) \
-		RISCV_GCC=riscv64-unknown-elf-dramfs-gcc \
-		RISCV_OBJCOPY=riscv64-unknown-elf-dramfs-objcopy \
-		RISCV_GCC_OPTS="-march=rv64imafdc -mabi=lp64d -mstrict-align -L$(BP_SDK_RISCV_LIB_DIR) -Wl,--whole-archive -lperchbm -Wl,--no-whole-archive" \
-		$(MAKE); \
-		for f in out/asm_test/*.o; \
-			do [ -f "$$f" ] && $(MV) "$$f" "$${f$(bsg_var_percent)o}riscv"; \
-		done; \
-
-$(eval $(call bsg_fn_build_prog_if_new,riscv-arch,$(BP_SDK_RVARCH_DIR),$(BP_SDK_INSTALL_DIR)))
+$(eval $(call bsg_tgt_build_submodule,riscv-arch,$(BP_RISCV_ARCH_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.riscv-arch_build:
-	@$(CD) $(@D); \
-		$(MAKE) all
-	@$(FIND) $(@D)/work/riscof -name "*-01.riscv" -exec $(MV) {} $(BP_SDK_RISCV_PROG_DIR)/riscv-arch/ \;
-	@$(FIND) $(@D)/work/riscof -name "*-01.signature" -exec $(MV) {} $(BP_SDK_RISCV_PROG_DIR)/riscv-arch/ \;
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(eval export LC_ALL=en_US.utf-8)
+	@$(eval export LANG=en_US.utf-8)
+	@$(MAKE) -C $< all
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $</work/riscof -name "*-01.riscv" -exec $(CP) {} $(PROG_DIR) \;
+	@$(FIND) $</work/riscof -name "*-01.signature" -exec $(CP) {} $(PROG_DIR) \;
 
-# Default Linux build is single core and terminates immediately
-$(eval $(call bsg_fn_build_prog_if_new,linux,$(BP_SDK_LINUX_DIR),$(BP_SDK_INSTALL_DIR)))
+$(eval $(call bsg_tgt_build_submodule,riscv-dv,$(BP_RISCV_DV_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.riscv-dv_build:
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(eval export PYTHON=$(PYTHON))
+	@$(eval export RISCV_GCC=riscv64-unknown-elf-dramfs-gcc)
+	@$(eval export RISCV_OBJCOPY=riscv64-unknown-elf-dramfs-objcopy)
+	@$(eval export RISCV_GCC_OPTS=-march=rv64imafdc -mabi=lp64d -mstrict-align -L$(BP_RISCV_LIB_DIR) -Wl,--whole-archive -lperchbm -Wl,--no-whole-archive)
+	@$(MAKE) -C $<
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
+
+## Default Linux build is single core and terminates immediately
+$(eval $(call bsg_tgt_build_submodule,linux,$(BP_LINUX_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.linux_build:
-	@$(eval OPENSBI_NCPUS ?= 1)
-	@$(eval WITH_SHELL ?= $(BP_SDK_LINUX_DIR)/scripts/test_shutdown.sh)
-	@$(eval MEM_SIZE ?= 64)
-	@$(CD) $(@D); \
-		$(MAKE) \
-			OPENSBI_NCPUS=$(OPENSBI_NCPUS) \
-			WITH_SHELL=$(WITH_SHELL) \
-			MEM_SIZE=$(MEM_SIZE) \
-			linux.riscv 
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(eval export OPENSBI_NCPUS ?= 1)
+	@$(eval export WITH_SHELL ?= $(BP_LINUX_DIR)/scripts/test_shutdown.sh)
+	@$(eval export MEM_SIZE ?= 64)
+	@$(MAKE) -C $< linux.riscv
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
-$(eval $(call bsg_fn_build_prog_if_new,yocto,$(BP_SDK_YOCTO_DIR),$(BP_SDK_INSTALL_DIR)))
+$(eval $(call bsg_tgt_build_submodule,yocto,$(BP_YOCTO_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.yocto_build:
-	@$(CD) $(@D); \
-		$(MAKE) yocto.riscv
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MAKE) -C $< yocto.riscv
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
-$(eval $(call bsg_fn_build_prog_if_new,zephyr,$(BP_SDK_ZEPHYR_DIR),$(BP_SDK_INSTALL_DIR)))
+$(eval $(call bsg_tgt_build_submodule,zephyr,$(BP_ZEPHYR_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.zephyr_build:
-	@$(CD) $(@D); \
-		$(MAKE) all
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MAKE) -C $< all
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
