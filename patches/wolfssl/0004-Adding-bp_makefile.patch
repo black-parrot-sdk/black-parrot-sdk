@@ -1,0 +1,57 @@
+From 4c6e70a16983d9c1667688ac3e4d0e2b380f6a00 Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko@cs.washington.edu>
+Date: Thu, 15 May 2025 19:04:35 -0700
+Subject: [PATCH] Adding bp_makefile
+
+---
+ bp_makefile | 38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
+ create mode 100644 bp_makefile
+
+diff --git a/bp_makefile b/bp_makefile
+new file mode 100644
+index 000000000..4fa54dfc9
+--- /dev/null
++++ b/bp_makefile
+@@ -0,0 +1,38 @@
++
++.PHONY: all
++
++CC     := $(CROSS_COMPILE)gcc
++AR     := $(CROSS_COMPILE)ar
++AS     := $(CROSS_COMPILE)as
++RANLIB := $(CROSS_COMPILE)ranlib
++LD     := $(CROSS_COMPILE)ld
++CXX    := $(CROSS_COMPILE)g++
++
++TEST_DIR      := ./wolfcrypt/test
++BENCHMARK_DIR := ./wolfcrypt/benchmark
++
++COMMON_CFLAGS := -march=rv64imafdc -mabi=lp64d -mcmodel=medany -L$(BP_RISCV_DIR)/lib \
++    -Wl,--whole-archive -lperch -Wl,--no-whole-archive
++
++LIB_CFLAGS := $(COMMON_CFLAGS) -Os -fno-common \
++    -DNO_DEV_RANDOM -DWOLFSSL_USER_IO -DNO_WRITEV
++CONFIG := --disable-shared --enable-static \
++    --disable-filesystem --disable-asyncthreads --enable-singlethreaded \
++    --disable-examples --enable-crypttests --host=riscv64-unknown-elf
++
++all:
++	mkdir -p $(BP_RISCV_DIR)
++	./autogen.sh && ./configure CC=$(CC) AR=$(AR) \
++        AS=$(AS) RANLIB=$(RANLIB) LD=$(LD) CXX=$(CXX) CFLAGS="$(LIB_CFLAGS)" \
++        $(CONFIG) --prefix=$(BP_RISCV_DIR);
++	$(MAKE) && $(MAKE) install
++
++
++build_wolfssl_test_benchmark:
++	$(CC) $(COMMON_RISCV_CFLAGS) -T$(BP_RISCV_DIR)/linker/riscv.ld \
++        $(TEST_DIR)/test.o $(BP_RISCV_DIR)/lib/libwolfssl.a -lm \
++        -o ./testwolfcrypt.riscv
++	$(CC) $(COMMON_RISCV_CFLAGS) \
++        $(BENCHMARK_DIR)/benchmark.o $(BP_RISCV_DIR)/lib/libwolfssl.a -lm \
++        -o ./benchmark.riscv
++
+-- 
+2.18.4
+

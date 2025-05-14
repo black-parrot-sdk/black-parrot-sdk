@@ -28,6 +28,7 @@ include: '.gitlab-ci.common.yml'
     BP_WORK_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-sdk-work"
     BP_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-sdk-install"
     BP_RISCV_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-sdk-riscv"
+    DOCKERFILE_FORCE: "1"
 
 ###################################################
 ## templates
@@ -95,7 +96,7 @@ include: '.gitlab-ci.common.yml'
 .build_sdk_job:
   extends: [.repo_template, .bp_sdk_mixin]
   variables:
-    SDK_PROGS: "bedrock perch bootrom"
+    SDK_PROGS: "bedrock perch bootrom lwip wolfssllib"
   script:
     - echo "[CI] moving dependencies to installation directory" | tee -a ${JOB_LOG}
     - mv ${JOB_DEPS_ROOT}/${TOOLS_PACKAGE} ${BP_INSTALL_DIR} >> ${JOB_LOG} 2>&1
@@ -229,6 +230,8 @@ build-riscv:
         PROG: ["bp-demos", "bp-tests", "riscv-tests"]
       - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
         PROG: ["coremark", "beebs"]
+      - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
+        PROG: ["wolfssl"]
       - DOCKER_PLATFORM: ["centos7", "ubuntu24.04"]
         PROG: ["riscv-arch"]
       # only build on centos because we rely on cad tools

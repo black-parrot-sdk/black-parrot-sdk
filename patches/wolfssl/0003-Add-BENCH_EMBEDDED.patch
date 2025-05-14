@@ -1,0 +1,95 @@
+From e08ed4229b5bc7587543fff77564919de9489240 Mon Sep 17 00:00:00 2001
+From: Yuan-Mao <s920721@gmail.com>
+Date: Tue, 22 Feb 2022 22:21:43 -0700
+Subject: [PATCH 3/3] Add BENCH_EMBEDDED
+
+This define reduces the memory usage of both benchmark program (wolfcrypt/benchmark/benchmark)
+and test program (wolfcrypt/test/test.c).
+---
+ wolfcrypt/test/test.c        | 1 -
+ wolfssl/wolfcrypt/settings.h | 8 ++++++++
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/wolfcrypt/test/test.c b/wolfcrypt/test/test.c
+index 741b6bf0b..96d7d41dc 100644
+--- a/wolfcrypt/test/test.c
++++ b/wolfcrypt/test/test.c
+@@ -1429,21 +1429,20 @@ initDefaultName();
+ 
+     /* so overall tests can pull in test function */
+ #ifdef WOLFSSL_ESPIDF
+     void app_main( )
+ #else
+ 
+ #ifdef HAVE_WOLFCRYPT_TEST_OPTIONS
+     int myoptind = 0;
+     char* myoptarg = NULL;
+ #endif
+-
+     int main(int argc, char** argv)
+ #endif
+     {
+         int ret;
+         func_args args;
+ #ifdef WOLFSSL_ESPIDF
+         /* set dummy wallclock time. */
+         struct timeval utctime;
+         struct timezone tz;
+         utctime.tv_sec = 1521725159; /* dummy time: 2018-03-22T13:25:59+00:00 */
+diff --git a/wolfssl/wolfcrypt/settings.h b/wolfssl/wolfcrypt/settings.h
+index 3a3dfae66..187a669fa 100644
+--- a/wolfssl/wolfcrypt/settings.h
++++ b/wolfssl/wolfcrypt/settings.h
+@@ -31,20 +31,24 @@
+     extern "C" {
+ #endif
+ 
+ /* This flag allows wolfSSL to include options.h instead of having client
+  * projects do it themselves. This should *NEVER* be defined when building
+  * wolfSSL as it can cause hard to debug problems. */
+ #ifdef EXTERNAL_OPTS_OPENVPN
+ #include <wolfssl/options.h>
+ #endif
+ 
++
++/* Uncomment next line if using Black Parrot */
++#define Black_Parrot
++
+ /* Uncomment next line if using IPHONE */
+ /* #define IPHONE */
+ 
+ /* Uncomment next line if using ThreadX */
+ /* #define THREADX */
+ 
+ /* Uncomment next line if using Micrium uC/OS-III */
+ /* #define MICRIUM */
+ 
+ /* Uncomment next line if using Deos RTOS*/
+@@ -251,20 +255,24 @@
+     defined(HAVE_AESGCM) && defined(WOLFSSL_AESNI)
+ 
+ /* The _M_X64 macro is what's used in the headers for MSC to tell if it
+  * has the 64-bit versions of the 128-bit integers available. If one is
+  * building on 32-bit Windows with AES-NI, turn off the AES-GCMloop
+  * unrolling. */
+ 
+     #define AES_GCM_AESNI_NO_UNROLL
+ #endif
+ 
++#ifdef Black_Parrot
++    #define BENCH_EMBEDDED
++#endif
++
+ #ifdef IPHONE
+     #define SIZEOF_LONG_LONG 8
+ #endif
+ 
+ #ifdef THREADX
+     #define SIZEOF_LONG_LONG 8
+ #endif
+ 
+ #ifdef HAVE_NETX
+     #ifdef NEED_THREADX_TYPES
+-- 
+2.18.4
+

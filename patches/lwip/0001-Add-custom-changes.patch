@@ -1,0 +1,200 @@
+From 5e871d5be28a2e8c20d1913e336f1d855f57f2b5 Mon Sep 17 00:00:00 2001
+From: Yuan-Mao <ymchueh@gmail.com>
+Date: Mon, 13 Feb 2023 13:52:34 -0800
+Subject: [PATCH] Add custom changes
+
+---
+ Makefile                    | 35 +++++++++++++++++
+ src/core/time.c             | 10 +++++
+ src/include/arch/cc.h       |  6 +++
+ src/include/lwip/arch.h     |  2 +-
+ src/include/lwip/lwipopts.h | 78 +++++++++++++++++++++++++++++++++++++
+ 5 files changed, 130 insertions(+), 1 deletion(-)
+ create mode 100644 Makefile
+ create mode 100644 src/core/time.c
+ create mode 100644 src/include/arch/cc.h
+ create mode 100644 src/include/lwip/lwipopts.h
+
+diff --git a/Makefile b/Makefile
+new file mode 100644
+index 00000000..48a582f2
+--- /dev/null
++++ b/Makefile
+@@ -0,0 +1,35 @@
++.PHONY: all install clean
++
++CC    := $(CROSS_COMPILE)gcc
++AR    := $(CROSS_COMPILE)ar
++RANLIB := $(CROSS_COMPILE)ranlib
++
++
++BUILD ?= ./build
++LWIP_INCLUDE := ./src/include
++
++LWIP_CFLAGS    := -mabi=lp64d -march=rv64imafdc -mcmodel=medany -Os \
++        -I$(LWIP_INCLUDE) -Wall -Wextra -static -std=gnu99 -fno-common
++
++LWIP_LIB_SRCS  := $(wildcard ./src/core/*.c)   \
++		$(wildcard ./src/core/ipv4/*.c) ./src/netif/ethernet.c
++
++LWIP_LIB_OBJS := $(LWIP_LIB_SRCS:%.c=$(BUILD)/%.o)
++
++all:     $(BUILD)/liblwip.a
++install: $(BUILD)/liblwip.a
++	mkdir -p $(BP_RISCV_DIR)/lib $(BP_RISCV_DIR)/include
++	cp $< $(BP_RISCV_DIR)/lib
++	cp -r $(LWIP_INCLUDE)/lwip  $(BP_RISCV_DIR)/include
++	cp -r $(LWIP_INCLUDE)/netif $(BP_RISCV_DIR)/include
++	cp -r $(LWIP_INCLUDE)/arch  $(BP_RISCV_DIR)/include
++
++$(BUILD)/%.o:%.c
++	mkdir -p $(dir $@) && $(CC) $(LWIP_CFLAGS) -c $< -o $@
++
++$(BUILD)/liblwip.a: $(LWIP_LIB_OBJS)
++	$(AR) -rc $@ $^
++	$(RANLIB) $@
++
++clean:
++	rm -rf $(BUILD)
+diff --git a/src/core/time.c b/src/core/time.c
+new file mode 100644
+index 00000000..7d82f47f
+--- /dev/null
++++ b/src/core/time.c
+@@ -0,0 +1,10 @@
++#include <sys/time.h>
++#include <lwip/arch.h>
++
++/* Unit: ms */
++u32_t sys_now(void)
++{
++    unsigned long mtime;
++    mtime = *(volatile unsigned long *)(0x30bff8UL);
++    return (u32_t)(mtime * 4 / 5 / 1000);
++}
+diff --git a/src/include/arch/cc.h b/src/include/arch/cc.h
+new file mode 100644
+index 00000000..e63b0b41
+--- /dev/null
++++ b/src/include/arch/cc.h
+@@ -0,0 +1,6 @@
++#ifndef __ARCH_CC_H__
++#define __ARCH_CC_H__
++
++#define LWIP_DECLARE_MEMORY_ALIGNED(variable_name, size) u8_t variable_name[size] __attribute__ ((aligned (MEM_ALIGNMENT)));
++
++#endif /* __ARCH_CC_H__ */
+diff --git a/src/include/lwip/arch.h b/src/include/lwip/arch.h
+index 58dae33a..37b82e13 100644
+--- a/src/include/lwip/arch.h
++++ b/src/include/lwip/arch.h
+@@ -192,21 +192,21 @@ typedef uintptr_t mem_ptr_t;
+  */
+ #ifdef SSIZE_MAX
+ /* If SSIZE_MAX is defined, unistd.h should provide the type as well */
+ #ifndef LWIP_NO_UNISTD_H
+ #define LWIP_NO_UNISTD_H 0
+ #endif
+ #if !LWIP_NO_UNISTD_H
+ #include <unistd.h>
+ #endif
+ #else /* SSIZE_MAX */
+-typedef int ssize_t;
++//typedef int ssize_t; // The newlib for BP has ssize_t but no SSIZE_MAX
+ #define SSIZE_MAX INT_MAX
+ #endif /* SSIZE_MAX */
+ 
+ /* some maximum values needed in lwip code */
+ #define LWIP_UINT32_MAX 0xffffffff
+ 
+ /** Define this to 1 in arch/cc.h of your port if your compiler does not provide
+  * the ctype.h header. If ctype.h is available, a few character functions
+  * are mapped to the appropriate functions (lwip_islower, lwip_isdigit...), if
+  * not, a private implementation is provided.
+diff --git a/src/include/lwip/lwipopts.h b/src/include/lwip/lwipopts.h
+new file mode 100644
+index 00000000..e52ab792
+--- /dev/null
++++ b/src/include/lwip/lwipopts.h
+@@ -0,0 +1,78 @@
++#ifndef __LWIPOPTS_H__
++#define __LWIPOPTS_H__
++
++#define NO_SYS                      1
++#define LWIP_TCP                    1
++#define LWIP_UDP                    1
++#define LWIP_DHCP                   1
++#define SYS_LIGHTWEIGHT_PROT        0
++#define MEM_LIBC_MALLOC             1
++#define MEM_USE_POOLS               0
++#define MEMP_MEM_MALLOC             0
++#define MEM_ALIGNMENT               8
++#define MEM_SIZE                    (32 * 1024)
++#define LWIP_ETHERNET               1
++#define LWIP_ARP                    1
++#define LWIP_IPV4                   1
++#define IP_DEFAULT_TTL              255
++#define LWIP_BROADCAST_PING         0
++#define LWIP_MULTICAST_PING         0
++// MSS = MTU - 40 (standard TCP/IP overhead)
++#define TCP_MSS                     1460
++#define TCP_SND_BUF                 (4 * TCP_MSS)
++#define TCP_WND                     (4 * TCP_MSS)
++#define TCP_LISTEN_BACKLOG          1
++#define LWIP_NETCONN                0
++#define LWIP_SOCKET                 0
++#define LWIP_STATS_DISPLAY          1
++//#define MEMP_NUM_TCP_PCB            4
++//#define MEMP_NUM_REASSDATA          0
++//#define MEMP_NUM_RAW_PCB            0
++//#define MEMP_NUM_UDP_PCB            1
++//#define MEMP_NUM_TCP_PCB_LISTEN     1
++//#define MEMP_NUM_TCP_SEG            TCP_SND_QUEUELEN
++//#define MEMP_NUM_FRAG_PBUF          0
++//#define MEMP_NUM_PBUF               0
++//#define PBUF_POOL_SIZE              0
++
++#define MEM_STATS                   1
++
++#define LWIP_DEBUG                  1
++
++#define LWIP_DEBUG_TIMERNAMES       0
++#define ETHARP_DEBUG                LWIP_DBG_OFF
++#define NETIF_DEBUG                 LWIP_DBG_OFF
++#define PBUF_DEBUG                  LWIP_DBG_OFF
++#define API_LIB_DEBUG               LWIP_DBG_OFF
++#define API_MSG_DEBUG               LWIP_DBG_OFF
++#define SOCKETS_DEBUG               LWIP_DBG_OFF
++#define ICMP_DEBUG                  LWIP_DBG_OFF
++#define INET_DEBUG                  LWIP_DBG_OFF
++#define IP_DEBUG                    LWIP_DBG_OFF
++#define IP_REASS_DEBUG              LWIP_DBG_OFF
++#define RAW_DEBUG                   LWIP_DBG_OFF
++#define MEM_DEBUG                   LWIP_DBG_OFF
++#define MEMP_DEBUG                  LWIP_DBG_OFF
++#define SYS_DEBUG                   LWIP_DBG_OFF
++#define TCP_DEBUG                   LWIP_DBG_OFF
++#define TCP_INPUT_DEBUG             LWIP_DBG_OFF
++#define TCP_OUTPUT_DEBUG            LWIP_DBG_OFF
++#define TCP_RTO_DEBUG               LWIP_DBG_OFF
++#define TCP_CWND_DEBUG              LWIP_DBG_OFF
++#define TCP_WND_DEBUG               LWIP_DBG_OFF
++#define TCP_FR_DEBUG                LWIP_DBG_OFF
++#define TCP_QLEN_DEBUG              LWIP_DBG_OFF
++#define TCP_RST_DEBUG               LWIP_DBG_OFF
++#define UDP_DEBUG                   LWIP_DBG_OFF
++#define TCPIP_DEBUG                 LWIP_DBG_OFF
++#define PPP_DEBUG                   LWIP_DBG_OFF
++#define SLIP_DEBUG                  LWIP_DBG_OFF
++#define DHCP_DEBUG                  LWIP_DBG_OFF
++#define TIMERS_DEBUG                LWIP_DBG_OFF
++
++/* Ethernet frame padding before the Ethernet Header
++* Aligned to 32-bit (14 + 2)
++*/
++#define ETH_PAD_SIZE 0
++
++#endif /* __LWIPOPTS_H__ */
+-- 
+2.18.4
+

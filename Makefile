@@ -26,6 +26,8 @@ sdk_lite: checkout
 
 sdk: ## standard SDK
 sdk: sdk_lite
+	@$(MAKE) -j1 build.lwip
+	@$(MAKE) -j1 build.wolfssllib
 
 sdk_bsg: ## additional SDK setup for BSG users
 sdk_bsg: sdk
@@ -41,6 +43,7 @@ prog: ## standard programs
 prog: prog_lite
 	@$(MAKE) -j1 build.coremark
 	@$(MAKE) -j1 build.beebs
+	@$(MAKE) -j1 build.wolfssl
 
 prog_bsg: ## additional programs for BSG users
 prog_bsg: prog

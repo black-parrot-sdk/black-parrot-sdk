@@ -42,7 +42,7 @@ readonly _BSG_E_LOG_LEVEL_MAX=99
 # defaults
 _BSG_LOG_LEVEL=-1
 _BSG_LOG_INIT=0
-_BSG_TRIM_LINES=5
+_BSG_TRIM_LINES=15
 _BSG_LOG_FILE=/dev/null
 _BSG_RPT_FILE=/dev/null
 
@@ -162,18 +162,22 @@ bsg_check_var() {
 # runs an arbitrary command with a CI wrapper
 # usage: bsg_run_task desc cmd <opts>
 bsg_run_task() {
-    _desc="$1"; shift; _cmd="$@"
+    _desc="$1"; shift; _cmd=("$@")
 
     bsg_log_info "running task..."
     bsg_log_raw "description: ${_desc}"
     bsg_log_raw "command: ${_cmd}"
     bsg_log_raw "output:"
 
+    # Run the command and format output, capturing exit code
     set -o pipefail
     {
-        # Run the command and format output
-        eval "$_cmd" 2>&1 | sed 's/^/\t\t/g' | tee -a "${_BSG_LOG_FILE}" | head -n"${_BSG_TRIM_LINES}"
-        _exit_code=$?
+        # Ignore SIGPIPE in this shell
+        trap '' SIGPIPE
+        # Run the command, tee output, and print only first N lines
+        "${_cmd[@]}" 2>&1 | tee -a "${_BSG_LOG_FILE}" 2>/dev/null | head -n "${_BSG_TRIM_LINES}"
+        local exit_code=${PIPESTATUS[0]}
+        trap - SIGPIPE  # Restore default SIGPIPE handling
     }
     set +o pipefail
     bsg_log_raw "...truncated after ${_BSG_TRIM_LINES} lines"

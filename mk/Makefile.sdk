@@ -39,3 +39,17 @@ $(eval $(call bsg_tgt_build_submodule,bootrom,$(BP_BOOTROM_DIR),$(BP_RISCV_TOUCH
 	@$(MKDIR) -p $(PROG_DIR)
 	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
+
+$(eval $(call bsg_tgt_build_submodule,lwip,$(BP_LWIP_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.lwip_build:
+	@$(eval export CROSS_COMPILE=riscv64-unknown-elf-dramfs-)
+	@$(eval export CC=$(CROSS_COMPILE)gcc)
+	@$(eval export AR=$(CROSS_COMPILE)ar)
+	@$(eval export RANLIB=$(CROSS_COMPILE)ranlib)
+	@$(MAKE) BP_RISCV_DIR=$(BP_RISCV_DIR) -C $< install
+
+$(eval $(call bsg_tgt_build_submodule,wolfssllib,$(BP_WOLFSSL_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.wolfssllib_build:
+	@$(eval export CROSS_COMPILE=riscv64-unknown-elf-dramfs-)
+	@$(MAKE) BP_RISCV_DIR=$(BP_RISCV_DIR) -C $< -f bp_makefile all
+

@@ -248,15 +248,18 @@ endef
 #############################
 # Makefile targets
 #############################
-# Global help target
+# Global help
 .PHONY: help
-help: ## prints this message
-	@$(GREP) -h '\s##\s' $(MAKEFILE_LIST) | sort \
+help: ## prints this target
+	@$(eval HELPFILTER := $(if $(findstring $(CURDIR),$(TOP)),xxxxxxxx,checkout|bleach_all))
+	@$(GREP) -h '\s##\s' $(MAKEFILE_LIST) \
+		| $(GREP) -Ev "$(HELPFILTER)" \
 		| $(AWK) 'BEGIN {FS = ":.*?## "}; {printf "\033[36m  %-30s\033[0m %s\n", $$1, $$2}'
 
+ifeq ($(CURDIR),$(TOP))
 # Global reset
 .PHONY: bleach_all
-bleach_all: ## wipes the whole repo clean. Use with caution
+bleach_all: ## wipes the whole repo clean: use with caution
 	@$(GIT) -C "$(git rev-parse --show-toplevel)" submodule deinit -f .
 	@$(GIT) -C "$(git rev-parse --show-toplevel)" clean -ffdx
 
@@ -271,6 +274,7 @@ checkout: ## checkout submodules
 	@$(call bsg_fn_disable_submodules,$(HOOK_DISABLE_SUBMODULES))
 	# Do the checkout
 	@$(GIT) submodule update
+endif
 
 ##########################################################
 ## Cad environment
@@ -290,8 +294,9 @@ VCS_HOME        ?=
 LM_LICENSE_FILE ?=
 
 ifneq ($(MAKECMDGOALS),help)
-BSG_CADENV_DIR ?= bsg_cadenv
+BSG_CADENV_DIR ?= $(TOP)/bsg_cadenv
 include $(BSG_CADENV_DIR)/cadenv.mk
+ifeq ($(CURDIR),$(TOP))
 %/cadenv.mk:
 	# BSG users leverage a machine-specific cadenv
 	#   Here, we add sourcing to get these variables as well
@@ -307,6 +312,7 @@ include $(BSG_CADENV_DIR)/cadenv.mk
 		$(TOUCH) $@; \
 	fi
 	@$(ECHO) "Successfully built $@!"
+endif
 endif
 
 # Saves initial values so that we can filter them later
