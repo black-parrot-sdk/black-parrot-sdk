@@ -33,7 +33,7 @@ $(eval $(call bsg_tgt_build_submodule,bootrom,$(BP_BOOTROM_DIR),$(BP_RISCV_TOUCH
 	@$(eval export WITH_MARCH=$(PLATFORM_MARCH))
 	@$(eval export WITH_MABI=$(PLATFORM_MABI))
 	@$(eval export BP_SDK_UCODE_DIR=$(BP_RISCV_DIR)/bedrock)
-	@$(MAKE) -C $< clean bootrom.riscv
+	@$(MAKE) -C $< clean all
 	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
 	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
 	@$(MKDIR) -p $(PROG_DIR)
