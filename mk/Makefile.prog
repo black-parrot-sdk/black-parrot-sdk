@@ -180,3 +180,13 @@ $(eval $(call bsg_tgt_build_submodule,zephyr,$(BP_ZEPHYR_DIR),$(BP_RISCV_TOUCH_D
 	@$(MKDIR) -p $(PROG_DIR)
 	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
 
+$(eval $(call bsg_tgt_build_submodule,wolfssl,$(BP_WOLFSSL_DIR),$(BP_RISCV_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.wolfssl_build:
+	@$(eval export CROSS_COMPILE=riscv64-unknown-elf-dramfs-)
+	@$(MAKE) BP_RISCV_DIR=$(BP_RISCV_DIR) -C $< -f bp_makefile all
+	@$(MAKE) BP_RISCV_DIR=$(BP_RISCV_DIR) -C $< -f bp_makefile build_wolfssl_test_benchmark
+	@$(eval SUITE_DIR=$(subst .,,$(subst _build,,$(@F))))
+	@$(eval PROG_DIR=$(BP_RISCV_DIR)/$(SUITE_DIR))
+	@$(MKDIR) -p $(PROG_DIR)
+	@$(FIND) $< -name "*.riscv" -exec $(CP) {} $(PROG_DIR) \;
+
