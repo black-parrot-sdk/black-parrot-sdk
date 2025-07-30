@@ -1,0 +1,120 @@
+From cb4b4b89cc25d78276b0f174bc5a715898e3b5f9 Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko@cs.washington.edu>
+Date: Wed, 25 Jun 2025 02:06:07 -0700
+Subject: [PATCH 2/2] Fixing bool typedef
+
+---
+ src/mergesort/libmergesort.c | 1 -
+ src/ndes/libndes.c           | 2 +-
+ src/prime/libprime.c         | 1 -
+ src/wikisort/libwikisort.c   | 1 -
+ 4 files changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/src/mergesort/libmergesort.c b/src/mergesort/libmergesort.c
+index 53e0489..432fece 100644
+--- a/src/mergesort/libmergesort.c
++++ b/src/mergesort/libmergesort.c
+@@ -33,21 +33,20 @@
+ #include <stdint.h>
+ #include <stdarg.h>
+ #include <string.h>
+ #include <math.h>
+ #include <limits.h>
+ 
+ /* various #defines for the C code */
+ #ifndef true
+ 	#define true 1
+ 	#define false 0
+-	typedef uint8_t bool;
+ #endif
+ 
+ /* These macros are no longer used in BEEBS. alloca does a better job
+ 
+ #define Var(name, value)				__typeof__(value) name = value
+ #define Allocate(type, count)				(type *)malloc((count) * sizeof(type))
+ 
+ */
+ 
+ /* BEEBS fixes RAND_MAX to its lowest permitted value, 2^15-1 */
+diff --git a/src/ndes/libndes.c b/src/ndes/libndes.c
+index a63f98b..00e443d 100644
+--- a/src/ndes/libndes.c
++++ b/src/ndes/libndes.c
+@@ -71,21 +71,21 @@ void des(immense inp, immense key, int * newkey, int isw, immense * out) {
+       53,21,61,29,36,4,44,12,52,20,60,28,35,3,43,11,
+       51,19,59,27,34,2,42,10,50,18,58,26,33,1,41,9,
+       49,17,57,25};
+    static great kns[17];
+ #ifdef WORSTCASE
+    static int initflag=1;
+ #else
+    static int initflag=0;
+ #endif
+    int ii,i,j,k;
+-   unsigned long ic,shifter,getbit();
++   unsigned long ic,shifter;
+    immense itmp;
+    great pg;
+ 
+    if (initflag) {
+       initflag=0;
+       bit[1]=shifter=1L;
+       for(j=2;j<=32;j++) bit[j] = (shifter <<= 1);
+       }
+    if (*newkey) {
+       *newkey=0;
+diff --git a/src/prime/libprime.c b/src/prime/libprime.c
+index 916594e..d7ebc22 100644
+--- a/src/prime/libprime.c
++++ b/src/prime/libprime.c
+@@ -20,21 +20,20 @@
+ 
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <http://www.gnu.org/licenses/>. */
+ 
+ #include "support.h"
+ 
+ /* This scale factor will be changed to equalise the runtime of the
+    benchmarks. */
+ #define SCALE_FACTOR    (REPEAT_FACTOR >> 0)
+ 
+-typedef  unsigned char  bool;
+ typedef  unsigned long  ulong;
+ 
+ bool divides (ulong n, ulong m);
+ bool even (ulong n);
+ bool prime (ulong n);
+ void swap (ulong* a, ulong* b);
+ 
+ bool divides (ulong n, ulong m) {
+   return (m % n == 0);
+ }
+diff --git a/src/wikisort/libwikisort.c b/src/wikisort/libwikisort.c
+index c1d6b66..9716fe6 100644
+--- a/src/wikisort/libwikisort.c
++++ b/src/wikisort/libwikisort.c
+@@ -33,21 +33,20 @@
+ #include <stdint.h>
+ #include <stdarg.h>
+ #include <string.h>
+ #include <math.h>
+ #include <limits.h>
+ 
+ /* various #defines for the C code */
+ #ifndef true
+ 	#define true 1
+ 	#define false 0
+-	typedef uint8_t bool;
+ #endif
+ 
+ #define Var(name, value)				__typeof__(value) name = value
+ /* Copied from libmergesort, but Allocate never used here, so commented out for clarity.
+ #define Allocate(type, count)				(type *)malloc((count) * sizeof(type))
+ */
+ 
+ /* BEEBS fixes RAND_MAX to its lowest permitted value, 2^15-1 */
+ 
+ #ifdef RAND_MAX
+-- 
+2.18.4
+

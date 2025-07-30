@@ -1,0 +1,171 @@
+From fcbf1409a44fda3da222e7a36a131de70a4860c1 Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko@cs.washington.edu>
+Date: Sun, 20 Jul 2025 13:40:22 -0700
+Subject: [PATCH 3/3] Fixing vm syscall
+
+---
+ v/riscv_test.h |  2 +-
+ v/vm.c         | 42 +++++++++++++++++++++++++-----------------
+ 2 files changed, 26 insertions(+), 18 deletions(-)
+
+diff --git a/v/riscv_test.h b/v/riscv_test.h
+index e935376..1a068bf 100644
+--- a/v/riscv_test.h
++++ b/v/riscv_test.h
+@@ -40,21 +40,21 @@ pf_filter:                                                              \
+         ret;                                                            \
+         .global userstart;                                              \
+ userstart:                                                              \
+         init
+ 
+ //-----------------------------------------------------------------------
+ // Pass/Fail Macro
+ //-----------------------------------------------------------------------
+ 
+ #undef RVTEST_PASS
+-#define RVTEST_PASS li a0, 1; scall
++#define RVTEST_PASS li a0, 0; scall
+ 
+ #undef RVTEST_FAIL
+ #define RVTEST_FAIL sll a0, TESTNUM, 1; 1:beqz a0, 1b; or a0, a0, 1; scall;
+ 
+ //-----------------------------------------------------------------------
+ // Data Section Macro
+ //-----------------------------------------------------------------------
+ 
+ #undef RVTEST_DATA_END
+ #define RVTEST_DATA_END
+diff --git a/v/vm.c b/v/vm.c
+index cc58417..0c5e35f 100644
+--- a/v/vm.c
++++ b/v/vm.c
+@@ -25,56 +25,50 @@ extern volatile uint64_t fromhost;
+ static void do_tohost(uint64_t tohost_value)
+ {
+   while (tohost)
+     fromhost = 0;
+   tohost = tohost_value;
+ }
+ 
+ #define pa2kva(pa) ((void*)(pa) - DRAM_BASE - MEGAPAGE_SIZE)
+ #define uva2kva(pa) ((void*)(pa) - MEGAPAGE_SIZE)
+ 
++#define vpn0(va) (((uintptr_t)(va) >> (PGSHIFT + 0*PTIDXBITS)) % (1 << PTIDXBITS))
++#define vpn1(va) (((uintptr_t)(va) >> (PGSHIFT + 1*PTIDXBITS)) % (1 << PTIDXBITS))
++#define vpn2(va) (((uintptr_t)(va) >> (PGSHIFT + 2*PTIDXBITS)) % (1 << PTIDXBITS))
++
+ #define flush_page(addr) asm volatile ("sfence.vma %0" : : "r" (addr) : "memory")
+ 
+ static uint64_t lfsr63(uint64_t x)
+ {
+   uint64_t bit = (x ^ (x >> 1)) & 1;
+   return (x >> 1) | (bit << 62);
+ }
+ 
+ static void cputchar(int x)
+ {
+-#if __riscv_xlen == 32
+-  // HTIF devices are not supported on RV32, so proxy a write system call
+-  volatile uint64_t syscall_struct[8];
+-  volatile int buff = x;
+-  syscall_struct[0] = SYS_write;
+-  syscall_struct[1] = 1;
+-  syscall_struct[2] = (uintptr_t)&buff;
+-  syscall_struct[3] = 1;
+-  do_tohost((uintptr_t)&syscall_struct);
+-  // Wait for response as struct has to be read by HTIF
+-  while(!fromhost);
+-#else
+-  do_tohost(0x0101000000000000 | (unsigned char)x);
+-#endif
++  volatile uint8_t* putc_addr = (volatile uint8_t *)(KIO_BASE | HOST_BASE | HOST_PUTCHAR);
++  uint8_t ch = (uint8_t) x;
++  *putc_addr = ch;
+ }
+ 
+ static void cputstring(const char* s)
+ {
+   while (*s)
+     cputchar(*s++);
+ }
+ 
+ static void terminate(int code)
+ {
+-  do_tohost(code);
+-  while (1);
++  volatile uint8_t* finish_addr = (volatile uint8_t *)(KIO_BASE | HOST_BASE | HOST_FINISH);
++  *finish_addr = code;
++  while(1);
+ }
+ 
+ void wtf()
+ {
+   terminate(841);
+ }
+ 
+ #define stringify1(x) #x
+ #define stringify(x) stringify1(x)
+ #define assert(x) do { \
+@@ -85,23 +79,25 @@ void wtf()
+ 
+ #define l1pt pt[0]
+ #define user_l2pt pt[1]
+ #if SATP_MODE_CHOICE == SATP_MODE_SV48
+ # define NPT 6
+ # define kernel_l2pt pt[2]
+ # define kernel_l3pt pt[3]
+ # define user_l3pt pt[4]
+ # define user_llpt pt[5]
+ #elif SATP_MODE_CHOICE == SATP_MODE_SV39
+-# define NPT 4
++# define NPT 6
+ # define kernel_l2pt pt[2]
+ # define user_llpt pt[3]
++# define host_llpt pt[4]
++# define clint_llpt pt[5]
+ #elif SATP_MODE_CHOICE == SATP_MODE_SV32
+ # define NPT 2
+ # define user_llpt user_l2pt
+ #else
+ # error Unknown SATP_MODE_CHOICE
+ #endif
+ pte_t pt[NPT][PTES_PER_PT] __attribute__((aligned(PGSIZE)));
+ 
+ typedef struct { pte_t addr; void* next; } freelist_t;
+ 
+@@ -275,20 +271,32 @@ void vm_boot(uintptr_t test_addr)
+   user_l3pt[0] = ((pte_t)user_llpt >> PGSHIFT << PTE_PPN_SHIFT) | PTE_V;
+ #elif SATP_MODE_CHOICE == SATP_MODE_SV39
+   l1pt[PTES_PER_PT-1] = ((pte_t)kernel_l2pt >> PGSHIFT << PTE_PPN_SHIFT) | PTE_V;
+   kernel_l2pt[PTES_PER_PT-1] = (DRAM_BASE/RISCV_PGSIZE << PTE_PPN_SHIFT) | PTE_V | PTE_R | PTE_W | PTE_X | PTE_A | PTE_D;
+   user_l2pt[0] = ((pte_t)user_llpt >> PGSHIFT << PTE_PPN_SHIFT) | PTE_V;
+ #elif SATP_MODE_CHOICE == SATP_MODE_SV32
+   l1pt[PTES_PER_PT-1] = (DRAM_BASE/RISCV_PGSIZE << PTE_PPN_SHIFT) | PTE_V | PTE_R | PTE_W | PTE_X | PTE_A | PTE_D;
+ #else
+ # error
+ #endif
++
++  // map kernel mmio to machine addresses
++  l1pt[vpn2(KIO_BASE)] = ((pte_t)kernel_l2pt >> PGSHIFT << PTE_PPN_SHIFT) | PTE_V;
++  kernel_l2pt[vpn1(HOST_BASE)] = ((pte_t)host_llpt >> PGSHIFT << PTE_PPN_SHIFT) | PTE_V;
++  kernel_l2pt[vpn1(CLINT_BASE)] = ((pte_t)clint_llpt >> PGSHIFT << PTE_PPN_SHIFT) | PTE_V;
++
++  host_llpt[vpn0(KIO_BASE|HOST_BASE|HOST_PUTCHAR)] = ((MIO_BASE|HOST_BASE|HOST_PUTCHAR)/RISCV_PGSIZE << PTE_PPN_SHIFT) | PTE_V | PTE_R | PTE_W | PTE_A | PTE_D;
++  host_llpt[vpn0(KIO_BASE|HOST_BASE|HOST_FINISH)]  = ((MIO_BASE|HOST_BASE|HOST_FINISH)/RISCV_PGSIZE << PTE_PPN_SHIFT) | PTE_V | PTE_R | PTE_W | PTE_A | PTE_D;
++
++  clint_llpt[vpn0(KIO_BASE|CLINT_BASE|CLINT_MTIME)] = ((MIO_BASE|CLINT_BASE|CLINT_MTIME)/RISCV_PGSIZE << PTE_PPN_SHIFT) | PTE_V | PTE_R | PTE_W | PTE_A | PTE_D;
++  clint_llpt[vpn0(KIO_BASE|CLINT_BASE|CLINT_MTIMECMP)] = ((MIO_BASE|CLINT_BASE|CLINT_MTIMECMP)/RISCV_PGSIZE << PTE_PPN_SHIFT) | PTE_V | PTE_R | PTE_W | PTE_A | PTE_D;
++
+   uintptr_t vm_choice = SATP_MODE_CHOICE;
+   uintptr_t satp_value = ((uintptr_t)l1pt >> PGSHIFT)
+                         | (vm_choice * (SATP_MODE & ~(SATP_MODE<<1)));
+   write_csr(satp, satp_value);
+   if (read_csr(satp) != satp_value)
+     assert(!"unsupported satp mode");
+   flush_page(DRAM_BASE);
+ 
+   // Set up PMPs if present, ignoring illegal instruction trap if not.
+   uintptr_t pmpc = PMP_NAPOT | PMP_R | PMP_W | PMP_X;
+-- 
+2.18.4
+

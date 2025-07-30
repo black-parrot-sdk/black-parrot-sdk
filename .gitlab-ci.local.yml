@@ -1,0 +1,252 @@
+
+spec:
+  inputs:
+    do_build_image:
+    do_build_tools:
+    do_build_riscv:
+    do_smoke_tools:
+    do_smoke_riscv:
+---
+
+###################################################
+## image setup
+###################################################
+
+build-image:
+  extends: [.docker_mixin]
+  before_script: !reference [.docker_anchors, docker_prefetch]
+  script:
+    - docker build docker -f docker/Dockerfile.${DOCKER_PLATFORM}
+        --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ${CONTAINER_IMAGE}
+        --build-arg USER_NAME="${BSG_CI_USER_NAME}"
+        --build-arg USER_ID="${BSG_CI_USER_ID}"
+        --build-arg GROUP_NAME="${BSG_CI_GROUP_NAME}"
+        --build-arg GROUP_ID="${BSG_CI_GROUP_ID}"
+        --build-arg OTHER_GROUPS="${BSG_CI_OTHER_GROUPS}"
+        -t ${CONTAINER_IMAGE}
+  after_script: !reference [.docker_anchors, docker_push]
+  rules:
+    - if: '"$[[ inputs.do_build_image ]]" =~ "/on_success/"'
+    - if: '"$[[ inputs.do_build_image ]]" =~ "/on_event/"'
+      changes:
+        paths:
+          - docker/Dockerfile.${DOCKER_PLATFORM}
+          - docker/entrypoint.${DOCKER_PLATFORM}.sh
+          - docker/requirements.txt
+
+###################################################
+## project definition
+###################################################
+
+.project_template:
+  extends: [.job_template]
+  image: $CONTAINER_IMAGE
+  variables:
+    # used internally
+    TOOLS_ARTIFACT: "install-${TOOL}"
+    TOOLS_WILDCARD: "install-*"
+    TOOLS_PACKAGE: "tools-${DOCKER_PLATFORM}"
+    RISCV_ARTIFACT: "riscv-${PROG}"
+    RISCV_WILDCARD: "riscv-*"
+    RISCV_PACKAGE: "riscv"
+    # exported to make sure things go in the right place
+    BP_WORK_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-sdk-work"
+    BP_INSTALL_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-sdk-install"
+    BP_RISCV_DIR: "${PROJECT_DIR}/${JOB_WORK_ROOT}/bp-sdk-riscv"
+  before_script:
+    - !reference [.job_template, before_script]
+    - COMMON_INSTALL_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_INSTALL_DIR})"
+    - COMMON_RISCV_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_RISCV_DIR})"
+    - echo "[CI] Initializing common mount @ ${COMMON_INSTALL_DIR}"
+    - mkdir -p ${COMMON_INSTALL_DIR} && ls ${COMMON_INSTALL_DIR}
+    - echo "[CI] Initializing common mount @ ${COMMON_RISCV_DIR}"
+    - mkdir -p ${COMMON_RISCV_DIR} && ls ${COMMON_RISCV_DIR}
+
+###################################################
+## job templates
+###################################################
+
+.build_tools_job:
+  extends: [.project_template]
+  variables:
+    TOOL: "setme"
+  script:
+    - echo "[CI] doing makefile checkout" | tee -a ${JOB_LOG}
+    - make -j${BSG_CI_CORES_PER_JOB} checkout >> ${JOB_LOG} 2>&1
+    - echo "[CI] checking out ${TOOL}" | tee -a ${JOB_LOG}
+    - make -j${BSG_CI_CORES_PER_JOB} checkout.${TOOL} >> ${JOB_LOG} 2>&1
+    - echo "[CI] patching ${TOOL}" | tee -a ${JOB_LOG}
+    - make -j${BSG_CI_CORES_PER_JOB} patch.${TOOL}
+    - echo "[CI] building ${TOOL}" | tee -a ${JOB_LOG}
+    - make -j${BSG_CI_CORES_PER_JOB} build.${TOOL} >> ${JOB_LOG} 2>&1
+    - echo "[CI] moving installation directory to build output" | tee -a ${JOB_LOG}
+    - mv ${BP_INSTALL_DIR} ${JOB_SUCCESS_ROOT}/${TOOLS_ARTIFACT}
+  rules:
+    - if: '"$[[ inputs.do_build_tools ]]" =~ "/on_success|on_event/"'
+
+.scatter_tools_job:
+  extends: [.project_template, .api_mixin]
+  variables:
+    # template variables
+    API_PACKAGE_NAME: "${TOOLS_PACKAGE}"
+    API_PACKAGE_VER: "${CI_COMMIT_REF_SLUG}"
+    API_PROJECT_ID: "${CI_PROJECT_ID}"
+  script:
+    - echo "[CI] gathering inputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
+    - mkdir -p ${API_UPLOAD_ROOT}
+    - find ${JOB_DEPS_ROOT} -maxdepth 1 -type d -name ${TOOLS_WILDCARD}
+        -exec rsync --remove-source-files -a {}/ ${API_UPLOAD_ROOT} \; >> ${JOB_LOG} 2>&1
+    - !reference [.api_anchors, api_upload]
+  rules:
+    - if: '"$[[ inputs.do_build_tools ]]" =~ "/on_success|on_event/"'
+
+.gather_tools_job:
+  extends: [.project_template, .api_mixin]
+  variables:
+    # template variables
+    API_PACKAGE_NAME: "${TOOLS_PACKAGE}"
+    API_PACKAGE_VER: "${CI_COMMIT_REF_SLUG}"
+    API_PROJECT_ID: "${CI_PROJECT_ID}"
+  script:
+    - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
+    - !reference [.api_anchors, api_download]
+    - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_INSTALL_DIR}
+
+.smoke_tools_job:
+  extends: [.project_template]
+  variables:
+    TOOL: "setme"
+    RUN_SCRIPT: "./ci/common/run-ci.sh"
+    SMOKE_SCRIPT: "./ci/smoke-${TOOL}.sh"
+  script:
+    - echo "[CI] running script for ${SMOKE_SCRIPT}" | tee -a ${JOB_LOG}
+    - ln -nsf ${COMMON_INSTALL_DIR} ${BP_INSTALL_DIR}
+    - ${RUN_SCRIPT} ${SMOKE_SCRIPT}
+  rules:
+    - if: '"$[[ inputs.do_smoke_tools ]]" =~ "/on_success|on_event/"'
+
+.build_riscv_job:
+  extends: [.project_template]
+  variables:
+    PROG: "setme"
+  script:
+    - echo "[CI] linking dependencies from common directory" | tee -a ${JOB_LOG}
+    - ln -nsf ${COMMON_INSTALL_DIR} ${BP_INSTALL_DIR}
+    - echo "[CI] moving dependencies to installation directory" | tee -a ${JOB_LOG}
+    - mv ${JOB_DEPS_ROOT}/${SDK_ARTIFACT} ${BP_RISCV_DIR}
+    - echo "[CI] doing makefile checkout" | tee -a ${JOB_LOG}
+    - make -j${BSG_CI_CORES_PER_JOB} checkout >> ${JOB_LOG} 2>&1
+    - echo "[CI] checking out ${PROG}" | tee -a ${JOB_LOG}
+    - make -j${BSG_CI_CORES_PER_JOB} checkout.${PROG} >> ${JOB_LOG} 2>&1
+    - echo "[CI] patching ${PROG}" | tee -a ${JOB_LOG}
+    - make patch.${PROG} >> ${JOB_LOG} 2>&1
+    - echo "[CI] building ${PROG}" | tee -a ${JOB_LOG}
+    - make build.${PROG} >> ${JOB_LOG} 2>&1
+    - echo "[CI] moving installation directory to build output" | tee -a ${JOB_LOG}
+    - mv ${BP_RISCV_DIR} ${JOB_SUCCESS_ROOT}/${RISCV_ARTIFACT}
+  rules:
+    - if: '"$[[ inputs.do_build_riscv ]]" =~ "/on_success|on_event/" && $DOCKER_PLATFORM == "centos7"'
+
+.scatter_riscv_job:
+  extends: [.project_template, .api_mixin]
+  variables:
+    # template variables
+    API_PACKAGE_NAME: "${RISCV_PACKAGE}"
+    API_PACKAGE_VER: "${CI_COMMIT_REF_SLUG}"
+    API_PROJECT_ID: "${CI_PROJECT_ID}"
+  script:
+    - echo "[CI] gathering inputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
+    - mkdir -p ${API_UPLOAD_ROOT}
+    - find ${JOB_DEPS_ROOT} -maxdepth 1 -type d -name ${RISCV_WILDCARD}
+        -exec rsync --remove-source-files -a {}/ ${API_UPLOAD_ROOT} \; >> ${JOB_LOG} 2>&1
+    - !reference [.api_anchors, api_upload]
+  rules:
+    - if: '"$[[ inputs.do_build_riscv ]]" =~ "/on_success|on_event/" && $DOCKER_PLATFORM == "centos7"'
+
+.gather_riscv_job:
+  extends: [.project_template, .api_mixin]
+  variables:
+    # template variables
+    API_PACKAGE_NAME: "${RISCV_PACKAGE}"
+    API_PACKAGE_VER: "${CI_COMMIT_REF_SLUG}"
+    API_PROJECT_ID: "${CI_PROJECT_ID}"
+  script:
+    - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
+    - !reference [.api_anchors, api_download]
+    - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_RISCV_DIR}
+  rules:
+    - if: '$DOCKER_PLATFORM == "centos7"'
+
+.smoke_riscv_job:
+  extends: [.project_template]
+  variables:
+    SIM: "setme"
+    RUN_SCRIPT: "./ci/common/run-ci.sh"
+    SMOKE_SCRIPT: "./ci/smoke-${SUITE}.sh"
+  script:
+    - echo "[CI] running script for ${SMOKE_SCRIPT}" | tee -a ${JOB_LOG}
+    - ln -nsf ${COMMON_INSTALL_DIR} ${BP_INSTALL_DIR}
+    - ln -nsf ${COMMON_RISCV_DIR} ${BP_RISCV_DIR}
+    - ${RUN_SCRIPT} ${SMOKE_SCRIPT} ${SIM}
+  rules:
+    - if: '"$[[ inputs.do_smoke_riscv ]]" =~ "/on_success|on_event/" && $DOCKER_PLATFORM == "centos7"'
+
+###################################################
+## Actual Jobs
+###################################################
+
+build-tools:
+  extends: [.build_tools_job]
+  parallel:
+    matrix:
+      - TOOL: ["dromajo", "gnudramfs"]
+      - TOOL: ["spike", "gnulinux"]
+  needs: [{job: build-image, optional: true}]
+
+scatter-tools:
+  extends: [.scatter_tools_job]
+  needs: [build-tools]
+
+gather-tools:
+  extends: [.gather_tools_job]
+  needs: [{job: scatter-tools, optional: true}]
+
+smoke-tools:
+  extends: [.smoke_tools_job]
+  parallel:
+    matrix:
+      - TOOL: ["dromajo"]
+      - TOOL: ["spike"]
+  needs: [gather-tools]
+
+build-riscv:
+  extends: [.build_riscv_job]
+  parallel:
+    matrix:
+      - PROG: ["bedrock", "bootrom"]
+      - PROG: ["bp-demos", "bp-tests", "riscv-tests"]
+      - PROG: ["coremark", "beebs"]
+      - PROG: ["riscv-arch", "riscv-dv"]
+      - PROG: ["linux"]
+  needs: [gather-tools]
+
+scatter-riscv:
+  extends: [.scatter_riscv_job]
+  needs: [build-riscv]
+
+gather-riscv:
+  extends: [.gather_riscv_job]
+  needs: [{job: scatter-riscv, optional: true}]
+
+smoke-riscv:
+  extends: [.smoke_riscv_job]
+  parallel:
+    matrix:
+      - SIM: ["dromajo"]
+        SUITE: ["bp-tests", "bp-multicore", "bp-demos", "linux"]
+      - SIM: ["spike"]
+        SUITE: ["riscv-arch", "riscv-dv", "riscv-tests"]
+      - SIM: ["dromajo", "spike"]
+        SUITE: ["beebs", "coremark"]
+  needs: [{job: gather-tools}, {job: gather-riscv}]
+

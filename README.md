@@ -20,10 +20,6 @@ For most users, the following makefile targets will be the most useful:
     make tools;              # standard host tools
     make tools_bsg;          # additional host tools for BSG users
 
-    make sdk_lite;           # minimal baremetal libraries
-    make sdk;                # standard baremetal libraries
-    make sdk_bsg;            # additional baremetal libraries for BSG users
-
     make prog_lite;          # minimal benchmark set
     make prog;               # standard benchmark set
     make prog_bsg;           # additional benchmark sets for BSG users
@@ -70,9 +66,10 @@ Following is an example of these targets for building [Dromajo](https://github.c
         |---ci
            |---common
               |---run-ci.sh                 # [r] wrapper script to run ci script on GitLab
-              |---run-local.sh              # [w] wrapper script to run ci script locally
               |---functions.sh              # [x] helper functions for bash scripts
-           |---smoke-sim.sh                 # [r] test that programs can be simulated
+           |---run-local.sh            # [w] wrapper script to run ci script locally
+           |---functions.sh            # [w] helper functions for this repo
+           |---smoke-simlist.sh        # [w] test that programs can be simulated
 
 
 ## Important Flags
@@ -112,7 +109,8 @@ This should build and install the test program to prog/bp-demos/foobar.riscv
 
 If you want to use your own build structure, include black-parrot-sdk/Makefile.env to import notable BlackParrot directory names as well as put the compiler on your path.
 To build a program, use the following flags:
-  - riscv64-unknown-elf-dramfs-gcc (for PanicRoom), riscv64-unknown-linux-gnu-gcc (for Linux)
+  - riscv64-unknown-elf-gcc (for PanicRoom), riscv64-unknown-linux-gnu-gcc (for Linux)
+  - --specs=dramfs.specs
   - -I$(BP\_INCLUDE\_DIR)
   - -L$(BP\_LIB\_DIR) -lperch
   - -T$(BP\_LINKER\_DIR)/riscv.ld
@@ -151,11 +149,11 @@ It includes sample linker scripts for supported SoC platforms, start code for ru
 libperch is automatically compiled as part of the toplevel `make sdk` target.
 It is automatically installed to ./lib/. Users should link this library when compiling a new bare-metal program for BlackParrot.
 
-## PanicRoom (aka bsg\_newlib\_dramfs)
+## PanicRoom (aka libgloss-dramfs)
 
 PanicRoom is a port of newlib which packages a DRAM-based filesystem (LittleFS) along with a minimal C library.
 By only implementing a few platform level operations, PanicRoom provides an operational filesystem, eliminating the need for a complex host interface.
-It is automatically included with the standard toolchain build as riscv64-unknown-elf-dramfs-, allowing benchmarks such as SPEC to run with minimal host overhead.
+It is automatically included with the standard toolchain build as riscv64-unknown-elf-, allowing benchmarks such as SPEC to run with minimal host overhead.
 For an example of how to use PanicRoom, see lfs\_demo in bp-demos.
 
 A utility called dramfs\_mklfs allows you to convert a set of text files into the LitteFS filesystem.
@@ -169,7 +167,7 @@ From there, you can simply compile the lfs.c along with your main program and yo
     int main() {
         // Initialize LFS
         // called by crt0.S
-        // dramfs_init();
+        // dramfs_fs_init();
 
         // Read from a file
         FILE *hello = fopen("hello.txt", "r");
