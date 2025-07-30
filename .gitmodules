@@ -3,116 +3,93 @@
     path = riscv-gnu-toolchain
     url = https://github.com/riscv/riscv-gnu-toolchain
     branch = master
-    ignore = dirty
 [submodule "riscv-isa-sim"]
     path = riscv-isa-sim
     url = https://github.com/riscv/riscv-isa-sim
-    ignore = dirty
 [submodule "beebs"]
     path = beebs
     url = https://github.com/mageec/beebs
     branch = master
-    ignore = dirty
 [submodule "coremark"]
     path = coremark
     url = https://github.com/eembc/coremark
     branch = master
-    ignore = dirty
 [submodule "riscv-dv"]
     path = riscv-dv
     url = https://github.com/chipsalliance/riscv-dv
     branch = master
-    ignore = dirty
 [submodule "riscv-tests"]
     path = riscv-tests
     url = https://github.com/riscv/riscv-tests
     branch = master
-    ignore = dirty
 [submodule "wolfssl"]
     path = wolfssl
     url = https://github.com/wolfSSL/wolfssl
     branch = master
-    ignore = dirty
 [submodule "lwip"]
     path = lwip
     url = https://github.com/lwip-tcpip/lwip
     branch = master
-    ignore = dirty
-
-# BlackParrot forks
 [submodule "dromajo"]
     path = dromajo
-    url = https://github.com/bsg-external/dromajo
-    branch = blackparrot_mods_1208
-    ignore = dirty
-[submodule "bsg_newlib_dramfs"]
-    path = bsg_newlib_dramfs
-    url = https://github.com/bespoke-silicon-group/bsg_newlib_dramfs
-    branch = dramfs
-
-# BlackParrot libraries
-[submodule "perch"]
-    path = perch
-    url = https://github.com/black-parrot-sdk/perch
+    url = https://github.com/chipsalliance/dromajo
     branch = master
-    ignore = dirty
+
+# BlackParrot forks
+[submodule "libperch"]
+    path = libperch
+    url = https://github.com/black-parrot-sdk/libperch
+    branch = master
 [submodule "bedrock"]
     path = bedrock
     url = https://github.com/black-parrot-sdk/bedrock.git
     branch = master
-    ignore = dirty
 [submodule "bootrom"]
     path = bootrom
     url = https://github.com/black-parrot-sdk/bootrom
     branch = master
-    ignore = dirty
 [submodule "bp-tests"]
     path = bp-tests
     url = https://github.com/black-parrot-sdk/bp-tests
     branch = master
-    ignore = dirty
 [submodule "bp-demos"]
     path = bp-demos
     url = https://github.com/black-parrot-sdk/bp-demos
     branch = master
-    ignore = dirty
+[submodule "libgloss-dramfs"]
+    path = libgloss-dramfs
+    url = https://github.com/black-parrot-sdk/libgloss-dramfs.git
+    branch = main
 
 # BlackParrot benchmark wrappers
 [submodule "bp-spec2000"]
     path = spec2000
     url = https://github.com/black-parrot-sdk/spec2000
     branch = master
-    ignore = dirty
 [submodule "bp-spec2006"]
     path = spec2006
     url = https://github.com/black-parrot-sdk/spec2006.git
     branch = master
-    ignore = dirty
 [submodule "bp-spec2017"]
     path = spec2017
     url = https://github.com/black-parrot-sdk/spec2017.git
     branch = master
-    ignore = dirty
 [submodule "bp-riscv-arch-test"]
     path = riscv-arch-test
     url = https://github.com/black-parrot-sdk/bp-riscv-arch-test.git
     branch = master
-    ignore = dirty
 
 # BlackParrot OS wrappers
 [submodule "bp-zephyr"]
     path = zephyr
     url = https://github.com/black-parrot-sdk/bp-zephyr
     branch = master
-    ignore = dirty
 [submodule "bp-linux"]
     path = linux
     url = https://github.com/black-parrot-sdk/bp-linux
     branch = master
-    ignore = dirty
 [submodule "bp-yocto"]
     path = yocto
     url = https://github.com/black-parrot-sdk/bp-yocto.git
     branch = master
-    ignore = dirty
 

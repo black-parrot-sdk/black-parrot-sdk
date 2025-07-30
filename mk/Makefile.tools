@@ -1,41 +1,62 @@
 
+$(eval $(call bsg_tgt_build_submodule,libgloss,$(BP_LIBGLOSS_DIR),$(BP_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.libgloss_build:
+	@$(CD) $(@D); $</configure --prefix=$(BP_INSTALL_DIR)/$(PLATFORM_TRIPLE) --host=$(PLATFORM_TRIPLE)
+	@+$(MAKE) -j1 -C $(@D) all install
+
+$(eval $(call bsg_tgt_build_submodule,libperch,$(BP_PERCH_DIR),$(BP_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
+%/.libperch_build:
+	@$(eval export WITH_PREFIX=$(BP_INSTALL_DIR))
+	@$(eval export WITH_TRIPLE=$(PLATFORM_TRIPLE))
+	@$(eval export WITH_MARCH=$(PLATFORM_MARCH))
+	@$(eval export WITH_MABI=$(PLATFORM_MABI))
+	@$(eval export WITH_DRAM_BASE=$(PLATFORM_DRAM_BASE))
+	@$(eval export WITH_STACK_SIZE=$(PLATFORM_STACK_SIZE))
+	@$(eval export WITH_HEAP_SIZE=$(PLATFORM_HEAP_SIZE))
+	@$(eval export WITH_BOOT_HART=$(PLATFORM_BOOT_HART))
+	@+$(MAKE) -j1 -C $< all install
+
 DISABLE_MULTILIB ?=
 ifeq ($(DISABLE_MULTILIB),)
 GNU_CONFIGURE_FLAGS += --enable-multilib
-GNU_CONFIGURE_FLAGS += --with-multilib-generator="rv64g-lp64d--;rv64gcb-lp64d--"
+GNU_CONFIGURE_FLAGS += --with-multilib-generator="rv64g-lp64d--;rv64gc-lp64d--"
+else
+GNU_CONFIGURE_FLAGS += --with-arch=rv64gc --with-abi=lp64d
 endif
 GNU_CONFIGURE_FLAGS += --disable-gdb --disable-qemu-system --with-sim=spike
 GNU_CONFIGURE_FLAGS += --with-isa-spec=2.2 --with-cmodel=medany
-GNU_CONFIGURE_FLAGS += --with-target-cflags="-mstrict-align -mcmodel=medany"
-GNU_CONFIGURE_FLAGS += --with-target-cxxflags="-mstrict-align -mcmodel=medany"
+GNU_CONFIGURE_FLAGS += --with-target-cflags="-O2 -mstrict-align -mcmodel=medany -falign-functions=8"
+GNU_CONFIGURE_FLAGS += --with-target-cxxflags="-O2 -mstrict-align -mcmodel=medany -falign-functions=8"
 
 $(eval $(call bsg_tgt_build_submodule,gnulinux,$(BP_GNU_DIR),$(BP_TOUCH_DIR),,$(BP_WORK_DIR)))
 %/.gnulinux_build:
 	@$(eval EXTRA_CONFIGURE_FLAGS := $(GNU_CONFIGURE_FLAGS))
 	@$(eval EXTRA_CONFIGURE_FLAGS += --enable-linux)
+	@$(eval export ENABLED_LANGUAGES := "c,c++,fortran")
+	@$(eval export NEWLIB_TARGET_FLAGS := --enable-newlib-global-atexit)
 	@$(call bsg_fn_default_configure,$(@D),$<,$(BP_INSTALL_DIR),$(EXTRA_CONFIGURE_FLAGS))
-	@$(MAKE) -C $(@D) linux
-	@$(MAKE) -C $(@D) install
+	@+$(MAKE) -C $(@D) linux
+	@+$(MAKE) -C $(@D) install
 	@$(call bsg_fn_strip_binaries, $(BP_INSTALL_DIR))
 
 $(eval $(call bsg_tgt_build_submodule,gnudramfs,$(BP_GNU_DIR),$(BP_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.gnudramfs_build:
 	@$(eval EXTRA_CONFIGURE_FLAGS := $(GNU_CONFIGURE_FLAGS))
 	@$(eval EXTRA_CONFIGURE_FLAGS += --disable-linux)
-	@$(eval EXTRA_CONFIGURE_FLAGS += --with-newlib-src="$(BP_NEWLIB_DIR)")
-	@$(eval EXTRA_CONFIGURE_FLAGS += --with-tune=bsg_blackparrot)
-	@$(eval export NEWLIB_TUPLE := "riscv64-unknown-elf-dramfs")
+	@$(eval export ENABLED_LANGUAGES := "c,c++,fortran")
+	@$(eval export NEWLIB_TARGET_FLAGS := --enable-newlib-global-atexit)
 	@$(call bsg_fn_default_configure,$(@D),$<,$(BP_INSTALL_DIR),$(EXTRA_CONFIGURE_FLAGS))
-	@$(MAKE) -C $(@D) newlib
-	@$(MAKE) -C $(@D) install
-	@$(CP) $(BP_INSTALL_DIR)/riscv64-unknown-elf-dramfs/bin/dramfs_mklfs $(BP_BIN_DIR)
+	@+$(MAKE) -C $(@D) newlib
+	@+$(MAKE) -C $(@D) install
+	@+$(MAKE) build.libgloss
+	@+$(MAKE) build.libperch
 	@$(call bsg_fn_strip_binaries, $(BP_INSTALL_DIR))
 
 $(eval $(call bsg_tgt_build_submodule,dromajo,$(BP_DROMAJO_DIR),$(BP_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
 %/.dromajo_build:
 	@$(eval EXTRA_CONFIGURE_FLAGS := )
 	@$(call bsg_fn_default_cmake,$(@D),$<,$(BP_INSTALL_DIR),$(EXTRA_CONFIGURE_FLAGS))
-	@$(MAKE) -C $(@D)
+	@+$(MAKE) -C $(@D)
 	@$(CP) $(@D)/dromajo $(BP_BIN_DIR)
 	@$(CP) $(@D)/libdromajo_cosim.a $(BP_LIB_DIR)
 	@$(CP) $</include/* $(BP_INCLUDE_DIR)
@@ -45,6 +66,6 @@ $(eval $(call bsg_tgt_build_submodule,spike,$(BP_SPIKE_DIR),$(BP_TOUCH_DIR),$(BP
 %/.spike_build:
 	@$(eval EXTRA_CONFIGURE_FLAGS := --without-boost --without-boost-asio --without-boost-regex)
 	@$(call bsg_fn_default_configure,$(@D),$<,$(BP_INSTALL_DIR),$(EXTRA_CONFIGURE_FLAGS))
-	@$(MAKE) -C $(@D) install
+	@+$(MAKE) -C $(@D) install
 	@$(call bsg_fn_strip_binaries, $(BP_INSTALL_DIR))
 

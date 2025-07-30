@@ -10,3 +10,9 @@ sdk.tar.gz
 prog.tar.gz
 riscv.ld
 *.swp
+*.dump
+*.dromajo.trace
+*.spike.trace
+*.riscv
+.gitlab-ci-local/
+signature.txt

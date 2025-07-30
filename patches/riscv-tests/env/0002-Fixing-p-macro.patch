@@ -1,0 +1,60 @@
+From d7be56fbed4b35debdc03e0493622403145677cf Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko@cs.washington.edu>
+Date: Tue, 29 Jul 2025 12:28:17 -0700
+Subject: [PATCH] Fixing p macro
+
+---
+ p/riscv_test.h | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/p/riscv_test.h b/p/riscv_test.h
+index 3d4637a..ae8380c 100644
+--- a/p/riscv_test.h
++++ b/p/riscv_test.h
+@@ -206,23 +206,25 @@ trap_vector:                                                            \
+         /* was it an interrupt or an exception? */                      \
+   1:    csrr t5, mcause;                                                \
+         bgez t5, handle_exception;                                      \
+         INTERRUPT_HANDLER;                                              \
+ handle_exception:                                                       \
+         /* we don't know how to handle whatever the exception was */    \
+   other_exception:                                                      \
+         /* some unhandlable exception occurred */                       \
+   1:    ori TESTNUM, TESTNUM, 1337;                                     \
+   write_tohost:                                                         \
+-        sw TESTNUM, tohost, t5;                                         \
+-        sw zero, tohost + 4, t5;                                        \
+-        j write_tohost;                                                 \
++        li t6, HOST_BASE;                                               \
++        li t5, HOST_FINISH;                                             \
++        or t5, t5, t6;                                                  \
++        sw zero, 0(t5);                                                 \
++  1:    j 1b;                                                           \
+ reset_vector:                                                           \
+         INIT_XREG;                                                      \
+         RISCV_MULTICORE_DISABLE;                                        \
+         INIT_RNMI;                                                      \
+         INIT_SATP;                                                      \
+         INIT_PMP;                                                       \
+         DELEGATE_NO_TRAPS;                                              \
+         li TESTNUM, 0;                                                  \
+         la t0, trap_vector;                                             \
+         csrw mtvec, t0;                                                 \
+@@ -285,11 +287,14 @@ reset_vector:                                                           \
+ #define RVTEST_DATA_BEGIN                                               \
+         EXTRA_DATA                                                      \
+         .pushsection .tohost,"aw",@progbits;                            \
+         .align 6; .global tohost; tohost: .dword 0; .size tohost, 8;    \
+         .align 6; .global fromhost; fromhost: .dword 0; .size fromhost, 8;\
+         .popsection;                                                    \
+         .align 4; .global begin_signature; begin_signature:
+ 
+ #define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
+ 
++#undef INIT_PMP
++#define INIT_PMP nop
++
+ #endif
+-- 
+2.18.4
+

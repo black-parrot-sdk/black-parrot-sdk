@@ -1,14 +1,14 @@
-From d87006fda7460b43943ecd55d9a31e19f9681e08 Mon Sep 17 00:00:00 2001
-From: Mark Wyse <muwyse@users.noreply.github.com>
-Date: Mon, 15 Jul 2024 10:49:13 -0700
-Subject: [PATCH 3/3] [PATCH 3/3] Adding BlackParrot platform
+From 64f3fd399be22fb8486316329d622862ea0f69c4 Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko@cs.washington.edu>
+Date: Sat, 19 Jul 2025 18:02:15 -0700
+Subject: [PATCH] Adding BlackParrot platform
 
 ---
- platform/generic/blackparrot/Kconfig           |  15 ++
- platform/generic/blackparrot/configs/defconfig |   0
- platform/generic/blackparrot/objects.mk        |  92 ++++++++++
- platform/generic/blackparrot/platform.c        | 244 +++++++++++++++++++++++++
- 4 files changed, 351 insertions(+)
+ platform/generic/blackparrot/Kconfig          |  15 ++
+ .../generic/blackparrot/configs/defconfig     |   0
+ platform/generic/blackparrot/objects.mk       |  92 +++++++
+ platform/generic/blackparrot/platform.c       | 236 ++++++++++++++++++
+ 4 files changed, 343 insertions(+)
  create mode 100644 platform/generic/blackparrot/Kconfig
  create mode 100644 platform/generic/blackparrot/configs/defconfig
  create mode 100644 platform/generic/blackparrot/objects.mk
@@ -138,10 +138,10 @@ index 0000000..205c4a8
 +
 diff --git a/platform/generic/blackparrot/platform.c b/platform/generic/blackparrot/platform.c
 new file mode 100644
-index 0000000..4ee121b
+index 0000000..7eff8e9
 --- /dev/null
 +++ b/platform/generic/blackparrot/platform.c
-@@ -0,0 +1,244 @@
+@@ -0,0 +1,236 @@
 +/*
 + * SPDX-License-Identifier: BSD-2-Clause
 + *
@@ -187,16 +187,14 @@ index 0000000..4ee121b
 +
 +static void bp_console_putc(char ch)
 +{
-+    uintptr_t core_offset = (current_hartid() << 3);
-+    uintptr_t putchar_ptr = (uintptr_t) PLATFORM_PUTCHAR_ADDR | core_offset;
++    uintptr_t putchar_ptr = (uintptr_t) PLATFORM_PUTCHAR_ADDR;
 +    char *putchar = (char *) putchar_ptr;
 +    *putchar = ch;
 +}
 +
 +static int bp_console_getc(void)
 +{
-+    uintptr_t core_offset = (current_hartid() << 3);
-+    uintptr_t getchar_ptr = (uintptr_t) PLATFORM_GETCHAR_ADDR | core_offset;
++    uintptr_t getchar_ptr = (uintptr_t) PLATFORM_GETCHAR_ADDR;
 +    int *getchar = (int *) getchar_ptr;
 +    int ch = *getchar;
 +
@@ -211,16 +209,14 @@ index 0000000..4ee121b
 +
 +static void bp_ipi_send(u32 hart_index)
 +{
-+    uintptr_t core_offset = (hart_index << 24);
-+    uintptr_t ipi_ptr = (uintptr_t) PLATFORM_ACLINT_MSWI_ADDR | core_offset;
++    uintptr_t ipi_ptr = (uintptr_t) PLATFORM_ACLINT_MSWI_ADDR;
 +    int *ipi = (int *) ipi_ptr;
 +    *ipi = 1;
 +}
 +
 +static void bp_ipi_clear(u32 hart_index)
 +{
-+    uintptr_t core_offset = (hart_index << 24);
-+    uintptr_t ipi_ptr = (uintptr_t) PLATFORM_ACLINT_MSWI_ADDR | core_offset;
++    uintptr_t ipi_ptr = (uintptr_t) PLATFORM_ACLINT_MSWI_ADDR;
 +    int *ipi = (int *) ipi_ptr;
 +    *ipi = 0;
 +}
@@ -233,8 +229,7 @@ index 0000000..4ee121b
 +
 +static u64 bp_timer_value(void)
 +{
-+    uintptr_t core_offset = (current_hartid() << 24);
-+    uintptr_t mtime_ptr = (uintptr_t) PLATFORM_ACLINT_MTIME_ADDR | core_offset;
++    uintptr_t mtime_ptr = (uintptr_t) PLATFORM_ACLINT_MTIME_ADDR;
 +    int *mtime = (int *) mtime_ptr;
 +    u64 val = *mtime;
 +
@@ -243,16 +238,14 @@ index 0000000..4ee121b
 +
 +static void bp_timer_event_start(u64 next_event)
 +{
-+    uintptr_t core_offset = (current_hartid() << 24);
-+    uintptr_t mtimecmp_ptr = (uintptr_t) PLATFORM_ACLINT_MTIMECMP_ADDR | core_offset;
++    uintptr_t mtimecmp_ptr = (uintptr_t) PLATFORM_ACLINT_MTIMECMP_ADDR;
 +    u64 *mtimecmp = (u64 *) mtimecmp_ptr;
 +    *mtimecmp = next_event;
 +}
 +
 +static void bp_timer_event_stop(void)
 +{
-+    uintptr_t core_offset = (current_hartid() << 24);
-+    uintptr_t mtimecmp_ptr = (uintptr_t) PLATFORM_ACLINT_MTIMECMP_ADDR | core_offset; 
++    uintptr_t mtimecmp_ptr = (uintptr_t) PLATFORM_ACLINT_MTIMECMP_ADDR; 
 +    int *mtimecmp = (int *) mtimecmp_ptr;
 +    *mtimecmp = -1;
 +}
@@ -276,19 +269,18 @@ index 0000000..4ee121b
 +
 +static void bp_system_reset(u32 type, u32 reason)
 +{
++    volatile uint8_t *finish_addr = (volatile uint8_t *)PLATFORM_FINISH_ADDR;
 +    switch(type) {
 +        case SBI_SRST_RESET_TYPE_SHUTDOWN:
-+            for (int i = 0; i < PLATFORM_HART_COUNT; i++) {
-+                uintptr_t core_offset = (i << 3);
-+                uintptr_t poweroff_ptr = (uintptr_t) PLATFORM_FINISH_ADDR | core_offset;
-+                int *poweroff = (int *) poweroff_ptr;
-+                *poweroff = reason;
-+            }
++            *finish_addr = 0;
 +            bp_console_putc('\n');
 +            bp_console_putc('.');
 +            bp_console_putc('.');
 +            bp_console_putc('.');
 +            bp_console_putc('\n');
++            while (1);
++        default:
++            *finish_addr = 1;
 +            while (1);
 +    }
 +}
@@ -387,5 +379,5 @@ index 0000000..4ee121b
 +};
 +
 -- 
-2.16.5
+2.18.4
 

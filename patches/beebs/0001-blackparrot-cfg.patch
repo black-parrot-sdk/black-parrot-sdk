@@ -1,39 +1,37 @@
-From: Dan Petrisko <petrisko@cs.washington.edu>
+From c7a330623f308589fc530da59d8c1e9c2e199fd2 Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko@cs.washington.edu>
+Date: Wed, 25 Jun 2025 02:06:00 -0700
+Subject: [PATCH 1/2] BlackParrot CFG
+
 ---
+ config/riscv64/chips/generic/chip.cfg | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
 diff --git a/config/riscv64/chips/generic/chip.cfg b/config/riscv64/chips/generic/chip.cfg
-index 16ce7e4..0f0d5d3 100644
+index 16ce7e4..adcf641 100644
 --- a/config/riscv64/chips/generic/chip.cfg
 +++ b/config/riscv64/chips/generic/chip.cfg
-@@ -1,6 +1,6 @@
- # Chip configuration for generic x86-64.
- 
--# Copyright (C) 2013-2014 Embecosm Limited and the University of Bristol
-+# Copyright {C} 2013-2014 Embecosm Limited and the University of Bristol
- 
- # Contributor Andrew Burgess <andrew.burgess@embecosm.com>
- 
-@@ -8,7 +8,7 @@
- 
- # This program is free software; you can redistribute it and/or modify it
- # under the terms of the GNU General Public License as published by the Free
--# Software Foundation; either version 3 of the License, or (at your option)
-+# Software Foundation; either version 3 of the License, or {at your option}
+@@ -12,11 +12,19 @@
  # any later version.
  
  # This program is distributed in the hope that it will be useful, but WITHOUT
-@@ -19,4 +19,14 @@
+ # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ # more details.
+ 
  # You should have received a copy of the GNU General Public License along with
  # this program.  If not, see <http://www.gnu.org/licenses/>.
  
 -export CHIP_CFLAGS="-std=gnu99"
++CC=riscv64-unknown-elf-gcc
 +chipdir=`readlink -m $srcdir/config/$arch/chips/$chip/`
 +#This is the directory that actually interacts with the benchmarks
 +#If you don't include it, it won't have a 'main' to call and will never
 +#compile the test
 +supportdir=`readlink -m $srcdir/support/`
-+#TODO: Find a way to pass the CC from outside
-+export CC="riscv64-unknown-elf-dramfs-gcc"
-+export CHIP_CFLAGS="-O2 -march=rv64gc_zba_zbb_zbs -mabi=lp64d -mcmodel=medany -I$supportdir -I$includedir -DBAREMETAL -DBOARD_REPEAT_FACTOR=2"
-+#TODO: Link to perch instead of having these duplicate C files
-+export CHIP_LDFLAGS="-T$BP_SDK_LINKER_DIR/riscv.ld -L$libdir $BP_SDK_DIR/perch/bsg_newlib_intf.c $BP_SDK_DIR/perch/bp_utils.c"
++export CHIP_CFLAGS=" -O3 -I$supportdir -DBOARD_REPEAT_FACTOR=2"
++export CHIP_CFLAGS+=" --specs=dramfs.specs --specs=perch.specs"
 +
+-- 
+2.18.4
+

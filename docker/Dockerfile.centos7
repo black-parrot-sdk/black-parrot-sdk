@@ -20,6 +20,7 @@ RUN yum install --nogpgcheck --setopt=tsflags=nodocs -y -q \
     python-devel python3-devel openssl-devel openssl11 openssl11-devel openssl11-libs \
     epel-release centos-release-scl scl-utils \
     bzip2 bzip2-devel sqlite-devel \
+    perl-IPC-Cmd \
     && yum clean all && rm -rf /var/cache/yum
 
 # Same thing for SCL mirrors
