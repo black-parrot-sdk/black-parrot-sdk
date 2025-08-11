@@ -58,8 +58,6 @@ $(eval $(call bsg_tgt_build_submodule,dromajo,$(BP_DROMAJO_DIR),$(BP_TOUCH_DIR),
 	@$(call bsg_fn_default_cmake,$(@D),$<,$(BP_INSTALL_DIR),$(EXTRA_CONFIGURE_FLAGS))
 	@+$(MAKE) -C $(@D)
 	@$(CP) $(@D)/dromajo $(BP_BIN_DIR)
-	@$(CP) $(@D)/libdromajo_cosim.a $(BP_LIB_DIR)
-	@$(CP) $</include/* $(BP_INCLUDE_DIR)
 	@$(call bsg_fn_strip_binaries, $(BP_INSTALL_DIR))
 
 $(eval $(call bsg_tgt_build_submodule,spike,$(BP_SPIKE_DIR),$(BP_TOUCH_DIR),$(BP_PATCH_DIR),$(BP_WORK_DIR)))
