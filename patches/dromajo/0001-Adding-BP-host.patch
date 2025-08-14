@@ -1,56 +1,26 @@
-From 66a326a7d0e848792c9528b979ea1b61f96ef49d Mon Sep 17 00:00:00 2001
+From 3525136761a392bc2ef6b9aa2f4034c56a494385 Mon Sep 17 00:00:00 2001
 From: Dan Ruelas-Petrisko <petrisko@cs.washington.edu>
-Date: Sat, 19 Jul 2025 17:34:03 -0700
-Subject: [PATCH] Adding BP host
+Date: Wed, 13 Aug 2025 22:31:22 -0700
+Subject: [PATCH 1/2] Adding BP host
 
 ---
- CMakeLists.txt             |   4 +
  include/dromajo_cosim.h    |   4 +-
- include/dromajo_template.h |   4 +
+ include/dromajo_template.h |  10 +-
  include/iomem.h            |  13 ++-
  include/machine.h          |   5 +
- include/riscv_cpu.h        |   7 +-
+ include/riscv_cpu.h        |   6 +-
  include/riscv_machine.h    |  27 ++++-
  src/dromajo.cpp            |  44 ++++++--
- src/dromajo_cosim.cpp      |  61 ++++++-----
+ src/dromajo_cosim.cpp      |  41 ++++----
  src/dromajo_cosim_test.cpp |   4 +-
  src/dromajo_main.cpp       |  21 ++++
  src/iomem.cpp              |  12 ++-
  src/pci.cpp                |   4 +-
- src/riscv_cpu.cpp          |  85 +++++++++------
- src/riscv_machine.cpp      | 215 ++++++++++++++++++++++++++++++++++---
+ src/riscv_cpu.cpp          |  83 +++++++++------
+ src/riscv_machine.cpp      | 209 ++++++++++++++++++++++++++++++++++---
  src/virtio.cpp             |   4 +
- 16 files changed, 416 insertions(+), 98 deletions(-)
+ 15 files changed, 400 insertions(+), 87 deletions(-)
 
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index e2cd7e2..0a87335 100644
---- a/CMakeLists.txt
-+++ b/CMakeLists.txt
-@@ -79,20 +79,24 @@ if (TRACEOS)
-             -DDUMP_ILLEGAL_INSTRUCTIONS
-     )
- endif ()
- 
- if (SIMPOINT)
-     add_compile_options(
-             -DSIMPOINT_BB
-     )
- endif ()
- 
-+add_link_options(
-+    -pthread
-+)
-+
- # Set Version Header
- set(CONFIG_VERSION "Dromajo-0.1")
- configure_file(include/config.h.in config.h @ONLY)
- 
- if (WARMUP)
-   message(STATUS "Checkpoint with WARMUP is on (typically for simpoints, but any checkpoint can use it).")
-     add_compile_options( -DLIVECACHE)
- endif ()
- 
- if (GOLDMEM)
 diff --git a/include/dromajo_cosim.h b/include/dromajo_cosim.h
 index effdfab..8df2e47 100644
 --- a/include/dromajo_cosim.h
@@ -89,7 +59,7 @@ index effdfab..8df2e47 100644
  /*
   * dromajo_install_new_loggers --
 diff --git a/include/dromajo_template.h b/include/dromajo_template.h
-index 44504aa..e90a1dd 100644
+index 44504aa..eb584c4 100644
 --- a/include/dromajo_template.h
 +++ b/include/dromajo_template.h
 @@ -1294,20 +1294,24 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
@@ -117,6 +87,41 @@ index 44504aa..e90a1dd 100644
                      s->pending_tval      = addr;                                           \
                      s->pending_exception = CAUSE_MISALIGNED_STORE;                         \
                      goto mmu_exception;                                                    \
+@@ -1803,31 +1807,31 @@ int no_inline glue(riscv_cpu_interp, XLEN)(RISCVCPUState *s, int n_cycles) {
+                 }
+                 NEXT_INSN;
+ #endif
+             default: goto illegal_insn;
+         }
+         /* update PC for next instruction */
+     jump_insn:;
+     } /* end of main loop */
+ illegal_insn:
+     s->pending_exception = CAUSE_ILLEGAL_INSTRUCTION;
+-    s->pending_tval      = 0;
++    s->pending_tval      = insn;
+ mmu_exception:
+ exception:
+     s->pc = GET_PC();
+     if (s->pending_exception >= 0) {
+-        if (s->pending_exception < CAUSE_USER_ECALL || s->pending_exception > CAUSE_USER_ECALL + 3) {
++        //if (s->pending_exception < CAUSE_USER_ECALL || s->pending_exception > CAUSE_USER_ECALL + 3) {
+             /* All other causes cancelled the instruction and shouldn't be
+              * counted in minstret */
+             --insn_counter_addend;
+             --insn_executed;
+-        }
++        //}
+ 
+         raise_exception2(s, s->pending_exception, s->pending_tval);
+     }
+     /* we exit because XLEN may have changed */
+ 
+ done_interp:
+     n_cycles--;
+ 
+ the_end:
+     s->insn_counter = GET_INSN_COUNTER();
 diff --git a/include/iomem.h b/include/iomem.h
 index 31d63c5..1f379c4 100644
 --- a/include/iomem.h
@@ -279,7 +284,7 @@ index 3f84954..6698861 100644
  
  #endif
 diff --git a/include/riscv_cpu.h b/include/riscv_cpu.h
-index f11fbde..04505d5 100644
+index f11fbde..604933d 100644
 --- a/include/riscv_cpu.h
 +++ b/include/riscv_cpu.h
 @@ -99,21 +99,21 @@ typedef uint128_t fp_uint;
@@ -305,29 +310,7 @@ index f11fbde..04505d5 100644
  #define ELEN ELEN_DEFAULT
  #endif
  #if (ELEN < ELEN_MIN || VLEN < ELEN || !IS_PO2(ELEN))
-@@ -233,20 +233,21 @@ typedef struct RISCVCPUState {
-     uint64_t minstret;      // RISCV CSR (updated when insn_counter increases)
-     uint64_t mcycle;        // RISCV CSR (updated when insn_counter increases)
-     BOOL     debug_mode;
-     BOOL     stop_the_counter;  // Set in debug mode only (cleared after ending Debug)
- 
-     BOOL power_down_flag; /* True when the core is idle awaiting
-                            * interrupts, does NOT mean terminate
-                            * simulation */
-     BOOL         terminate_simulation;
-     int          pending_exception; /* used during MMU exception handling */
-+    int          pending_interrupt;
-     target_ulong pending_tval;
- 
-     /* CSRs */
-     target_ulong mstatus;
-     target_ulong mtvec;
-     target_ulong mscratch;
-     target_ulong mepc;
-     target_ulong mcause;
-     target_ulong mtval;
-     target_ulong mvendorid; /* ro */
-@@ -362,20 +363,24 @@ void riscv_set_debug_mode(RISCVCPUState *s, bool on);
+@@ -362,20 +362,24 @@ void riscv_set_debug_mode(RISCVCPUState *s, bool on);
  
  int riscv_benchmark_exit_code(RISCVCPUState *s);
  
@@ -585,37 +568,10 @@ index f283864..2a141a9 100644
          }
      }
 diff --git a/src/dromajo_cosim.cpp b/src/dromajo_cosim.cpp
-index 00c4743..27f18cc 100644
+index 00c4743..bae87a6 100644
 --- a/src/dromajo_cosim.cpp
 +++ b/src/dromajo_cosim.cpp
-@@ -41,22 +41,24 @@ void check_inorder_init(int ncores);
-  * Returns NULL upon failure.
-  */
- dromajo_cosim_state_t *dromajo_cosim_init(int argc, char *argv[]) {
-     RISCVMachine *m = virt_machine_main(argc, argv);
- 
- #ifdef GOLDMEM_INORDER
-     check_inorder_init(m->ncpus);
- #endif
- 
-     m->common.cosim             = true;
--    m->common.pending_interrupt = -1;
--    m->common.pending_exception = -1;
-+    for (int i = 0; i < m->ncpus; i++) {
-+        m->cpu_state[i]->pending_interrupt = -1;
-+        m->cpu_state[i]->pending_exception = -1;
-+    }
- 
-     return (dromajo_cosim_state_t *)m;
- }
- 
- void dromajo_cosim_fini(dromajo_cosim_state_t *state) { virt_machine_end((RISCVMachine *)state); }
- 
- static bool is_store_conditional(uint32_t insn) {
-     int opcode = insn & 0x7f, funct3 = insn >> 12 & 7;
-     return opcode == 0x2f && insn >> 27 == 3 && (funct3 == 2 || funct3 == 3);
- }
-@@ -156,21 +158,21 @@ static inline void handle_dut_overrides(RISCVCPUState *s, int priv, uint64_t pc,
+@@ -156,21 +156,21 @@ static inline void handle_dut_overrides(RISCVCPUState *s, int priv, uint64_t pc,
      }
  }
  
@@ -638,7 +594,7 @@ index 00c4743..27f18cc 100644
          m->pending_exception = cause;
          (m->debug_log)(hartid, "[DEBUG] DUT raised exception %d\n", m->pending_exception);
      }
-@@ -185,31 +187,30 @@ void dromajo_cosim_raise_trap(dromajo_cosim_state_t *state, int hartid, int64_t
+@@ -185,31 +185,30 @@ void dromajo_cosim_raise_trap(dromajo_cosim_state_t *state, int hartid, int64_t
   * being the upper bits (ie., all but LSB).  Caveat: the DUT provides
   * the instructions bit after expansion, so this is only matched on
   * non-compressed instruction.
@@ -671,7 +627,7 @@ index 00c4743..27f18cc 100644
      }
  
      r->common.maxinsns--;
-@@ -219,88 +220,90 @@ int dromajo_cosim_step(dromajo_cosim_state_t *state, int hartid, uint64_t dut_pc
+@@ -219,37 +218,31 @@ int dromajo_cosim_step(dromajo_cosim_state_t *state, int hartid, uint64_t dut_pc
      }
  
      /*
@@ -702,52 +658,28 @@ index 00c4743..27f18cc 100644
 -            break;
 -        }
 -
--        if (r->common.pending_interrupt != -1 && r->common.pending_exception != -1) {
-+        if (r->cpu_state[hartid]->pending_interrupt != -1 && r->cpu_state[hartid]->pending_exception !=
-+ -1) {
+         if (r->common.pending_interrupt != -1 && r->common.pending_exception != -1) {
              /* On the DUT, the interrupt can race the exception.
                 Let's try to match that behavior */
  
--            (m.debug_log)(hartid, "[DEBUG] DUT also raised exception %d\n", r->common.pending_exception);
-+            (m.debug_log)(hartid, "[DEBUG] DUT also raised exception %d\n", r->cpu_state[hartid]->pending_exception);
+             (m.debug_log)(hartid, "[DEBUG] DUT also raised exception %d\n", r->common.pending_exception);
              riscv_cpu_interp64(s, 1);  // Advance into the exception
  
              int cause = s->priv == PRV_S ? s->scause : s->mcause;
  
--            if (r->common.pending_exception != cause) {
-+            if (r->cpu_state[hartid]->pending_exception != cause) {
-                 char priv = s->priv["US?M"];
- 
-                 /* Unfortunately, handling the error case is awkward,
-                  * so we just exit from here */
- 
-                 log_buff_space = snprintf(log_buffer, 512, "%d 0x%016" PRIx64 " ", emu_priv, emu_pc);
-                 log_buff_space += snprintf(log_buffer + log_buff_space, 512 - log_buff_space, " (0x%08x) ", emu_insn);
-                 log_buff_space += snprintf(log_buffer + log_buff_space,
-                                            512 - log_buff_space,
-                                            "[error] EMU %cCAUSE %d != DUT %cCAUSE %d\n",
-                                            priv,
-                                            cause,
-                                            priv,
--                                           r->common.pending_exception);
-+                                           r->cpu_state[hartid]->pending_exception);
-                 (m.error_log)(hartid, log_buffer);
- 
-                 return 0x1FFF;
-             }
+             if (r->common.pending_exception != cause) {
+@@ -274,33 +267,45 @@ int dromajo_cosim_step(dromajo_cosim_state_t *state, int hartid, uint64_t dut_pc
          }
  
--        if (r->common.pending_interrupt != -1) {
--            riscv_cpu_set_mip(s, riscv_cpu_get_mip(s) | 1 << r->common.pending_interrupt);
-+        if (r->cpu_state[hartid]->pending_interrupt != -1) {
-+            riscv_cpu_set_mip(s, riscv_cpu_get_mip(s) | 1 << r->cpu_state[hartid]->pending_interrupt);
+         if (r->common.pending_interrupt != -1) {
+             riscv_cpu_set_mip(s, riscv_cpu_get_mip(s) | 1 << r->common.pending_interrupt);
              (m.debug_log)(hartid,
                            "[DEBUG] Interrupt: MIP <- %d: Now MIP = %x\n",
--                          r->common.pending_interrupt,
-+                          r->cpu_state[hartid]->pending_interrupt,
+                           r->common.pending_interrupt,
                            riscv_cpu_get_mip(s));
          }
  
+-        if (riscv_cpu_interp64(s, 1) != 0) {
 +        if (is_store_conditional(emu_insn) && dut_wdata != 0) {
 +            /* When DUT fails an SC, we must simulate the same behavior */
 +            s->load_res = ~0;
@@ -759,21 +691,20 @@ index 00c4743..27f18cc 100644
 +            s->load_res_memseqno = s->machine->memseqno;
 +        }
 +
-         if (riscv_cpu_interp64(s, 1) != 0) {
++        if (riscv_cpu_interp64(s,1)) {
              iregno = riscv_get_most_recently_written_reg(s);
              fregno = riscv_get_most_recently_written_fp_reg(s);
  
--            //// ABE: I think this is the solution
--            // r->common.pending_interrupt = -1;
--            // r->common.pending_exception = -1;
--
+             //// ABE: I think this is the solution
+             // r->common.pending_interrupt = -1;
+             // r->common.pending_exception = -1;
+ 
              break;
          }
  
--        r->common.pending_interrupt = -1;
--        r->common.pending_exception = -1;
-+        r->cpu_state[hartid]->pending_interrupt = -1;
-+        r->cpu_state[hartid]->pending_exception = -1;
+         r->common.pending_interrupt = -1;
+         r->common.pending_exception = -1;
++
      }
  
  #ifdef GOLDMEM_INORDER
@@ -784,21 +715,31 @@ index 00c4743..27f18cc 100644
  
      bool do_clwsp = (dut_insn & 0x3) == 2 && (dut_insn & 0xe000) == 0x4000;
      bool do_cldsp = (dut_insn & 0x3) == 2 && (dut_insn & 0xe000) == 0x6000;
-@@ -440,22 +443,22 @@ int dromajo_cosim_step(dromajo_cosim_state_t *state, int hartid, uint64_t dut_pc
+@@ -433,26 +438,26 @@ int dromajo_cosim_step(dromajo_cosim_state_t *state, int hartid, uint64_t dut_pc
+ 
+     uint64_t emu_mstatus = riscv_cpu_get_mstatus(s);
+ 
+     /*
+      * XXX We currently do not compare mstatus because DUT's mstatus
+      * varies between pre-commit (all FP instructions) and post-commit
+      * (CSR instructions).
       */
      if (emu_pc != dut_pc || emu_insn != dut_insn && (emu_insn & 3) == 3 ||  // DUT expands all C instructions
          emu_wdata != dut_wdata && emu_wrote_data) {
-         (m.error_log)(hartid, "[error] EMU PC %016" PRIx64 ", DUT PC %016" PRIx64 "\n", emu_pc, dut_pc);
-         (m.error_log)(hartid, "[error] EMU INSN %08x, DUT INSN %08x\n", emu_insn, dut_insn);
+-        (m.error_log)(hartid, "[error] EMU PC %016" PRIx64 ", DUT PC %016" PRIx64 "\n", emu_pc, dut_pc);
+-        (m.error_log)(hartid, "[error] EMU INSN %08x, DUT INSN %08x\n", emu_insn, dut_insn);
++        printf("[error] EMU PC %016" PRIx64 ", DUT PC %016" PRIx64 "\n", emu_pc, dut_pc);
++        printf("[error] EMU INSN %08x, DUT INSN %08x\n", emu_insn, dut_insn);
          if (emu_wrote_data)
-             (m.error_log)(hartid, "[error] EMU WDATA %016" PRIx64 ", DUT WDATA %016" PRIx64 "\n", emu_wdata, dut_wdata);
-         (m.error_log)(hartid, "[error] EMU MSTATUS %08" PRIx64 ", DUT MSTATUS %08" PRIx64 "\n", emu_mstatus, dut_mstatus);
-         (m.error_log)(hartid,
+-            (m.error_log)(hartid, "[error] EMU WDATA %016" PRIx64 ", DUT WDATA %016" PRIx64 "\n", emu_wdata, dut_wdata);
+-        (m.error_log)(hartid, "[error] EMU MSTATUS %08" PRIx64 ", DUT MSTATUS %08" PRIx64 "\n", emu_mstatus, dut_mstatus);
+-        (m.error_log)(hartid,
++            printf("[error] EMU WDATA %016" PRIx64 ", DUT WDATA %016" PRIx64 "\n", emu_wdata, dut_wdata);
++        printf("[error] EMU MSTATUS %08" PRIx64 ", DUT MSTATUS %08" PRIx64 "\n", emu_mstatus, dut_mstatus);
++        printf(
                        "[error] DUT pending exception %d pending interrupt %d\n",
--                      r->common.pending_exception,
--                      r->common.pending_interrupt);
-+                      r->cpu_state[hartid]->pending_exception,
-+                      r->cpu_state[hartid]->pending_interrupt);
+                       r->common.pending_exception,
+                       r->common.pending_interrupt);
          exit_code = 0x1FFF;
      }
  
@@ -806,9 +747,6 @@ index 00c4743..27f18cc 100644
  
      if (exit_code == 0)
          riscv_cpu_sync_regs(s);
- 
-     return exit_code;
- }
 diff --git a/src/dromajo_cosim_test.cpp b/src/dromajo_cosim_test.cpp
 index 56103b7..9b947a3 100644
 --- a/src/dromajo_cosim_test.cpp
@@ -1074,7 +1012,7 @@ index 345fd00..ca1625e 100644
      pci_device_set_config8(s->piix3_dev, 0x0e, 0x80); /* header type */
  
 diff --git a/src/riscv_cpu.cpp b/src/riscv_cpu.cpp
-index 5a29bdb..d20be19 100644
+index 5a29bdb..8e4fcec 100644
 --- a/src/riscv_cpu.cpp
 +++ b/src/riscv_cpu.cpp
 @@ -171,32 +171,36 @@ static inline uint64_t track_dread(RISCVCPUState *s, uint64_t vaddr, uint64_t pa
@@ -1198,24 +1136,7 @@ index 5a29bdb..d20be19 100644
      set_priv(s, s->dcsr & 3);
      s->pc = s->dpc;
  }
-@@ -2166,37 +2181,37 @@ static sfloat64 f_unbox64(sfloat64 r) { return r; }
- #include "dromajo_template.h"
- 
- int riscv_cpu_interp(RISCVCPUState *s, int n_cycles) { return riscv_cpu_interp64(s, n_cycles); }
- 
- /* Note: the value is not accurate when called in riscv_cpu_interp() */
- uint64_t riscv_cpu_get_cycles(RISCVCPUState *s) { return s->mcycle; }
- 
- void riscv_cpu_set_mip(RISCVCPUState *s, uint32_t mask) {
-     s->mip |= mask;
-     /* exit from power down if an interrupt is pending */
--    if (s->power_down_flag && (s->mip & s->mie) != 0 && (s->machine->common.pending_interrupt != -1 || !s->machine->common.cosim))
-+    if (s->power_down_flag && (s->mip & s->mie) != 0 && (s->pending_interrupt != -1 || !s->machine->common.cosim))
-         s->power_down_flag = FALSE;
- }
- 
- void riscv_cpu_reset_mip(RISCVCPUState *s, uint32_t mask) { s->mip &= ~mask; }
- 
+@@ -2182,21 +2197,21 @@ void riscv_cpu_reset_mip(RISCVCPUState *s, uint32_t mask) { s->mip &= ~mask; }
  uint32_t riscv_cpu_get_mip(RISCVCPUState *s) { return s->mip; }
  
  BOOL riscv_cpu_get_power_down(RISCVCPUState *s) { return s->power_down_flag; }
@@ -1481,7 +1402,7 @@ index 5a29bdb..d20be19 100644
          exit(-4);
      }
 diff --git a/src/riscv_machine.cpp b/src/riscv_machine.cpp
-index cb15491..c67944e 100644
+index cb15491..d5a28f3 100644
 --- a/src/riscv_machine.cpp
 +++ b/src/riscv_machine.cpp
 @@ -44,20 +44,24 @@
@@ -1525,7 +1446,7 @@ index cb15491..c67944e 100644
 +  RISCVMachine *m = (RISCVMachine *)opaque;
 +  if (m->common.cosim)
 +    return;
-+  
++
 +  sigfile.open("signature.txt");
 +}
 +
@@ -1762,23 +1683,10 @@ index cb15491..c67944e 100644
      s->common.console = p->console;
  
      memset(vbus, 0, sizeof(*vbus));
-@@ -1318,29 +1457,40 @@ RISCVMachine *virt_machine_init(const VirtMachineParams *p) {
-                            p->files[VM_FILE_KERNEL].len,
-                            p->files[VM_FILE_INITRD].buf,
-                            p->files[VM_FILE_INITRD].len,
-                            p->bootrom_name,
-                            p->dtb_name,
-                            p->cmdline))
-         return NULL;
- 
-     /* interrupts and exception setup for cosim */
+@@ -1327,20 +1466,29 @@ RISCVMachine *virt_machine_init(const VirtMachineParams *p) {
      s->common.cosim             = false;
--    s->common.pending_exception = -1;
--    s->common.pending_interrupt = -1;
-+    for (int i = 0; i < s->ncpus; i++) {
-+        s->cpu_state[i]->pending_interrupt = -1;
-+        s->cpu_state[i]->pending_exception = -1;
-+    }
+     s->common.pending_exception = -1;
+     s->common.pending_interrupt = -1;
  
      /* plic/clint setup */
      s->plic_base_addr  = p->plic_base_addr;
@@ -1789,10 +1697,10 @@ index cb15491..c67944e 100644
 +    /* Initialize devices */
 +    for (int i = s->mem_map->n_phys_mem_range - 1; i >= 0; --i) {
 +        PhysMemoryRange *pr = &s->mem_map->phys_mem_range[i];
-+   
++
 +		if (!pr->is_ram) {
 +			pr->init_func(pr->opaque);
-+		} 
++		}
 +    }
 +
      return s;
@@ -1805,7 +1713,7 @@ index cb15491..c67944e 100644
      } else if (copy_kernel(s,
                             p->files[VM_FILE_BIOS].buf,
                             p->files[VM_FILE_BIOS].len,
-@@ -1390,22 +1540,26 @@ RISCVMachine *virt_machine_load(const VirtMachineParams *p, RISCVMachine *s) {
+@@ -1390,22 +1538,26 @@ RISCVMachine *virt_machine_load(const VirtMachineParams *p, RISCVMachine *s) {
              }
          }
      }
@@ -1834,7 +1742,7 @@ index cb15491..c67944e 100644
      free(s);
  }
  
-@@ -1456,27 +1610,35 @@ static inline void serialize_devices(RISCVMachine *m, const char *dump_base) {
+@@ -1456,27 +1608,35 @@ static inline void serialize_devices(RISCVMachine *m, const char *dump_base) {
      FILE *fd = fopen(dump_name, "w");
      if (!fd) {
          err(-3, "opening %s for serialization", dump_name);
@@ -1876,7 +1784,7 @@ index cb15491..c67944e 100644
          JSONValue j           = json_object_get(a, "irq");
          m->plic_priority[irq] = (uint32_t)json_get_int64(j);
      }
-@@ -1530,25 +1692,34 @@ static inline void deserialize_devices(RISCVMachine *m, const char *dump_base) {
+@@ -1530,25 +1690,34 @@ static inline void deserialize_devices(RISCVMachine *m, const char *dump_base) {
          char dev_name[5];
          snprintf(dev_name, 5, "vio%d", i);
          dev_cfg = json_object_get(devs_json, dev_name);
@@ -1915,7 +1823,7 @@ index cb15491..c67944e 100644
      if (!(riscv_cpu_get_mip(s) & MIP_MTIP) && rtc_get_time(m) > 0) {
          ms_delay1 = s->timecmp - rtc_get_time(m);
          if (ms_delay1 <= 0) {
-@@ -1561,20 +1732,30 @@ int virt_machine_get_sleep_duration(RISCVMachine *m, int hartid, int ms_delay) {
+@@ -1561,20 +1730,30 @@ int virt_machine_get_sleep_duration(RISCVMachine *m, int hartid, int ms_delay) {
                  ms_delay = ms_delay1;
          }
      }
@@ -1929,10 +1837,10 @@ index cb15491..c67944e 100644
 +void virt_machine_tick(RISCVMachine *m, int n_cycles) {
 +    for (int i = m->mem_map->n_phys_mem_range - 1; i >= 0; --i) {
 +        PhysMemoryRange *pr = &m->mem_map->phys_mem_range[i];
-+            
++
 +        if (!pr->is_ram) {
 +            pr->tick_func(pr->opaque, n_cycles);
-+        }           
++        }
 +    }
 +}
 +

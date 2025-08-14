@@ -1,14 +1,14 @@
-From a7d74affef4f35489bb52443182d6f7c31a72952 Mon Sep 17 00:00:00 2001
+From 2151e429853082cdd7b844a0acfa560bb03bd622 Mon Sep 17 00:00:00 2001
 From: Dan Ruelas-Petrisko <petrisko@cs.washington.edu>
-Date: Wed, 6 Aug 2025 22:14:44 -0700
-Subject: [PATCH] Disable lto
+Date: Wed, 13 Aug 2025 22:31:30 -0700
+Subject: [PATCH 2/2] Disable lto
 
 ---
- CMakeLists.txt | 2 --
- 1 file changed, 2 deletions(-)
+ CMakeLists.txt | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 0a87335..bf7f218 100644
+index e2cd7e2..bf7f218 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -53,25 +53,23 @@ add_compile_options(
@@ -37,6 +37,31 @@ index 0a87335..bf7f218 100644
              -DDUMP_UART
              -DDUMP_CLINT
              -DDUMP_PLIC
+@@ -79,20 +77,24 @@ if (TRACEOS)
+             -DDUMP_ILLEGAL_INSTRUCTIONS
+     )
+ endif ()
+ 
+ if (SIMPOINT)
+     add_compile_options(
+             -DSIMPOINT_BB
+     )
+ endif ()
+ 
++add_link_options(
++    -pthread
++)
++
+ # Set Version Header
+ set(CONFIG_VERSION "Dromajo-0.1")
+ configure_file(include/config.h.in config.h @ONLY)
+ 
+ if (WARMUP)
+   message(STATUS "Checkpoint with WARMUP is on (typically for simpoints, but any checkpoint can use it).")
+     add_compile_options( -DLIVECACHE)
+ endif ()
+ 
+ if (GOLDMEM)
 -- 
 2.18.4
 
