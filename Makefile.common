@@ -233,6 +233,7 @@ checkout: ## checkout submodules
 	@mkdir -p ${$@_hookdirs} ${$@_extradirs}
 	@git submodule init
 	@git submodule sync
+	@git submodule update
 
 # global submodule tidy
 .PHONY: tidy
