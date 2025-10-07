@@ -130,11 +130,11 @@ $(recheckout_target): $(uncheckout_target)
 	@rm -f $(touch_dir)/$(name).checkout.*
 	@+$(MAKE) $(checkout_tag)
 $(checkout_tag):
-	@git submodule update $(src_dir)
+	@git submodule update --init $(src_dir)
 	@if [ -f $(src_dir)/.git ]; then \
 		git -C $(src_dir) submodule foreach --quiet "git submodule init"; \
 		git -C $(src_dir) submodule foreach --quiet "git submodule sync"; \
-		all_submodules=$$$$(git -C $(src_dir) submodule status --recursive | awk '{print $$$$2}'); \
+		all_submodules=$$$$(git -C $(src_dir) submodule status | awk '{print $$$$2}'); \
 		if [ -n "$$$$all_submodules" ]; then \
 			skip_patterns="$(subst $(notdir $(src_dir))/,,$(subst $(bsg_var_space),,$(foreach s,$(HOOK_DISABLE_SUBMODULES),$(s).*|)))xnomatchx"; \
 			skip_submodules=$$$$(printf "%s\n" $$$$all_submodules | grep    -E "$$$$skip_patterns"); \
@@ -222,8 +222,8 @@ bleach_all: ## wipes the whole repo clean: use with caution
 
 # global checkout
 .PHONY: checkout
-checkout: $(BSG_CADENV_DIR)
-checkout: ## checkout submodules
+checkout:: $(BSG_CADENV_DIR)
+checkout:: ## checkout submodules
 	@$(eval $@_hookdirs := $(HOOK_CHECKOUT_DIRS))
 	@$(eval $@_hookmatch := $(addsuffix /%,$($@_hookdirs)))
 	@$(eval $@_uservars := $(call bsg_var_user))

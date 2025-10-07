@@ -2,7 +2,8 @@ TOP ?= $(shell git rev-parse --show-toplevel)
 include $(TOP)/Makefile.common
 include $(TOP)/Makefile.env
 
-include $(BP_MK_DIR)/Makefile.*
+include $(BP_MK_DIR)/Makefile.tools
+include $(BP_MK_DIR)/Makefile.prog
 
 tools_lite: ## minimal SDK toolset
 tools_lite:
