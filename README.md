@@ -1,6 +1,5 @@
 ![BlackParrot Logo](docs/bp_logo.png)
-
-# BlackParrot SDK Repository
+# BlackParrot SDK: Bare-Metal and OS Development Kits for the BlackParrot RISC-V Multicore [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) [![Gitlab CI](https://gitlab.com/bespoke-silicon-group/black-parrot-sdk/badges/master/pipeline.svg)](https://gitlab.com/bespoke-silicon-group/black-parrot-sdk/pipelines) [![Contributers](https://img.shields.io/github/contributors/black-parrot-sdk/black-parrot-sdk.svg?style=flat)]()
 
 The BlackParrot SDK is a collection of tools and example benchmark suites to demonstrate how to
 develop for [BlackParrot](https://github.com/black-parrot/black-parrot) which implements a standard RV64IMAFDCB + MSU ISA and so is
