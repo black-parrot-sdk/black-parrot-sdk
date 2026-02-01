@@ -57,10 +57,14 @@ build-image:
     - !reference [.job_template, before_script]
     - COMMON_INSTALL_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_INSTALL_DIR})"
     - COMMON_RISCV_DIR="${JOB_COMMON_ROOT}/$(basename ${BP_RISCV_DIR})"
-    - echo "[CI] Initializing common mount @ ${COMMON_INSTALL_DIR}"
-    - mkdir -p ${COMMON_INSTALL_DIR} && ls ${COMMON_INSTALL_DIR}
-    - echo "[CI] Initializing common mount @ ${COMMON_RISCV_DIR}"
-    - mkdir -p ${COMMON_RISCV_DIR} && ls ${COMMON_RISCV_DIR}
+    - if [ -d "${COMMON_INSTALL_DIR}" ]; then
+        echo "[CI] Linking COMMON_INSTALL_DIR";
+        ln -nsf "${COMMON_INSTALL_DIR}" "${BP_INSTALL_DIR}";
+      fi
+    - if [ -d "${COMMON_RISCV_DIR}" ]; then
+        echo "[CI] Linking COMMON_RISCV_DIR";
+        ln -nsf "${COMMON_RISCV_DIR}" "${BP_RISCV_DIR}";
+      fi
 
 ###################################################
 ## job templates
@@ -110,7 +114,7 @@ build-image:
   script:
     - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
     - !reference [.api_anchors, api_download]
-    - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_INSTALL_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_INSTALL_DIR}
 
 .smoke_tools_job:
   extends: [.project_template]
@@ -121,6 +125,8 @@ build-image:
   script:
     - echo "[CI] running script for ${SMOKE_SCRIPT}" | tee -a ${JOB_LOG}
     - ln -nsf ${COMMON_INSTALL_DIR} ${BP_INSTALL_DIR}
+    - ls ${BP_INSTALL_DIR}
+    - ls ${BP_INSTALL_DIR}/bin
     - ${RUN_SCRIPT} ${SMOKE_SCRIPT}
   rules:
     - if: '"$[[ inputs.do_smoke_tools ]]" =~ "/on_success|on_event/"'
@@ -173,7 +179,7 @@ build-image:
   script:
     - echo "[CI] scattering outputs for ${API_PACKAGE_NAME}" | tee -a ${JOB_LOG}
     - !reference [.api_anchors, api_download]
-    - mv ${API_DOWNLOAD_ROOT}/* ${COMMON_RISCV_DIR}
+    - rsync -a --remove-source-files ${API_DOWNLOAD_ROOT}/ ${COMMON_RISCV_DIR}
   rules:
     - if: '$DOCKER_PLATFORM == "centos7"'
 
