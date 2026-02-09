@@ -1,6 +1,6 @@
-From f050352a7a42f1bd2a91d1c134b0db06fbaeeedf Mon Sep 17 00:00:00 2001
+From 8cc15c401b5cdcadd43bb8c9b5d7fb6af0a0c33a Mon Sep 17 00:00:00 2001
 From: Dan Ruelas-Petrisko <petrisko@cs.washington.edu>
-Date: Sun, 20 Jul 2025 23:11:57 -0700
+Date: Fri, 6 Feb 2026 13:51:20 -0800
 Subject: [PATCH] Adding BP host
 
 ---
@@ -12,9 +12,9 @@ Subject: [PATCH] Adding BP host
  riscv/platform.h  |   10 +-
  riscv/processor.h |    1 +
  riscv/riscv.mk.in |    1 +
- riscv/sim.cc      |    4 +
+ riscv/sim.cc      |    7 +
  riscv/sim.h       |    1 +
- 10 files changed, 2103 insertions(+), 2738 deletions(-)
+ 10 files changed, 2106 insertions(+), 2738 deletions(-)
  create mode 100644 riscv/host.cc
 
 diff --git a/configure b/configure
@@ -9144,10 +9144,10 @@ index 00000000..ff1076bc
 +
 +REGISTER_DEVICE(host, host_parse_from_fdt, host_generate_dts)
 diff --git a/riscv/platform.h b/riscv/platform.h
-index c8a5bf4b..bacffe78 100644
+index 5b794da2..30e9b6ea 100644
 --- a/riscv/platform.h
 +++ b/riscv/platform.h
-@@ -1,23 +1,25 @@
+@@ -1,25 +1,27 @@
  // See LICENSE for license details.
  #ifndef _RISCV_PLATFORM_H
  #define _RISCV_PLATFORM_H
@@ -9175,15 +9175,17 @@ index c8a5bf4b..bacffe78 100644
 -#define DRAM_BASE          0x80000000
 +#define EXT_IO_BASE       0x100000000
 +#define DRAM_BASE         0x080000000
+ #define DEBUG_START        0x0
+ #define DEBUG_SIZE         0x1000
  
  #endif
 diff --git a/riscv/processor.h b/riscv/processor.h
-index cc2897a4..49ce91c8 100644
+index cb05210c..c3d3b033 100644
 --- a/riscv/processor.h
 +++ b/riscv/processor.h
-@@ -423,20 +423,21 @@ private:
-   void register_insn(insn_desc_t, bool);
-   int paddr_bits();
+@@ -393,20 +393,21 @@ private:
+   void disasm(insn_t insn); // disassemble and print an instruction
+   void register_insn(insn_desc_t, std::vector<insn_desc_t>& pool);
  
    void enter_debug_mode(uint8_t cause, uint8_t ext_cause);
  
@@ -9196,18 +9198,18 @@ index cc2897a4..49ce91c8 100644
    friend class extension_t;
  
    void parse_priv_string(const char*);
-   void build_opcode_map();
    void register_base_instructions();
    insn_func_t decode_insn(insn_t insn);
  
    // Track repeated executions for processor_t::disasm()
    uint64_t last_pc, last_bits, executions;
  public:
+   entropy_source es; // Crypto ISE Entropy source.
 diff --git a/riscv/riscv.mk.in b/riscv/riscv.mk.in
-index 4239a661..ac64845e 100644
+index 3171e47c..d09314e9 100644
 --- a/riscv/riscv.mk.in
 +++ b/riscv/riscv.mk.in
-@@ -58,20 +58,21 @@ riscv_srcs = \
+@@ -59,20 +59,21 @@ riscv_srcs = \
  	interactive.cc \
  	cachesim.cc \
  	mmu.cc \
@@ -9230,7 +9232,7 @@ index 4239a661..ac64845e 100644
  	socketif.cc \
  	cfg.cc \
 diff --git a/riscv/sim.cc b/riscv/sim.cc
-index 388d7290..b204b4ae 100644
+index 7b07bd67..74c0b8ee 100644
 --- a/riscv/sim.cc
 +++ b/riscv/sim.cc
 @@ -27,20 +27,21 @@ static void handle_signal(int sig)
@@ -9264,8 +9266,8 @@ index 388d7290..b204b4ae 100644
    // particular, the default device tree configuration that you get without
    // setting the dtb_file argument has one.
    std::vector<device_factory_sargs_t> device_factories = {
-     {clint_factory, {}}, // clint must be element 0
-     {plic_factory, {}}, // plic must be element 1
+     {clint_factory, {}},
+     {plic_factory, {}},
 +    {host_factory, {}}, // host must be element 2
      {ns16550_factory, {}}};
    device_factories.insert(device_factories.end(),
@@ -9277,19 +9279,22 @@ index 388d7290..b204b4ae 100644
      std::ifstream fin(dtb_file, std::ios::binary);
      if (!fin.good()) {
        std::cerr << "can't find dtb file: " << dtb_file << std::endl;
-@@ -250,20 +252,22 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
-     abstract_device_t* device = factory->parse_from_fdt(fdt, this, &device_base, sargs);
-     if (device) {
-       assert(device_base);
-       std::shared_ptr<abstract_device_t> dev_ptr(device);
-       add_device(device_base, dev_ptr);
+@@ -252,20 +254,25 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
  
-       if (i == 0) // clint_factory
+       if (dynamic_cast<clint_t*>(&*dev_ptr)) {
+         assert(!clint);
          clint = std::static_pointer_cast<clint_t>(dev_ptr);
-       else if (i == 1) // plic_factory
+       }
+ 
+       if (dynamic_cast<plic_t*>(&*dev_ptr)) {
+         assert(!plic);
          plic = std::static_pointer_cast<plic_t>(dev_ptr);
-+      else if (i == 2) // host_factory
+       }
++
++      if (dynamic_cast<host_t*>(&*dev_ptr)) {
++        assert(!host);
 +        host = std::static_pointer_cast<host_t>(dev_ptr);
++      }
      }
    }
  }
@@ -9301,13 +9306,13 @@ index 388d7290..b204b4ae 100644
    delete debug_mmu;
  }
 diff --git a/riscv/sim.h b/riscv/sim.h
-index da04a882..b7a5e821 100644
+index 299e8965..99701c73 100644
 --- a/riscv/sim.h
 +++ b/riscv/sim.h
-@@ -73,20 +73,21 @@ private:
-   std::vector<std::pair<reg_t, abstract_mem_t*>> mems;
+@@ -75,20 +75,21 @@ private:
    std::vector<processor_t*> procs;
    std::map<size_t, processor_t*> harts;
+   std::unordered_map<reg_t, char*> addr_to_mem_cache;
    std::pair<reg_t, reg_t> initrd_range;
    std::string dts;
    std::string dtb;

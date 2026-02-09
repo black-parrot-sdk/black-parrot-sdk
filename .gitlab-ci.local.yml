@@ -124,7 +124,6 @@ build-image:
     SMOKE_SCRIPT: "./ci/smoke-${TOOL}.sh"
   script:
     - echo "[CI] running script for ${SMOKE_SCRIPT}" | tee -a ${JOB_LOG}
-    - ln -nsf ${COMMON_INSTALL_DIR} ${BP_INSTALL_DIR}
     - ls ${BP_INSTALL_DIR}
     - ls ${BP_INSTALL_DIR}/bin
     - ${RUN_SCRIPT} ${SMOKE_SCRIPT}
@@ -136,8 +135,6 @@ build-image:
   variables:
     PROG: "setme"
   script:
-    - echo "[CI] linking dependencies from common directory" | tee -a ${JOB_LOG}
-    - ln -nsf ${COMMON_INSTALL_DIR} ${BP_INSTALL_DIR}
     - echo "[CI] moving dependencies to installation directory" | tee -a ${JOB_LOG}
     - mv ${JOB_DEPS_ROOT}/${SDK_ARTIFACT} ${BP_RISCV_DIR}
     - echo "[CI] doing makefile checkout" | tee -a ${JOB_LOG}
@@ -191,8 +188,6 @@ build-image:
     SMOKE_SCRIPT: "./ci/smoke-${SUITE}.sh"
   script:
     - echo "[CI] running script for ${SMOKE_SCRIPT}" | tee -a ${JOB_LOG}
-    - ln -nsf ${COMMON_INSTALL_DIR} ${BP_INSTALL_DIR}
-    - ln -nsf ${COMMON_RISCV_DIR} ${BP_RISCV_DIR}
     - ${RUN_SCRIPT} ${SMOKE_SCRIPT} ${SIM}
   rules:
     - if: '"$[[ inputs.do_smoke_riscv ]]" =~ "/on_success|on_event/" && $DOCKER_PLATFORM == "centos7"'

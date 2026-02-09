@@ -13,7 +13,7 @@
 [submodule "coremark"]
     path = coremark
     url = https://github.com/eembc/coremark
-    branch = master
+    branch = main
 [submodule "riscv-dv"]
     path = riscv-dv
     url = https://github.com/chipsalliance/riscv-dv

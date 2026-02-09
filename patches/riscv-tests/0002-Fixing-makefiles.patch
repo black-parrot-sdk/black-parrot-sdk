@@ -1,18 +1,18 @@
-From aa02a56566005f9933443ec0e28d5f72b02974b4 Mon Sep 17 00:00:00 2001
+From b0d5172b20c06f7895e4b233dfff247e73c77753 Mon Sep 17 00:00:00 2001
 From: Dan Ruelas-Petrisko <petrisko@cs.washington.edu>
-Date: Sun, 20 Jul 2025 13:39:07 -0700
+Date: Sun, 8 Feb 2026 07:52:25 -0800
 Subject: [PATCH 2/2] Fixing makefiles
 
 ---
- benchmarks/Makefile |  2 +-
- isa/Makefile        | 22 +++++-----------------
- 2 files changed, 6 insertions(+), 18 deletions(-)
+ benchmarks/Makefile | 3 ++-
+ isa/Makefile        | 7 ++++++-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/benchmarks/Makefile b/benchmarks/Makefile
-index acc4573..63cc435 100644
+index 8c65579..11bf42d 100644
 --- a/benchmarks/Makefile
 +++ b/benchmarks/Makefile
-@@ -87,21 +87,21 @@ $(bmarks_riscv_out): %.riscv.out: %.riscv
+@@ -87,21 +87,22 @@ $(bmarks_riscv_out): %.riscv.out: %.riscv
  	$(RISCV_SIM) $< > $@
  
  riscv: $(bmarks_riscv_dump)
@@ -24,6 +24,7 @@ index acc4573..63cc435 100644
  # Default
  
 -all: riscv
++#all: 
 +all: $(bmarks_riscv_bin)
  
  #------------------------------------------------------------
@@ -36,50 +37,14 @@ index acc4573..63cc435 100644
  install:
  	mkdir $(install_dir)
 diff --git a/isa/Makefile b/isa/Makefile
-index e3b6719..ba3a165 100644
+index 0f0106f..e044f57 100644
 --- a/isa/Makefile
 +++ b/isa/Makefile
-@@ -81,61 +81,49 @@ $(1): $$($(1)_tests_dump)
- .PHONY: $(1)
- 
- COMPILER_SUPPORTS_$(1) := $$(shell $$(RISCV_GCC) $(2) -c -x c /dev/null -o /dev/null 2> /dev/null; echo $$$$?)
- 
- ifeq ($$(COMPILER_SUPPORTS_$(1)),0)
- tests += $$($(1)_tests)
- endif
- 
- endef
- 
--$(eval $(call compile_template,rv32ui,-march=rv32g -mabi=ilp32))
--$(eval $(call compile_template,rv32uc,-march=rv32g -mabi=ilp32))
--$(eval $(call compile_template,rv32um,-march=rv32g -mabi=ilp32))
--$(eval $(call compile_template,rv32ua,-march=rv32g -mabi=ilp32))
--$(eval $(call compile_template,rv32uf,-march=rv32g -mabi=ilp32))
--$(eval $(call compile_template,rv32ud,-march=rv32g -mabi=ilp32))
--$(eval $(call compile_template,rv32uzfh,-march=rv32g_zfh -mabi=ilp32))
--$(eval $(call compile_template,rv32uzba,-march=rv32g_zba -mabi=ilp32))
--$(eval $(call compile_template,rv32uzbb,-march=rv32g_zbb -mabi=ilp32))
--$(eval $(call compile_template,rv32uzbc,-march=rv32g_zbc -mabi=ilp32))
--$(eval $(call compile_template,rv32uzbs,-march=rv32g_zbs -mabi=ilp32))
--$(eval $(call compile_template,rv32si,-march=rv32g -mabi=ilp32))
--$(eval $(call compile_template,rv32mi,-march=rv32g -mabi=ilp32))
- ifeq ($(XLEN),64)
- $(eval $(call compile_template,rv64ui,-march=rv64g -mabi=lp64))
- $(eval $(call compile_template,rv64uc,-march=rv64g -mabi=lp64))
- $(eval $(call compile_template,rv64um,-march=rv64g -mabi=lp64))
- $(eval $(call compile_template,rv64ua,-march=rv64g -mabi=lp64))
- $(eval $(call compile_template,rv64uf,-march=rv64g -mabi=lp64))
- $(eval $(call compile_template,rv64ud,-march=rv64g -mabi=lp64))
--$(eval $(call compile_template,rv64uzfh,-march=rv64g_zfh -mabi=lp64))
- $(eval $(call compile_template,rv64uzba,-march=rv64g_zba -mabi=lp64))
- $(eval $(call compile_template,rv64uzbb,-march=rv64g_zbb -mabi=lp64))
- $(eval $(call compile_template,rv64uzbc,-march=rv64g_zbc -mabi=lp64))
- $(eval $(call compile_template,rv64uzbs,-march=rv64g_zbs -mabi=lp64))
- $(eval $(call compile_template,rv64mzicbo,-march=rv64g_zicboz -mabi=lp64))
- $(eval $(call compile_template,rv64si,-march=rv64g -mabi=lp64))
--$(eval $(call compile_template,rv64ssvnapot,-march=rv64g -mabi=lp64))
- $(eval $(call compile_template,rv64mi,-march=rv64g -mabi=lp64))
--$(eval $(call compile_template,hypervisor,-march=rv64gh -mabi=lp64))
+@@ -138,25 +138,30 @@ $(eval $(call compile_template,rv32uzbkb,-march=rv32g_zbkb -mabi=ilp32))
+ $(eval $(call compile_template,rv32uzbkx,-march=rv32g_zbkx -mabi=ilp32))
+ $(eval $(call compile_template,rv32uzbs,-march=rv32g_zbs -mabi=ilp32))
+ $(eval $(call compile_template,rv32si,-march=rv32g -mabi=ilp32))
+ $(eval $(call compile_template,rv32mi,-march=rv32g -mabi=ilp32))
  endif
  
  tests_dump = $(addsuffix .dump, $(tests))
@@ -97,6 +62,7 @@ index e3b6719..ba3a165 100644
  # Default
  
 -all: $(tests_dump)
++#all: $(tests_dump)
 +$(tests_riscv): %.riscv : %
 +	@mv $< $@
 +all: $(tests_riscv)
