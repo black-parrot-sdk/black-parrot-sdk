@@ -1,0 +1,100 @@
+From 08ddab870ce8bc323e477256050b0ec389ddfbb7 Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko.bsg@gmail.com>
+Date: Tue, 31 Mar 2026 15:55:38 -0700
+Subject: [PATCH] Adding CLINT-PLIC emulation
+
+---
+ riscv/clint.cc  | 10 ++++++++++
+ riscv/devices.h |  1 +
+ 2 files changed, 11 insertions(+)
+
+diff --git a/riscv/clint.cc b/riscv/clint.cc
+index e16ebddc..3b44c285 100644
+--- a/riscv/clint.cc
++++ b/riscv/clint.cc
+@@ -19,25 +19,29 @@ clint_t::clint_t(const simif_t* sim, uint64_t freq_hz, bool real_time)
+ }
+ 
+ /* 0000 msip hart 0
+  * 0004 msip hart 1
+  * 4000 mtimecmp hart 0 lo
+  * 4004 mtimecmp hart 0 hi
+  * 4008 mtimecmp hart 1 lo
+  * 400c mtimecmp hart 1 hi
+  * bff8 mtime lo
+  * bffc mtime hi
++ * c000 meip hart 0
++ * c008 seip hart 0
+  */
+ 
+ #define MSIP_BASE	0x0
+ #define MTIMECMP_BASE	0x4000
+ #define MTIME_BASE	0xbff8
++#define MEIP_BASE 0xc000
++#define SEIP_BASE 0xc008
+ 
+ bool clint_t::load(reg_t addr, size_t len, uint8_t* bytes)
+ {
+   if (len > 8)
+     return false;
+ 
+   tick(0);
+ 
+   static_assert(MSIP_BASE == 0);
+   if (/* addr >= MSIP_BASE && */ addr < MTIMECMP_BASE) {
+@@ -83,20 +87,26 @@ bool clint_t::store(reg_t addr, size_t len, const uint8_t* bytes)
+       const auto hart_id = (addr - MSIP_BASE) / sizeof(msip_t);
+       if (sim->get_harts().count(hart_id))
+         sim->get_harts().at(hart_id)->state.mip->backdoor_write_with_mask(MIP_MSIP, msip & 1 ? MIP_MSIP : 0);
+     }
+   } else if (addr >= MTIMECMP_BASE && addr < MTIME_BASE) {
+     const auto hart_id = (addr - MTIMECMP_BASE) / sizeof(mtimecmp_t);
+     if (sim->get_harts().count(hart_id))
+       write_little_endian_reg(&mtimecmp[hart_id], addr, len, bytes);
+   } else if (addr >= MTIME_BASE && addr < MTIME_BASE + sizeof(mtime_t)) {
+     write_little_endian_reg(&mtime, addr, len, bytes);
++  } else if (addr == MEIP_BASE) {
++      meip_t meip = 0;
++      write_little_endian_reg(&meip, addr, len, bytes);
++      for (const auto& [hart_id, hart] : sim->get_harts()) {
++        hart->state.mip->backdoor_write_with_mask(MIP_MEIP, meip & 1 ? MIP_MEIP : 0);
++      }
+   } else if (addr + len <= CLINT_SIZE) {
+     // Do nothing
+   } else {
+     return false;
+   }
+   tick(0);
+   return true;
+ }
+ 
+ void clint_t::tick(reg_t rtc_ticks)
+diff --git a/riscv/devices.h b/riscv/devices.h
+index 4b571902..1232cc62 100644
+--- a/riscv/devices.h
++++ b/riscv/devices.h
+@@ -97,20 +97,21 @@ class clint_t : public abstract_device_t {
+   bool load(reg_t addr, size_t len, uint8_t* bytes) override;
+   bool store(reg_t addr, size_t len, const uint8_t* bytes) override;
+   reg_t size() override { return CLINT_SIZE; }
+   void tick(reg_t rtc_ticks) override;
+   uint64_t get_mtimecmp(reg_t hartid) { return mtimecmp[hartid]; }
+   uint64_t get_mtime() { return mtime; }
+  private:
+   typedef uint64_t mtime_t;
+   typedef uint64_t mtimecmp_t;
+   typedef uint32_t msip_t;
++  typedef uint64_t meip_t;
+   const simif_t* sim;
+   uint64_t freq_hz;
+   bool real_time;
+   uint64_t real_time_ref_secs;
+   uint64_t real_time_ref_usecs;
+   mtime_t mtime;
+   std::map<size_t, mtimecmp_t> mtimecmp;
+ };
+ 
+ #define PLIC_MAX_DEVICES 1024
+-- 
+2.18.4
+
