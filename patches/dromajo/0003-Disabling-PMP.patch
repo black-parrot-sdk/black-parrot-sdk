@@ -1,7 +1,7 @@
-From faee4efc5fc03f92393604a4c31c29a514d2b3dc Mon Sep 17 00:00:00 2001
+From 2100d7d41ab04ffdf206da6b53b273108d5c40ca Mon Sep 17 00:00:00 2001
 From: Dan Ruelas-Petrisko <petrisko@cs.washington.edu>
 Date: Sun, 17 Aug 2025 22:08:03 -0700
-Subject: [PATCH] Disabling PMP
+Subject: [PATCH 3/4] Disabling PMP
 
 ---
  src/riscv_cpu.cpp | 210 +++++++++++++++++++++++-----------------------
