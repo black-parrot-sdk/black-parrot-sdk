@@ -1,0 +1,311 @@
+From b59f459fca27cd606d6b21281f558a7b340d01fa Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko.bsg@gmail.com>
+Date: Tue, 21 Apr 2026 15:44:51 -0700
+Subject: [PATCH] Adding bp_cfg device
+
+---
+ riscv/bp_cfg.cc  | 54 ++++++++++++++++++++++++++++++++++++++++++++++++
+ riscv/devices.h  | 11 ++++++++++
+ riscv/dts.cc     | 17 +++++++++++++++
+ riscv/dts.h      |  2 ++
+ riscv/platform.h |  2 ++
+ riscv/sim.cc     |  7 +++++++
+ riscv/sim.h      |  1 +
+ 7 files changed, 94 insertions(+)
+ create mode 100644 riscv/bp_cfg.cc
+
+diff --git a/riscv/bp_cfg.cc b/riscv/bp_cfg.cc
+new file mode 100644
+index 00000000..0b9276f1
+--- /dev/null
++++ b/riscv/bp_cfg.cc
+@@ -0,0 +1,54 @@
++#include <sys/time.h>
++#include <sstream>
++#include "devices.h"
++#include "processor.h"
++#include "simif.h"
++#include "sim.h"
++#include "term.h"
++#include "dts.h"
++
++bp_cfg_t::bp_cfg_t(const simif_t* sim)
++{
++
++}
++
++bool bp_cfg_t::load(reg_t addr, size_t len, uint8_t* bytes)
++{
++    std::cerr << std::hex << "bp_cfg_read: " << addr << std::endl;
++    return true;
++}
++
++bool bp_cfg_t::store(reg_t addr, size_t len, const uint8_t* bytes)
++{
++    std::cerr << std::hex << "bp_cfg_write: " << addr << std::endl;
++    return true;
++}
++
++void bp_cfg_t::tick(reg_t rtc_ticks)
++{
++
++}
++
++bp_cfg_t* bp_cfg_parse_from_fdt(const void* fdt, const sim_t* sim, reg_t* base,
++    const std::vector<std::string>& UNUSED sargs) {
++    if (fdt_parse_bp_cfg(fdt, base, "riscv,bp_cfg0") == 0)
++      return new bp_cfg_t(sim);
++    else
++      return nullptr;
++}
++
++std::string bp_cfg_generate_dts(const sim_t* sim, const std::vector<std::string>& UNUSED sargs) {
++  std::stringstream s;
++  s << std::hex
++    << "    bp_cfg@" << BP_CFG_BASE << " {\n"
++       "      compatible = \"riscv,bp_cfg0\";\n";
++  reg_t bp_cfgbs = BP_CFG_BASE;
++  reg_t bp_cfgsz = HOST_SIZE;
++  s << std::hex
++    << "      reg = <0x" << (bp_cfgbs >> 32) << " 0x" << (bp_cfgbs & (uint32_t)-1) <<
++       " 0x" << (bp_cfgsz >> 32) << " 0x" << (bp_cfgsz & (uint32_t)-1) << ">;\n"
++       "    };\n";
++  return s.str();
++}
++
++REGISTER_DEVICE(bp_cfg, bp_cfg_parse_from_fdt, bp_cfg_generate_dts)
+diff --git a/riscv/devices.h b/riscv/devices.h
+index 1232cc62..2eb58ff3 100644
+--- a/riscv/devices.h
++++ b/riscv/devices.h
+@@ -154,20 +154,31 @@ class plic_t : public abstract_device_t, public abstract_interrupt_controller_t
+   bool context_enable_read(const plic_context_t *context,
+                            reg_t offset, uint32_t *val);
+   bool context_enable_write(plic_context_t *context,
+                             reg_t offset, uint32_t val);
+   bool context_read(plic_context_t *context,
+                     reg_t offset, uint32_t *val);
+   bool context_write(plic_context_t *context,
+                      reg_t offset, uint32_t val);
+ };
+ 
++class bp_cfg_t : public abstract_device_t {
++ public:
++  bp_cfg_t(const simif_t*);
++  bool load(reg_t addr, size_t len, uint8_t* bytes) override;
++  bool store(reg_t addr, size_t len, const uint8_t* bytes) override;
++  void tick(reg_t rtc_ticks) override;
++  size_t size() { return BP_CFG_SIZE; }
++ private:
++  const simif_t* sim;
++};
++
+ class host_t : public abstract_device_t {
+  public:
+   host_t(const simif_t*);
+   bool load(reg_t addr, size_t len, uint8_t* bytes) override;
+   bool store(reg_t addr, size_t len, const uint8_t* bytes) override;
+   void tick(reg_t rtc_ticks) override;
+   size_t size() { return HOST_SIZE; }
+  private:
+   const simif_t* sim;
+   std::ofstream sigfile;
+diff --git a/riscv/dts.cc b/riscv/dts.cc
+index d1931eb3..57f74219 100644
+--- a/riscv/dts.cc
++++ b/riscv/dts.cc
+@@ -300,20 +300,37 @@ int fdt_parse_plic(const void *fdt, reg_t *plic_addr, uint32_t *ndev,
+     return -ENODEV;
+ 
+   ndev_p = (fdt32_t *)fdt_getprop(fdt, nodeoffset, "riscv,ndev", &len);
+   if (!ndev || !ndev_p)
+     return -ENODEV;
+   *ndev = fdt32_to_cpu(*ndev_p);
+ 
+   return 0;
+ }
+ 
++int fdt_parse_bp_cfg(const void *fdt, reg_t *bp_cfg_addr,
++                   const char *compatible)
++{
++  int nodeoffset, len, rc;
++  const fdt32_t *ndev_p;
++
++  nodeoffset = fdt_node_offset_by_compatible(fdt, -1, compatible);
++  if (nodeoffset < 0)
++    return nodeoffset;
++
++  rc = fdt_get_node_addr_size(fdt, nodeoffset, bp_cfg_addr, NULL, "reg");
++  if (rc < 0 || !bp_cfg_addr)
++    return -ENODEV;
++
++  return 0;
++}
++
+ int fdt_parse_host(const void *fdt, reg_t *host_addr,
+                    const char *compatible)
+ {
+   int nodeoffset, len, rc;
+   const fdt32_t *ndev_p;
+ 
+   nodeoffset = fdt_node_offset_by_compatible(fdt, -1, compatible);
+   if (nodeoffset < 0)
+     return nodeoffset;
+ 
+diff --git a/riscv/dts.h b/riscv/dts.h
+index 79270ea6..872c3a50 100644
+--- a/riscv/dts.h
++++ b/riscv/dts.h
+@@ -17,20 +17,22 @@ std::string dtb_to_dts(const std::string& dtc_input);
+ int fdt_get_node_addr_size(const void *fdt, int node, reg_t *addr,
+                            unsigned long *size, const char *field);
+ int fdt_get_offset(const void *fdt, const char *field);
+ int fdt_get_first_subnode(const void *fdt, int node);
+ int fdt_get_next_subnode(const void *fdt, int node);
+ 
+ int fdt_parse_clint(const void *fdt, reg_t *clint_addr,
+                     const char *compatible);
+ int fdt_parse_plic(const void *fdt, reg_t *plic_addr, uint32_t *ndev,
+                    const char *compatible);
++int fdt_parse_bp_cfg(const void *fdt, reg_t *bp_cfg_addr,
++                   const char *compatible);
+ int fdt_parse_host(const void *fdt, reg_t *host_addr,
+                    const char *compatible);
+ int fdt_parse_ns16550(const void *fdt, reg_t *ns16550_addr,
+                       uint32_t *reg_shift, uint32_t *reg_io_width, uint32_t* reg_int_id,
+                       const char *compatible);
+ int fdt_parse_pmp_num(const void *fdt, int cpu_offset, reg_t *pmp_num);
+ int fdt_parse_pmp_alignment(const void *fdt, int cpu_offset, reg_t *pmp_align);
+ int fdt_parse_mmu_type(const void *fdt, int cpu_offset, const char **mmu_type);
+ int fdt_parse_isa(const void *fdt, int cpu_offset, const char **isa_str);
+ int fdt_parse_hartid(const void *fdt, int cpu_offset, uint32_t *hartid);
+diff --git a/riscv/platform.h b/riscv/platform.h
+index 30e9b6ea..e3fdc3c4 100644
+--- a/riscv/platform.h
++++ b/riscv/platform.h
+@@ -3,20 +3,22 @@
+ #define _RISCV_PLATFORM_H
+ 
+ #define DEFAULT_KERNEL_BOOTARGS "console=ttyS0 earlycon"
+ #define DEFAULT_RSTVEC     0x00001000
+ #define DEFAULT_ISA        "rv64imafdc_zicntr_zihpm_zba_zbb_zbs"
+ #define DEFAULT_PRIV       "MSU"
+ #define CLINT_BASE         0x00300000
+ #define CLINT_SIZE         0x000c0000
+ #define HOST_BASE          0x100000
+ #define HOST_SIZE          0x0F0000
++#define BP_CFG_BASE        0x200000
++#define BP_CFG_SIZE        0x0F0000
+ #define PLIC_BASE          0x0c000000
+ #define PLIC_SIZE          0x01000000
+ #define PLIC_NDEV          31
+ #define PLIC_PRIO_BITS     4
+ #define NS16550_BASE       0x10000000
+ #define NS16550_SIZE       0x100
+ #define NS16550_REG_SHIFT  0
+ #define NS16550_REG_IO_WIDTH 1
+ #define NS16550_INTERRUPT_ID 1
+ #define EXT_IO_BASE       0x100000000
+diff --git a/riscv/sim.cc b/riscv/sim.cc
+index 74c0b8ee..2c52c956 100644
+--- a/riscv/sim.cc
++++ b/riscv/sim.cc
+@@ -25,20 +25,21 @@ volatile bool ctrlc_pressed = false;
+ static void handle_signal(int sig)
+ {
+   if (ctrlc_pressed)
+     exit(-1);
+   ctrlc_pressed = true;
+   signal(sig, &handle_signal);
+ }
+ 
+ const size_t sim_t::INTERLEAVE;
+ 
++extern device_factory_t* bp_cfg_factory;
+ extern device_factory_t* clint_factory;
+ extern device_factory_t* plic_factory;
+ extern device_factory_t* host_factory;
+ extern device_factory_t* ns16550_factory;
+ 
+ sim_t::sim_t(const cfg_t *cfg, bool halted,
+              std::vector<std::pair<reg_t, abstract_mem_t*>> mems,
+              const std::vector<device_factory_sargs_t>& plugin_device_factories,
+              const std::vector<std::string>& args,
+              const debug_module_config_t &dm_config,
+@@ -112,20 +113,21 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
+ 
+   // Only make a CLINT (Core-Local INTerrupt controller) and PLIC (Platform-
+   // Level-Interrupt-Controller) if they are specified in the device tree
+   // configuration.
+   //
+   // This isn't *quite* as general as we could get (because you might have one
+   // that's not bus-accessible), but it should handle the normal use cases. In
+   // particular, the default device tree configuration that you get without
+   // setting the dtb_file argument has one.
+   std::vector<device_factory_sargs_t> device_factories = {
++    {bp_cfg_factory, {}},
+     {clint_factory, {}},
+     {plic_factory, {}},
+     {host_factory, {}}, // host must be element 2
+     {ns16550_factory, {}}};
+   device_factories.insert(device_factories.end(),
+                           plugin_device_factories.begin(),
+                           plugin_device_factories.end());
+ 
+   // Load dtb_file if provided, otherwise self-generate a dts/dtb
+   if (dtb_file) {
+@@ -259,20 +261,25 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
+ 
+       if (dynamic_cast<plic_t*>(&*dev_ptr)) {
+         assert(!plic);
+         plic = std::static_pointer_cast<plic_t>(dev_ptr);
+       }
+ 
+       if (dynamic_cast<host_t*>(&*dev_ptr)) {
+         assert(!host);
+         host = std::static_pointer_cast<host_t>(dev_ptr);
+       }
++
++      if (dynamic_cast<bp_cfg_t*>(&*dev_ptr)) {
++        assert(!bp_cfg);
++        bp_cfg = std::static_pointer_cast<bp_cfg_t>(dev_ptr);
++      }
+     }
+   }
+ }
+ 
+ sim_t::~sim_t()
+ {
+   for (size_t i = 0; i < procs.size(); i++)
+     delete procs[i];
+   delete debug_mmu;
+ }
+diff --git a/riscv/sim.h b/riscv/sim.h
+index 99701c73..34467af8 100644
+--- a/riscv/sim.h
++++ b/riscv/sim.h
+@@ -76,20 +76,21 @@ private:
+   std::map<size_t, processor_t*> harts;
+   std::unordered_map<reg_t, char*> addr_to_mem_cache;
+   std::pair<reg_t, reg_t> initrd_range;
+   std::string dts;
+   std::string dtb;
+   bool dtb_enabled;
+   std::vector<std::shared_ptr<abstract_device_t>> devices;
+   std::shared_ptr<clint_t> clint;
+   std::shared_ptr<plic_t> plic;
+   std::shared_ptr<host_t> host;
++  std::shared_ptr<bp_cfg_t> bp_cfg;
+   bus_t bus;
+   log_file_t log_file;
+ 
+   FILE *cmd_file; // pointer to debug command input file
+ 
+   std::optional<unsigned long long> instruction_limit;
+ 
+   socketif_t *socketif;
+   std::ostream sout_; // used for socket and terminal interface
+ 
+-- 
+2.18.4
+

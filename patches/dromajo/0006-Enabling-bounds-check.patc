@@ -1,0 +1,47 @@
+From c4ad104ceaadd934a8463ffb337c81c1571836cd Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko.bsg@gmail.com>
+Date: Tue, 21 Apr 2026 16:48:57 -0700
+Subject: [PATCH] Enabling bounds check
+
+---
+ src/riscv_cpu.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/riscv_cpu.cpp b/src/riscv_cpu.cpp
+index 23a46df..5d22935 100644
+--- a/src/riscv_cpu.cpp
++++ b/src/riscv_cpu.cpp
+@@ -184,27 +184,27 @@ static inline uint64_t track_iread(RISCVCPUState *s, uint64_t vaddr, uint64_t pa
+  * the mstatus register and the MPP field in the mstatus register
+  * contains S or U. Optionally, PMP checks may additionally apply to
+  * M-mode accesses, in which case the PMP registers themselves are
+  * locked, so that even M-mode software cannot change them without a
+  * system reset.  In effect, PMP can grant permissions to S and U
+  * modes, which by default have none, and can revoke permissions from
+  * M-mode, which by default has full permissions." */
+ bool riscv_cpu_pmp_access_ok(RISCVCPUState *s, uint64_t paddr, size_t size, pmpcfg_t perm) {
+     int priv;
+ 
+-    // BlackParrot has no PMP
+-    return true;
+-
+     /* rv64mi-p-access expects illegal physical addresses to fail. */
+     if ((uint64_t)paddr >> s->physical_addr_len != 0)
+         return false;
+ 
++    // BlackParrot has no PMP
++    return true;
++
+     if ((s->mstatus & MSTATUS_MPRV) && !(perm & PMPCFG_X)) {
+         /* use previous privilege */
+         priv = (s->mstatus >> MSTATUS_MPP_SHIFT) & 3;
+     } else {
+         priv = s->priv;
+     }
+ 
+     // Check for _any_ bytes from the range overlapping with a PMP
+     // region (we don't support the cases where the PMP region is
+     // smaller than the access).
+-- 
+2.18.4
+
