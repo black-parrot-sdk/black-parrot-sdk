@@ -4,8 +4,8 @@ Date: Tue, 29 Jul 2025 12:28:17 -0700
 Subject: [PATCH] Fixing p macro
 
 ---
- p/riscv_test.h | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+ p/riscv_test.h | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
 
 diff --git a/p/riscv_test.h b/p/riscv_test.h
 index 3d4637a..ae8380c 100644
@@ -40,21 +40,5 @@ index 3d4637a..ae8380c 100644
          li TESTNUM, 0;                                                  \
          la t0, trap_vector;                                             \
          csrw mtvec, t0;                                                 \
-@@ -285,11 +287,14 @@ reset_vector:                                                           \
- #define RVTEST_DATA_BEGIN                                               \
-         EXTRA_DATA                                                      \
-         .pushsection .tohost,"aw",@progbits;                            \
-         .align 6; .global tohost; tohost: .dword 0; .size tohost, 8;    \
-         .align 6; .global fromhost; fromhost: .dword 0; .size fromhost, 8;\
-         .popsection;                                                    \
-         .align 4; .global begin_signature; begin_signature:
- 
- #define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
- 
-+#undef INIT_PMP
-+#define INIT_PMP nop
-+
- #endif
 -- 
 2.18.4
-
