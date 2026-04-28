@@ -1,0 +1,103 @@
+From 15ab5c9a481f3620ea4196f0a39c0b720a00eefa Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko.bsg@gmail.com>
+Date: Tue, 31 Mar 2026 12:24:58 -0700
+Subject: [PATCH 4/4] Adding CLINT-PLIC emulation
+
+---
+ src/riscv_machine.cpp | 23 ++++++++++++++++++++---
+ 1 file changed, 20 insertions(+), 3 deletions(-)
+
+diff --git a/src/riscv_machine.cpp b/src/riscv_machine.cpp
+index d5a28f3..a3e8644 100644
+--- a/src/riscv_machine.cpp
++++ b/src/riscv_machine.cpp
+@@ -189,23 +189,33 @@ static void uart_write(void *opaque, uint32_t offset, uint32_t val, int size_log
+     vm_error("%s: bad write: addr=0x%x v=0x%x\n", __func__, (int)offset, (int)val);
+ }
+ 
+ /* CLINT registers
+  * 0000 msip hart 0
+  * 0004 msip hart 1
+  * 4000 mtimecmp hart 0 lo
+  * 4004 mtimecmp hart 0 hi
+  * 4008 mtimecmp hart 1 lo
+  * 400c mtimecmp hart 1 hi
+- * bff8 mtime lo
+- * bffc mtime hi
++ * c000 meip hart 0
++ * c008 seip hart 0
+  */
++static void plic_set_irq(void *opaque, int irq_num, int state);
++
++static void clint_init(void *opaque) {
++    RISCVMachine *m = (RISCVMachine *)opaque;
++    for (int hartid = 0; hartid < m->ncpus; ++hartid) {
++        for (int ctx = 0; ctx < 2; ++ctx) {
++            m->cpu_state[hartid]->plic_enable_irq[ctx] = 1;
++        }
++    }
++}
+ 
+ static uint32_t clint_read(void *opaque, uint32_t offset, int size_log2) {
+     RISCVMachine *m = (RISCVMachine *)opaque;
+     uint32_t      val;
+ 
+     if (0 <= offset && offset < 0x4000) {
+         int hartid = offset >> 2;
+         if (m->ncpus <= hartid) {
+             vm_error("%s: MSIP access for hartid:%d which is beyond ncpus\n", __func__, hartid);
+             val = 0;
+@@ -277,20 +287,27 @@ static void clint_write(void *opaque, uint32_t offset, uint32_t val, int size_lo
+         int hartid = (offset - 0x4000) >> 3;
+         if (m->ncpus <= hartid) {
+             vm_error("%s: MSIP access for hartid:%d which is beyond ncpus\n", __func__, hartid);
+         } else if ((offset >> 2) & 1) {
+             m->cpu_state[hartid]->timecmp = (m->cpu_state[hartid]->timecmp & 0xffffffff) | ((uint64_t)val << 32);
+             riscv_cpu_reset_mip(m->cpu_state[hartid], MIP_MTIP);
+         } else {
+             m->cpu_state[hartid]->timecmp = (m->cpu_state[hartid]->timecmp & ~0xffffffff) | val;
+             riscv_cpu_reset_mip(m->cpu_state[hartid], MIP_MTIP);
+         }
++    } else if (0xc000 <= offset && offset < 0xcffff) {
++        // ignore emulated high access
++        if (offset & 0x4) { return; }
++        int irq_num = (((offset - 0xc000) >> 3) & 0x1); // 0 M-mode  or 1 S-mode
++        int state = val & 1;
++        printf("PLIC SET IRQ: %x %x\n", offset, val);
++        plic_set_irq(m, irq_num, state);
+     } else {
+         vm_error("clint_write to unmanaged address CLINT_BASE+0x%x\n", offset);
+         val = 0;
+     }
+ 
+ #ifdef DUMP_CLINT
+     vm_error("clint_write: offset=%x val=%x\n", offset, val);
+ #endif
+ }
+ 
+@@ -1341,21 +1358,21 @@ RISCVMachine *virt_machine_init(const VirtMachineParams *p) {
+                         DefaultInitFunc,
+                         dw_apb_uart_read,
+                         dw_apb_uart_write,
+                         DefaultTickFunc,
+                         DEVIO_SIZE32 | DEVIO_SIZE16 | DEVIO_SIZE8);
+ 
+     cpu_register_device(s->mem_map,
+                         p->clint_base_addr,
+                         p->clint_size,
+                         s,
+-                        DefaultInitFunc,
++                        clint_init,
+                         clint_read,
+                         clint_write,
+                         DefaultTickFunc,
+                         DEVIO_SIZE32 | DEVIO_SIZE16 | DEVIO_SIZE8);
+     cpu_register_device(s->mem_map, p->plic_base_addr, p->plic_size, s, DefaultInitFunc, plic_read, plic_write, DefaultTickFunc, DEVIO_SIZE32);
+ 
+     // BlackParrot Host
+     cpu_register_device(s->mem_map,
+                         HOST_BASE_ADDR,
+                         HOST_SIZE,
+-- 
+2.18.4
+
