@@ -1,0 +1,24 @@
+From d2ea17fa14fddcc95568be23a22bd44f1b52a668 Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko.bsg@gmail.com>
+Date: Fri, 5 Jun 2026 21:44:51 -0700
+Subject: [PATCH] Removing pmp disable
+
+---
+ p/riscv_test.h | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/p/riscv_test.h b/p/riscv_test.h
+index ae8380c..551390e 100644
+--- a/p/riscv_test.h
++++ b/p/riscv_test.h
+@@ -294,7 +294,4 @@ reset_vector:                                                           \
+ 
+ #define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
+ 
+-#undef INIT_PMP
+-#define INIT_PMP nop
+-
+ #endif
+-- 
+2.53.0
+
