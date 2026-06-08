@@ -1,0 +1,24 @@
+From a0d603ae07a59d1d42c393d1af23d6edfd2c4599 Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko.bsg@gmail.com>
+Date: Mon, 8 Jun 2026 01:40:57 -0700
+Subject: [PATCH 4/4] Adding bp_cfg to sources
+
+---
+ riscv/riscv.mk.in | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/riscv/riscv.mk.in b/riscv/riscv.mk.in
+index d09314e9..2dbe2970 100644
+--- a/riscv/riscv.mk.in
++++ b/riscv/riscv.mk.in
+@@ -77,6 +77,7 @@ riscv_srcs = \
+ 	vector_unit.cc \
+ 	socketif.cc \
+ 	cfg.cc \
++	bp_cfg.cc \
+ 	$(riscv_gen_srcs) \
+ 
+ riscv_test_srcs = \
+-- 
+2.53.0
+

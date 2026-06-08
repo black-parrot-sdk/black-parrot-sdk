@@ -114,7 +114,7 @@ define bsg_tgt_build_tag
 	$(eval rebuild_target := re$(build_target))
 	$(eval internal_target := $(work_dir)/$(name)/.$(name)_build)
 	$(eval patch_root := $(patch_dir)/$(if $(src_dir),$(shell basename $(src_dir)),$(name)))
-	$(eval patch_files := $(shell find $(patch_root) -name "*.patch" 2>/dev/null))
+	$(eval patch_files := $(sort $(shell find $(patch_root) -name "*.patch" 2>/dev/null)))
 	$(eval APPLY_PATCH := git apply --ignore-whitespace --ignore-space-change)
 	$(eval REVRS_PATCH := $(APPLY_PATCH) --reverse)
 	$(eval CHECK_PATCH := $(REVRS_PATCH) --check)
