@@ -1,0 +1,26 @@
+From 3342a33829bc656c0ce7196dea2b879c17296419 Mon Sep 17 00:00:00 2001
+From: Dan Ruelas-Petrisko <petrisko.bsg@gmail.com>
+Date: Wed, 16 Sep 2026 14:08:08 -0700
+Subject: [PATCH] Fixing fail condition
+
+---
+ p/riscv_test.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/p/riscv_test.h b/p/riscv_test.h
+index 551390e..1144b7d 100644
+--- a/p/riscv_test.h
++++ b/p/riscv_test.h
+@@ -216,7 +216,8 @@ handle_exception:                                                       \
+         li t6, HOST_BASE;                                               \
+         li t5, HOST_FINISH;                                             \
+         or t5, t5, t6;                                                  \
+-        sw zero, 0(t5);                                                 \
++        sw a0, 0(t5);                                                   \
++        fence;                                                          \
+   1:    j 1b;                                                           \
+ reset_vector:                                                           \
+         INIT_XREG;                                                      \
+-- 
+2.52.0
+
